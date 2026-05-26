@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "000000000000",
-    "project_id": "aguiabranca-placeholder",
-    "storage_bucket": "aguiabranca-placeholder.appspot.com"
+    "project_number": "711646010506",
+    "project_id": "aguia-branca-16d4d",
+    "storage_bucket": "aguia-branca-16d4d.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "mobilesdk_app_id": "1:711646010506:android:97520253546442c29b2173",
         "android_client_info": {
           "package_name": "com.aguiabranca.app"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_REPLACE_WITH_REAL_KEY"
+          "current_key": "AIzaSyCUH-3a7s-ZVTIN_Bm9ioSTyJ--MZt967s"
         }
       ],
       "services": {
@@ -26,7 +26,7 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000001",
+        "mobilesdk_app_id": "1:711646010506:android:e7c6098df19554169b2173",
         "android_client_info": {
           "package_name": "com.aguiabranca.app.debug"
         }
@@ -34,7 +34,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_REPLACE_WITH_REAL_KEY"
+          "current_key": "AIzaSyCUH-3a7s-ZVTIN_Bm9ioSTyJ--MZt967s"
         }
       ],
       "services": {
