@@ -52,7 +52,7 @@ fun JourneyStepper(
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
-                    text = "❌ Ideia rejeitada",
+                    text = "Ideia rejeitada",
                     color = SemanticDanger,
                     fontWeight = FontWeight.SemiBold
                 )

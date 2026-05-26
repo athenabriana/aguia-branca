@@ -10,18 +10,18 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+// Suppresses listener errors (notably PERMISSION_DENIED on signOut)
+// to avoid propagating exceptions that would crash viewModelScope.
 fun Query.snapshotsAsFlow(): Flow<QuerySnapshot> = callbackFlow {
-    val reg = addSnapshotListener { value, error ->
-        if (error != null) close(error)
-        else if (value != null) trySend(value)
+    val reg = addSnapshotListener { value, _ ->
+        if (value != null) trySend(value)
     }
     awaitClose { reg.remove() }
 }
 
 fun com.google.firebase.firestore.DocumentReference.snapshotsAsFlow(): Flow<DocumentSnapshot> = callbackFlow {
-    val reg = addSnapshotListener { value, error ->
-        if (error != null) close(error)
-        else if (value != null) trySend(value)
+    val reg = addSnapshotListener { value, _ ->
+        if (value != null) trySend(value)
     }
     awaitClose { reg.remove() }
 }

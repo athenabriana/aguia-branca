@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 data class LoginFormState(
@@ -61,8 +62,14 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 sessionManager.signIn(email, password)
-                val session = sessionManager.currentUser.first { it != null }!!
-                _state.value = UiState.Success(session.role)
+                val session = withTimeoutOrNull(10_000) {
+                    sessionManager.currentUser.first { it != null }
+                }
+                if (session == null) {
+                    _state.value = UiState.Error(DomainError.NotFound("perfil", email))
+                } else {
+                    _state.value = UiState.Success(session.role)
+                }
             } catch (e: FirebaseAuthInvalidCredentialsException) {
                 _state.value = UiState.Error(DomainError.ValidationFailed("credenciais", "inválidas"))
             } catch (e: FirebaseAuthInvalidUserException) {

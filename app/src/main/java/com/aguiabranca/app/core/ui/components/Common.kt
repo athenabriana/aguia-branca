@@ -55,7 +55,7 @@ fun StageBadge(stage: ProjectStage) {
 
 @Composable
 fun GuidelineBadge(title: String?, modifier: Modifier = Modifier) {
-    val text = title?.let { "🎯 Conectada com: $it" } ?: "🎯 Orientação removida"
+    val text = title?.let { "Conectada com: $it" } ?: "Orientação removida"
     val fg = if (title == null) SemanticDanger else MaterialTheme.colorScheme.primary
     Pill(text = text, bg = fg.copy(alpha = 0.10f), fg = fg, modifier = modifier)
 }

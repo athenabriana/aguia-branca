@@ -40,8 +40,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.domain.badge.Badges
 import com.aguiabranca.app.core.domain.model.IdeaStatus
+import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.components.BadgeChip
 import com.aguiabranca.app.core.ui.local.LocalSession
+import com.aguiabranca.app.feature.ideas.ui.divisionLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +77,11 @@ fun ProfileScreen(
                 Spacer(Modifier.size(16.dp))
                 Column {
                     Text(user?.name ?: session.name, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                    Text("${user?.role?.name ?: session.role.name} · ${user?.division?.name ?: session.division.name}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                    Text(
+                        "${roleLabel(user?.role ?: session.role)} · ${divisionLabel(user?.division ?: session.division)}",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 12.sp
+                    )
                 }
             }
             Spacer(Modifier.height(20.dp))
@@ -117,5 +123,11 @@ fun ProfileScreen(
             Spacer(Modifier.height(24.dp))
         }
     }
+}
+
+private fun roleLabel(role: Role) = when (role) {
+    Role.OPERADOR -> "Operador"
+    Role.GESTOR -> "Gestor"
+    Role.LIDER -> "Líder"
 }
 

@@ -102,7 +102,12 @@ fun GuidelineDrillDownScreen(
                 item {
                     Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.primary) {
                         Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                            Text("🎯 ${g.title}", color = androidx.compose.ui.graphics.Color.White, fontWeight = FontWeight.Bold)
+                            Text(
+                                g.title,
+                                color = androidx.compose.ui.graphics.Color.White,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp
+                            )
                             Spacer(Modifier.height(4.dp))
                             Text(g.description, color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
                         }

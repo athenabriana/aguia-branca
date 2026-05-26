@@ -86,17 +86,29 @@ fun ProjectsListScreen(
                 NavTab.CURATION -> onCuration()
                 NavTab.GUIDELINES -> onGuidelines()
                 NavTab.PROFILE -> onProfile()
-                NavTab.DASHBOARD -> { /* líder não chega aqui */ }
                 else -> {}
             }
         },
         topBar = { TopAppBar(title = { Text("Projetos") }) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
-            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
-                if (items.isEmpty()) {
-                    item { Text("Nenhum projeto ainda.", color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (items.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Nenhum projeto cadastrado", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "Aprovar uma ideia na curadoria cria automaticamente um projeto em planejamento.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
                 }
+            }
+            LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
                 items(items, key = { it.id }) { p ->
                     Surface(
                         shape = RoundedCornerShape(14.dp),
@@ -167,8 +179,10 @@ fun ProjectDetailScreen(
                 Text(project.title, fontWeight = FontWeight.Bold, fontSize = 20.sp, modifier = Modifier.weight(1f))
                 StageBadge(project.stage)
             }
-            Spacer(Modifier.height(6.dp))
-            GuidelineBadge(title = ui.guidelineTitle ?: project.guidelineId?.let { null })
+            if (ui.guidelineTitle != null) {
+                Spacer(Modifier.height(6.dp))
+                GuidelineBadge(title = ui.guidelineTitle)
+            }
             Spacer(Modifier.height(8.dp))
             Text(project.description)
             Spacer(Modifier.height(12.dp))

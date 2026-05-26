@@ -32,7 +32,7 @@ fun GuidelineImpactCard(
         color = MaterialTheme.colorScheme.surface
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("🎯  $title", fontWeight = FontWeight.SemiBold)
+            Text(title, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.padding(4.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 kpi("Ideias", "$ideasCount")
