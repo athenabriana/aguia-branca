@@ -36,9 +36,7 @@ import com.aguiabranca.app.core.ui.local.LocalSession
 @Composable
 fun CurationScreen(
     onOpenIdea: (String) -> Unit,
-    onProjects: () -> Unit,
-    onGuidelines: () -> Unit,
-    onProfile: () -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: CurationViewModel = hiltViewModel()
 ) {
     val session = LocalSession.current ?: return
@@ -48,14 +46,7 @@ fun CurationScreen(
     RoleScaffold(
         role = session.role,
         currentTab = NavTab.CURATION,
-        onTabClick = {
-            when (it) {
-                NavTab.PROJECTS -> onProjects()
-                NavTab.GUIDELINES -> onGuidelines()
-                NavTab.PROFILE -> onProfile()
-                else -> {}
-            }
-        },
+        onTabClick = onTab,
         topBar = { TopAppBar(title = { Text("Curadoria") }) }
     ) { padding ->
         if (ideas.isEmpty()) {

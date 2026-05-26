@@ -47,8 +47,7 @@ import com.aguiabranca.app.feature.profile.ui.UsersRankingViewModel
 fun MyIdeasScreen(
     onOpenIdea: (String) -> Unit,
     onNewIdea: () -> Unit,
-    onGuidelines: () -> Unit,
-    onProfile: () -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: MyIdeasViewModel = hiltViewModel(),
     rankingVm: UsersRankingViewModel = hiltViewModel()
 ) {
@@ -60,13 +59,7 @@ fun MyIdeasScreen(
     RoleScaffold(
         role = session.role,
         currentTab = NavTab.IDEAS,
-        onTabClick = {
-            when (it) {
-                NavTab.GUIDELINES -> onGuidelines()
-                NavTab.PROFILE -> onProfile()
-                else -> {}
-            }
-        },
+        onTabClick = onTab,
         topBar = {
             TopAppBar(title = { Text("Minhas ideias") })
         }

@@ -3,17 +3,18 @@ package com.aguiabranca.app.navigation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
+import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.aguiabranca.app.core.ui.local.LocalSession
 import com.aguiabranca.app.core.domain.model.Role
+import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.local.LocalSession
 import com.aguiabranca.app.feature.auth.ui.LoginScreen
 import com.aguiabranca.app.feature.dashboard.ui.DashboardScreen
+import com.aguiabranca.app.feature.dashboard.ui.GuidelineDrillDownScreen
 import com.aguiabranca.app.feature.guidelines.ui.GuidelinesAdminScreen
 import com.aguiabranca.app.feature.guidelines.ui.GuidelinesScreen
 import com.aguiabranca.app.feature.ideas.ui.CurationScreen
@@ -25,17 +26,27 @@ import com.aguiabranca.app.feature.projects.ui.NewProjectScreen
 import com.aguiabranca.app.feature.projects.ui.ProjectDetailScreen
 import com.aguiabranca.app.feature.projects.ui.ProjectEditScreen
 import com.aguiabranca.app.feature.projects.ui.ProjectsListScreen
-import com.aguiabranca.app.feature.dashboard.ui.GuidelineDrillDownScreen
+
+private fun NavController.navigateTab(route: Route) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
+    }
+}
 
 @Composable
 fun AppNavHost(navController: NavHostController) {
     val session = LocalSession.current
 
     LaunchedEffect(session) {
-        val current = navController.currentDestination?.route
-        if (session == null && current?.startsWith(Route.Login::class.qualifiedName ?: "") == false) {
-            navController.navigate(Route.Login) {
-                popUpTo(0) { inclusive = true }
+        if (session == null) {
+            val current = navController.currentDestination?.route
+            val loginRoute = Route.Login::class.qualifiedName.orEmpty()
+            if (current == null || !current.startsWith(loginRoute)) {
+                navController.navigate(Route.Login) {
+                    popUpTo(0) { inclusive = true }
+                }
             }
         }
     }
@@ -45,6 +56,18 @@ fun AppNavHost(navController: NavHostController) {
         Role.GESTOR -> Route.Curation
         Role.LIDER -> Route.Dashboard
         null -> Route.Login
+    }
+
+    val onTab: (NavTab) -> Unit = { tab ->
+        val route: Route? = when (tab) {
+            NavTab.IDEAS -> Route.MyIdeas
+            NavTab.CURATION -> Route.Curation
+            NavTab.PROJECTS -> Route.Projects
+            NavTab.DASHBOARD -> Route.Dashboard
+            NavTab.GUIDELINES -> Route.Guidelines
+            NavTab.PROFILE -> Route.Profile
+        }
+        route?.let { navController.navigateTab(it) }
     }
 
     NavHost(navController = navController, startDestination = startDestination) {
@@ -66,8 +89,7 @@ fun AppNavHost(navController: NavHostController) {
             MyIdeasScreen(
                 onOpenIdea = { id -> navController.navigate(Route.IdeaDetail(id)) },
                 onNewIdea = { navController.navigate(Route.NewIdea) },
-                onGuidelines = { navController.navigate(Route.Guidelines) },
-                onProfile = { navController.navigate(Route.Profile) }
+                onTab = onTab
             )
         }
         composable<Route.NewIdea> {
@@ -85,9 +107,9 @@ fun AppNavHost(navController: NavHostController) {
         }
         composable<Route.Guidelines> {
             GuidelinesScreen(
-                onBack = { navController.popBackStack() },
                 onAdmin = { navController.navigate(Route.GuidelinesAdmin) },
-                onEdit = { id -> navController.navigate(Route.GuidelineEdit(id)) }
+                onEdit = { id -> navController.navigate(Route.GuidelineEdit(id)) },
+                onTab = onTab
             )
         }
         composable<Route.GuidelinesAdmin> {
@@ -105,24 +127,25 @@ fun AppNavHost(navController: NavHostController) {
         }
         composable<Route.Profile> {
             ProfileScreen(
-                onBack = { navController.popBackStack() }
+                onLoggedOut = {
+                    navController.navigate(Route.Login) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onTab = onTab
             )
         }
         composable<Route.Curation> {
             CurationScreen(
                 onOpenIdea = { id -> navController.navigate(Route.IdeaDetail(id)) },
-                onProjects = { navController.navigate(Route.Projects) },
-                onGuidelines = { navController.navigate(Route.Guidelines) },
-                onProfile = { navController.navigate(Route.Profile) }
+                onTab = onTab
             )
         }
         composable<Route.Projects> {
             ProjectsListScreen(
                 onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) },
                 onNewProject = { navController.navigate(Route.NewProject) },
-                onCuration = { navController.navigate(Route.Curation) },
-                onGuidelines = { navController.navigate(Route.Guidelines) },
-                onProfile = { navController.navigate(Route.Profile) }
+                onTab = onTab
             )
         }
         composable<Route.ProjectDetail> { entry ->
@@ -151,9 +174,7 @@ fun AppNavHost(navController: NavHostController) {
             DashboardScreen(
                 onOpenGuideline = { id -> navController.navigate(Route.GuidelineDrillDown(id)) },
                 onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) },
-                onProjects = { navController.navigate(Route.Projects) },
-                onGuidelines = { navController.navigate(Route.Guidelines) },
-                onProfile = { navController.navigate(Route.Profile) }
+                onTab = onTab
             )
         }
         composable<Route.GuidelineDrillDown> { entry ->

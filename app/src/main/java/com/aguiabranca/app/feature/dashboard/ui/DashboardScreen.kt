@@ -66,9 +66,7 @@ import com.aguiabranca.app.feature.ideas.ui.divisionLabel
 fun DashboardScreen(
     onOpenGuideline: (String) -> Unit,
     onOpenProject: (String) -> Unit,
-    onProjects: () -> Unit,
-    onGuidelines: () -> Unit,
-    onProfile: () -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: DashboardViewModel = hiltViewModel(),
     analytics: Analytics? = null
 ) {
@@ -85,14 +83,7 @@ fun DashboardScreen(
     RoleScaffold(
         role = session.role,
         currentTab = NavTab.DASHBOARD,
-        onTabClick = {
-            when (it) {
-                NavTab.PROJECTS -> onProjects()
-                NavTab.GUIDELINES -> onGuidelines()
-                NavTab.PROFILE -> onProfile()
-                else -> {}
-            }
-        },
+        onTabClick = onTab,
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Dashboard") },

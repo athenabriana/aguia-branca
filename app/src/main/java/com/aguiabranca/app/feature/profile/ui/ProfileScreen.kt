@@ -18,14 +18,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,13 +40,16 @@ import com.aguiabranca.app.core.domain.badge.Badges
 import com.aguiabranca.app.core.domain.model.IdeaStatus
 import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.components.BadgeChip
+import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.local.LocalSession
 import com.aguiabranca.app.feature.ideas.ui.divisionLabel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    onBack: () -> Unit,
+    onLoggedOut: () -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: ProfileViewModel = hiltViewModel()
 ) {
     val session = LocalSession.current ?: return
@@ -56,13 +57,11 @@ fun ProfileScreen(
     val ui by vm.ui.collectAsState()
     val user = ui.user
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Perfil") },
-                navigationIcon = { TextButton(onClick = onBack) { Text("Voltar") } }
-            )
-        }
+    RoleScaffold(
+        role = session.role,
+        currentTab = NavTab.PROFILE,
+        onTabClick = onTab,
+        topBar = { TopAppBar(title = { Text("Perfil") }) }
     ) { padding ->
         Column(
             modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp).verticalScroll(rememberScrollState())
@@ -72,7 +71,10 @@ fun ProfileScreen(
                     modifier = Modifier.size(64.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text((user?.name?.firstOrNull()?.uppercase() ?: "?"), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                    Text(
+                        (user?.name?.firstOrNull()?.uppercase() ?: session.name.firstOrNull()?.uppercase() ?: "?"),
+                        color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Bold
+                    )
                 }
                 Spacer(Modifier.size(16.dp))
                 Column {
@@ -119,7 +121,7 @@ fun ProfileScreen(
                 }
             }
             Spacer(Modifier.height(28.dp))
-            OutlinedButton(onClick = { vm.logout(onBack) }, modifier = Modifier.fillMaxWidth()) { Text("Sair") }
+            OutlinedButton(onClick = { vm.logout(onLoggedOut) }, modifier = Modifier.fillMaxWidth()) { Text("Sair") }
             Spacer(Modifier.height(24.dp))
         }
     }
@@ -130,4 +132,3 @@ private fun roleLabel(role: Role) = when (role) {
     Role.GESTOR -> "Gestor"
     Role.LIDER -> "Líder"
 }
-

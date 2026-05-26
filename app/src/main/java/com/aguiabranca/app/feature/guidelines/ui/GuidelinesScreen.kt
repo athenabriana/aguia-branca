@@ -1,9 +1,8 @@
 package com.aguiabranca.app.feature.guidelines.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,16 +17,15 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,74 +39,87 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.domain.model.Role
+import com.aguiabranca.app.core.ui.components.NavTab
 import com.aguiabranca.app.core.ui.components.PillarChip
+import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.components.formatDateShort
 import com.aguiabranca.app.core.ui.local.LocalSession
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GuidelinesScreen(
-    onBack: () -> Unit,
     onAdmin: () -> Unit,
     onEdit: (String) -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: GuidelinesViewModel = hiltViewModel()
 ) {
-    val session = LocalSession.current
+    val session = LocalSession.current ?: return
     val items by vm.guidelines.collectAsState()
     var deleteId by remember { mutableStateOf<String?>(null) }
 
-    Scaffold(
-        topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Orientações estratégicas") },
-                navigationIcon = {
-                    TextButton(onClick = onBack) { Text("Voltar") }
-                }
-            )
-        },
-        floatingActionButton = {
-            if (session?.role == Role.LIDER) {
-                ExtendedFloatingActionButton(
-                    onClick = onAdmin,
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
-                    text = { Text("Nova") }
-                )
-            }
-        }
+    RoleScaffold(
+        role = session.role,
+        currentTab = NavTab.GUIDELINES,
+        onTabClick = onTab,
+        topBar = { TopAppBar(title = { Text("Orientações estratégicas") }) }
     ) { padding ->
-        if (items.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Nenhuma orientação cadastrada", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        } else {
-            LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)) {
-                items(items, key = { it.id }) { g ->
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
-                        shape = RoundedCornerShape(14.dp),
-                        color = MaterialTheme.colorScheme.surface
-                    ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                                Text(g.title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
-                                if (session?.role == Role.LIDER) {
-                                    IconButton(onClick = { onEdit(g.id) }) { Icon(Icons.Outlined.Edit, contentDescription = "Editar") }
-                                    IconButton(onClick = { deleteId = g.id }) { Icon(Icons.Outlined.Delete, contentDescription = "Excluir") }
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (items.isEmpty()) {
+                Column(
+                    modifier = Modifier.fillMaxSize().padding(32.dp),
+                    verticalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("Nenhuma orientação cadastrada", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+                    Spacer(Modifier.size(8.dp))
+                    Text(
+                        if (session.role == Role.LIDER)
+                            "Use o botão Nova para definir as orientações estratégicas que guiarão as ideias e projetos."
+                        else
+                            "As orientações estratégicas aparecem aqui quando publicadas pelas lideranças.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp)) {
+                    items(items, key = { it.id }) { g ->
+                        Surface(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            color = MaterialTheme.colorScheme.surface
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                                    Text(g.title, fontWeight = FontWeight.SemiBold, fontSize = 16.sp, modifier = Modifier.weight(1f))
+                                    if (session.role == Role.LIDER) {
+                                        IconButton(onClick = { onEdit(g.id) }) { Icon(Icons.Outlined.Edit, contentDescription = "Editar") }
+                                        IconButton(onClick = { deleteId = g.id }) { Icon(Icons.Outlined.Delete, contentDescription = "Excluir") }
+                                    }
                                 }
-                            }
-                            Spacer(Modifier.size(4.dp))
-                            Text(g.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Spacer(Modifier.size(8.dp))
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                PillarChip(g.pillar)
+                                Spacer(Modifier.size(4.dp))
+                                Text(g.description, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 Spacer(Modifier.size(8.dp))
-                                Text("• ${g.authorName}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Spacer(Modifier.size(8.dp))
-                                Text("atualizada em ${formatDateShort(g.updatedAt)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    PillarChip(g.pillar)
+                                    Spacer(Modifier.size(8.dp))
+                                    Text("• ${g.authorName}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Spacer(Modifier.size(8.dp))
+                                    Text("atualizada em ${formatDateShort(g.updatedAt)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                     }
                 }
+            }
+            if (session.role == Role.LIDER) {
+                ExtendedFloatingActionButton(
+                    onClick = onAdmin,
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    text = { Text("Nova") },
+                    modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+                )
             }
         }
     }

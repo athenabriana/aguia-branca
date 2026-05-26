@@ -70,9 +70,7 @@ import com.aguiabranca.app.feature.ideas.ui.divisionLabel
 fun ProjectsListScreen(
     onOpenProject: (String) -> Unit,
     onNewProject: () -> Unit,
-    onCuration: () -> Unit,
-    onGuidelines: () -> Unit,
-    onProfile: () -> Unit,
+    onTab: (NavTab) -> Unit,
     vm: ProjectsListViewModel = hiltViewModel()
 ) {
     val session = LocalSession.current ?: return
@@ -81,14 +79,7 @@ fun ProjectsListScreen(
     RoleScaffold(
         role = session.role,
         currentTab = NavTab.PROJECTS,
-        onTabClick = {
-            when (it) {
-                NavTab.CURATION -> onCuration()
-                NavTab.GUIDELINES -> onGuidelines()
-                NavTab.PROFILE -> onProfile()
-                else -> {}
-            }
-        },
+        onTabClick = onTab,
         topBar = { TopAppBar(title = { Text("Projetos") }) }
     ) { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
