@@ -1,7 +1,5 @@
 package com.aguiabranca.app.feature.auth.ui
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,16 +17,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,7 +37,6 @@ import com.aguiabranca.app.core.domain.error.toPtBr
 import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.state.UiState
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LoginScreen(
     onLoggedIn: (Role) -> Unit,
@@ -51,19 +44,11 @@ fun LoginScreen(
 ) {
     val form by vm.form.collectAsState()
     val state by vm.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(state) {
         val s = state
         if (s is UiState.Success) {
             onLoggedIn(s.data)
-        }
-    }
-
-    LaunchedEffect(form.seedMessage) {
-        form.seedMessage?.let {
-            snackbarHostState.showSnackbar(it)
-            vm.clearSeedMessage()
         }
     }
 
@@ -79,11 +64,7 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .combinedClickable(
-                        onClick = {},
-                        onLongClick = { vm.runSeed() }
-                    ),
+                    .clip(androidx.compose.foundation.shape.CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -140,21 +121,7 @@ fun LoginScreen(
                             Text("Entrar")
                         }
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        "Pressione o logo para popular credenciais demo",
-                        fontSize = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    if (form.seedRunning) {
-                        Spacer(Modifier.height(8.dp))
-                        Text("Gerando dados de demonstração…", fontSize = 12.sp)
-                    }
                 }
-            }
-            Spacer(Modifier.height(24.dp))
-            SnackbarHost(hostState = snackbarHostState) { data ->
-                Snackbar { Text(data.visuals.message) }
             }
         }
     }

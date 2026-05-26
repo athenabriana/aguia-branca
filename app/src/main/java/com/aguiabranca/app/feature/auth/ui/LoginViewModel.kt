@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
-import com.aguiabranca.app.bootstrap.SeedData
 import com.aguiabranca.app.core.auth.SessionManager
 import com.aguiabranca.app.core.domain.error.DomainError
 import com.aguiabranca.app.core.domain.model.Role
@@ -21,16 +20,13 @@ import javax.inject.Inject
 
 data class LoginFormState(
     val email: String = "",
-    val password: String = "",
-    val seedRunning: Boolean = false,
-    val seedMessage: String? = null
+    val password: String = ""
 )
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
-    private val sessionManager: SessionManager,
-    private val seedData: SeedData
+    private val sessionManager: SessionManager
 ) : ViewModel() {
 
     private val _form = MutableStateFlow(
@@ -81,24 +77,6 @@ class LoginViewModel @Inject constructor(
 
     fun consumeError() {
         if (_state.value is UiState.Error) _state.value = UiState.Idle
-    }
-
-    fun runSeed() {
-        if (_form.value.seedRunning) return
-        _form.value = _form.value.copy(seedRunning = true, seedMessage = null)
-        viewModelScope.launch {
-            val msg = try {
-                seedData.seed()
-                "Seed concluído. Use as credenciais demo."
-            } catch (t: Throwable) {
-                "Falha no seed: ${t.localizedMessage}"
-            }
-            _form.value = _form.value.copy(seedRunning = false, seedMessage = msg)
-        }
-    }
-
-    fun clearSeedMessage() {
-        _form.value = _form.value.copy(seedMessage = null)
     }
 
     private companion object {

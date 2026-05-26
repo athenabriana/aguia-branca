@@ -74,15 +74,13 @@ Gere o keystore com:
 keytool -genkey -v -keystore keystore/release.jks -alias aguiabranca -keyalg RSA -keysize 2048 -validity 10000
 ```
 
-## Seed de dados de demonstração
+## Usuários de demonstração
 
-1. Abra o app no emulador / dispositivo conectado ao Firebase configurado.
-2. Na tela de login, faça **long-press no logo** "IG" (centralizado).
-3. Aguarde "Seed concluído". A função cria:
-   - 3 usuários: `lider@aguiabranca.com`, `gestor@aguiabranca.com`, `operador@aguiabranca.com` (senha `aguiabranca123`)
-   - 4 orientações estratégicas
-   - 6 ideias em diferentes status (com e sem ICE, com e sem vínculo a orientação)
-   - 3 projetos (1 concluído com ROI positivo, 1 em execução, 1 em planejamento)
+| Email | Senha | Perfil |
+|---|---|---|
+| `lider@aguiabranca.com` | `aguiabranca123` | Líder |
+| `gestor@aguiabranca.com` | `aguiabranca123` | Gestor |
+| `operador@aguiabranca.com` | `aguiabranca123` | Operador |
 
 ## Perfis e funcionalidades
 
@@ -105,7 +103,6 @@ Para detalhes de arquitetura, modelo de dados, fluxos críticos (aprovação→p
 app/src/main/java/com/aguiabranca/app/
 ├── AguiaBrancaApplication.kt        # Hilt root + Crashlytics
 ├── MainActivity.kt               # Splash, edge-to-edge, predictive back
-├── bootstrap/SeedData.kt
 ├── core/
 │   ├── auth/SessionManager.kt
 │   ├── data/{dto,mapper,FirestoreHelpers}
@@ -120,7 +117,7 @@ app/src/main/java/com/aguiabranca/app/
 │   ├── ui/local/LocalSession.kt
 │   └── util/Analytics.kt
 ├── feature/
-│   ├── auth/                     # Login + Seed
+│   ├── auth/                     # Login
 │   ├── guidelines/               # CRUD + listagem
 │   ├── ideas/                    # CRUD + curadoria + ICE + jornada
 │   ├── projects/                 # CRUD + timeline
