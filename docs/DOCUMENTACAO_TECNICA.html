@@ -217,6 +217,70 @@
     .pkg-tree .section-gap > li { margin-top: 0.25rem; }
     .pkg-tree .section-gap > li:first-child { margin-top: 0; }
 
+    /* ============ Video card ============ */
+    .video-card {
+      display: flex;
+      align-items: stretch;
+      gap: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 14px;
+      margin: 1rem 0 1.4rem;
+      text-decoration: none;
+      color: inherit;
+      page-break-inside: avoid;
+    }
+    .video-card .thumb {
+      position: relative;
+      flex: 0 0 220px;
+      aspect-ratio: 16 / 9;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0d1117;
+    }
+    .video-card .thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .video-card .play {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(255,0,0,0.92);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .video-card .play svg { width: 20px; height: 20px; fill: white; margin-left: 3px; }
+    .video-card .info { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    .video-card .info .label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--brand);
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .video-card .info .title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .video-card .info .url {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+      word-break: break-all;
+    }
+
     /* ============ Print ============ */
     @page { size: A4; margin: 18mm 16mm; }
     @media print {
@@ -239,6 +303,7 @@
         font-size: 0.8em;
         color: #777;
       }
+      a.video-card[href^="http"]::after { content: none; }
     }
   </style>
 </head>
@@ -273,6 +338,20 @@
 
 <!-- ============================================================ -->
 <h2 id="visao">1. Visão geral</h2>
+
+<a class="video-card" href="https://youtu.be/vavpqs3Of_o" target="_blank" rel="noopener">
+  <div class="thumb">
+    <img src="https://img.youtube.com/vi/vavpqs3Of_o/maxresdefault.jpg" alt="Demonstração em vídeo do app" onerror="this.src='https://img.youtube.com/vi/vavpqs3Of_o/hqdefault.jpg'">
+    <span class="play">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+    </span>
+  </div>
+  <div class="info">
+    <div class="label">Demonstração em vídeo</div>
+    <div class="title">Águia Branca Challenge, Sprint 1</div>
+    <div class="url">https://youtu.be/vavpqs3Of_o</div>
+  </div>
+</a>
 
 <p>
 Aplicativo Android que conecta três perfis do Grupo Águia Branca no ciclo de inovação:
