@@ -203,12 +203,15 @@ private fun DashboardBody(
             KpiCard("Redução de custo", formatCurrency(state.totalCostReduction), modifier = Modifier.weight(1f))
         }
 
-        Spacer(Modifier.height(16.dp))
-        Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
-            Column(modifier = Modifier.padding(16.dp)) {
-                Text("Tendência de ROI (últimos 6 meses)", fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-                SparklineChart(values = state.sparklineRoi)
+        val hasRoiHistory = state.sparklineRoi.count { it != null } >= 2
+        if (hasRoiHistory) {
+            Spacer(Modifier.height(16.dp))
+            Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Tendência de ROI (últimos 6 meses)", fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(8.dp))
+                    SparklineChart(values = state.sparklineRoi)
+                }
             }
         }
 
