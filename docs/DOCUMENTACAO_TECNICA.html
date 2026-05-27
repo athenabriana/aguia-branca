@@ -537,16 +537,6 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
   </ul>
 </div>
 
-<h3>3.2 Conceitos que aparecem em todo lugar</h3>
-<ul>
-  <li><strong>Outcome&lt;T&gt;</strong>: envelope <code>Success(T)</code> ou <code>Failure(DomainError)</code>. Usado no lugar de <em>throw</em> entre Data e Domain.</li>
-  <li><strong>DomainError</strong>: <code>NetworkUnavailable</code>, <code>PermissionDenied</code>, <code>NotFound</code>, <code>ValidationFailed</code>, <code>Unknown</code>. Convertido em mensagem em português pela função <code>toPtBr()</code> na UI.</li>
-  <li><strong>LocalSession</strong>: <code>CompositionLocal</code> com a sessão do usuário. Provido no <code>MainActivity</code> e lido por qualquer tela.</li>
-  <li><strong>RoleGate</strong>: composable no <code>AppNavHost</code> que volta uma tela atrás se o papel atual não pode acessar a rota.</li>
-  <li><strong>snapshotsAsFlow</strong>: extensão sobre <code>Query</code>/<code>DocumentReference</code>. Converte o listener do Firestore em <code>Flow</code> e ignora erros (para não derrubar o ViewModel no logout).</li>
-  <li><strong>UiState</strong>: <code>sealed class</code> com <code>Idle</code>, <code>Loading</code>, <code>Success(T)</code> e <code>Error(DomainError)</code>. Usado pelas telas que têm carga assíncrona explícita.</li>
-</ul>
-
 <!-- ============================================================ -->
 <h2 id="dados" class="page-break">4. Modelo de dados</h2>
 
@@ -709,21 +699,21 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
     </marker>
   </defs>
   <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
-    <rect x="10"  y="35" width="120" height="42" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
-    <text x="70" y="60" text-anchor="middle" fill="#1a3a8e" font-weight="600">Operador</text>
-    <line x1="130" y1="56" x2="170" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <rect x="10"  y="35" width="100" height="42" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
+    <text x="60" y="60" text-anchor="middle" fill="#1a3a8e" font-weight="600">Operador</text>
+    <line x1="110" y1="56" x2="140" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
 
-    <rect x="170" y="20" width="160" height="72" rx="8" fill="#fff" stroke="#777"/>
-    <text x="250" y="42" text-anchor="middle" font-weight="600">Form: Nova ideia</text>
-    <text x="250" y="60" text-anchor="middle" fill="#555">título · descrição</text>
-    <text x="250" y="76" text-anchor="middle" fill="#555">categoria · orientação</text>
-    <line x1="330" y1="56" x2="370" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <rect x="140" y="20" width="160" height="72" rx="8" fill="#fff" stroke="#777"/>
+    <text x="220" y="42" text-anchor="middle" font-weight="600">Form: Nova ideia</text>
+    <text x="220" y="60" text-anchor="middle" fill="#555">título · descrição</text>
+    <text x="220" y="76" text-anchor="middle" fill="#555">categoria · orientação</text>
+    <line x1="300" y1="56" x2="330" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
 
-    <rect x="370" y="20" width="180" height="72" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
-    <text x="460" y="42" text-anchor="middle" font-weight="600" fill="#8a5a00">Transação Firestore</text>
-    <text x="460" y="60" text-anchor="middle" fill="#555">cria ideia + credita pontos</text>
-    <text x="460" y="76" text-anchor="middle" fill="#555">(+10 base, +15 com orientação)</text>
-    <line x1="550" y1="56" x2="590" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
+    <rect x="330" y="20" width="230" height="72" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="445" y="42" text-anchor="middle" font-weight="600" fill="#8a5a00">Transação Firestore</text>
+    <text x="445" y="60" text-anchor="middle" fill="#555">cria ideia + credita pontos</text>
+    <text x="445" y="76" text-anchor="middle" fill="#555">(+10 base, +15 com orientação)</text>
+    <line x1="560" y1="56" x2="590" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar2)"/>
 
     <rect x="590" y="35" width="120" height="42" rx="8" fill="#e0f3e3" stroke="#1f6b35"/>
     <text x="650" y="60" text-anchor="middle" fill="#1f6b35" font-weight="600">Toast confirma</text>
