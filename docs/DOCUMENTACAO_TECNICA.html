@@ -258,6 +258,7 @@
     <li><a href="#visao">Visão geral</a></li>
     <li><a href="#stack">Tecnologias utilizadas</a></li>
     <li><a href="#arquitetura">Arquitetura da solução</a></li>
+    <li><a href="#pacotes">Pacotes</a></li>
     <li><a href="#dados">Modelo de dados</a></li>
     <li><a href="#regras">Regras de segurança</a></li>
     <li><a href="#fluxos">Fluxo da aplicação</a></li>
@@ -365,7 +366,8 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
 <div class="diagram-caption">Dependência sempre de fora pra dentro: UI e Data dependem de Domain; Domain não depende de ninguém.</div>
 </div>
 
-<h3>3.1 Pacotes</h3>
+<!-- ============================================================ -->
+<h2 id="pacotes" class="page-break">4. Pacotes</h2>
 <div class="pkg-tree">
   <div class="root-path">app/src/main/java/com/aguiabranca/app/</div>
   <ul class="section-gap">
@@ -535,9 +537,9 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
 </div>
 
 <!-- ============================================================ -->
-<h2 id="dados" class="page-break">4. Modelo de dados</h2>
+<h2 id="dados" class="page-break">5. Modelo de dados</h2>
 
-<h3>4.1 <code>users/{uid}</code></h3>
+<h3>5.1 <code>users/{uid}</code></h3>
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
@@ -550,7 +552,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
   </tbody>
 </table>
 
-<h3>4.2 <code>strategicGuidelines/{id}</code></h3>
+<h3>5.2 <code>strategicGuidelines/{id}</code></h3>
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
@@ -561,7 +563,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
   </tbody>
 </table>
 
-<h3>4.3 <code>ideas/{id}</code></h3>
+<h3>5.3 <code>ideas/{id}</code></h3>
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
@@ -578,7 +580,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
   </tbody>
 </table>
 
-<h3>4.4 <code>projects/{id}</code></h3>
+<h3>5.4 <code>projects/{id}</code></h3>
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
@@ -598,7 +600,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
   </tbody>
 </table>
 
-<h3>4.5 <code>projects/{id}/updates/{uid}</code> (histórico)</h3>
+<h3>5.5 <code>projects/{id}/updates/{uid}</code> (histórico)</h3>
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
@@ -609,7 +611,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
   </tbody>
 </table>
 
-<h3>4.6 Índices compostos</h3>
+<h3>5.6 Índices compostos</h3>
 <p>Em <code>firebase/firestore.indexes.json</code>:</p>
 <ul>
   <li><code>ideas</code>: <code>authorId</code> + <code>createdAt</code> (desc), tela "Minhas ideias".</li>
@@ -617,7 +619,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <st
 </ul>
 
 <!-- ============================================================ -->
-<h2 id="regras" class="page-break">5. Regras de segurança</h2>
+<h2 id="regras" class="page-break">6. Regras de segurança</h2>
 
 <p>
 As regras estão em <code>firestore.rules</code> e controlam o acesso por papel buscando o documento do usuário a cada requisição. São a fonte de verdade, mesmo se a UI esconder um botão, o backend rejeita ações não autorizadas.
@@ -638,7 +640,7 @@ As regras estão em <code>firestore.rules</code> e controlam o acesso por papel 
   }
 }</code></pre>
 
-<h3>5.1 Resumo por coleção</h3>
+<h3>7.1 Resumo por coleção</h3>
 <table>
   <thead><tr><th>Coleção</th><th>Leitura</th><th>Criação</th><th>Atualização</th><th>Exclusão</th></tr></thead>
   <tbody>
@@ -685,9 +687,9 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
 </p>
 
 <!-- ============================================================ -->
-<h2 id="fluxos" class="page-break">6. Fluxo da aplicação</h2>
+<h2 id="fluxos" class="page-break">7. Fluxo da aplicação</h2>
 
-<h3>6.1 Cadastrar uma ideia</h3>
+<h3>7.1 Cadastrar uma ideia</h3>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 110" role="img" aria-label="Fluxo de cadastro de ideia">
   <defs>
@@ -718,7 +720,7 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
 </svg>
 </div>
 
-<h3>6.2 Aprovar uma ideia (gera projeto)</h3>
+<h3>7.2 Aprovar uma ideia (gera projeto)</h3>
 <p>Tudo acontece em uma transação no Firestore via <code>ApproveIdeaUseCase</code>:</p>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="Fluxo de aprovação de ideia">
@@ -766,7 +768,7 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
 A cópia é proposital. Se a ideia for editada ou excluída depois, o projeto ainda preserva o critério que justificou aprovar, o crédito do autor e o ponto de responsabilidade inicial.
 </p>
 
-<h3>6.3 Trocar o responsável de um projeto</h3>
+<h3>7.3 Trocar o responsável de um projeto</h3>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 110" role="img" aria-label="Fluxo de troca de responsável">
   <defs>
@@ -796,7 +798,7 @@ A cópia é proposital. Se a ideia for editada ou excluída depois, o projeto ai
 Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <code>field = "responsável"</code>, <code>from = nomeAntigo</code>, <code>to = nomeNovo</code>.
 </p>
 
-<h3>6.4 Concluir um projeto</h3>
+<h3>7.4 Concluir um projeto</h3>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 110" role="img" aria-label="Fluxo de conclusão de projeto">
   <defs>
@@ -823,7 +825,7 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
 </svg>
 </div>
 
-<h3>6.5 Dashboard do líder</h3>
+<h3>7.5 Dashboard do líder</h3>
 <p>
 <code>DashboardComputer</code> combina os flows do Firestore com o estado de filtros e devolve um <code>DashboardState</code> que a tela renderiza.
 </p>
@@ -882,7 +884,7 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
 </div>
 
 <!-- ============================================================ -->
-<h2 id="ice" class="page-break">7. Matriz ICE</h2>
+<h2 id="ice" class="page-break">8. Matriz ICE</h2>
 
 <p>
 ICE é um framework de priorização leve, comum em produto e inovação. Em vez de discutir cada ideia em comitê, o avaliador estima três dimensões em escala 1 a 10 e o score sai por multiplicação. A escala multiplicativa amplifica diferenças: uma ideia 9·9·9 = 729 fica visivelmente acima de 7·7·7 = 343, mesmo as médias estando próximas.
@@ -909,7 +911,7 @@ ICE é um framework de priorização leve, comum em produto e inovação. Em vez
   </tbody>
 </table>
 
-<h3>7.1 Cálculo</h3>
+<h3>8.1 Cálculo</h3>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 130" role="img" aria-label="Fórmula e faixas do score ICE">
   <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
@@ -932,15 +934,15 @@ ICE é um framework de priorização leve, comum em produto e inovação. Em vez
 </svg>
 </div>
 
-<h3>7.2 Como aparece no app</h3>
+<h3>8.2 Como aparece no app</h3>
 <ul>
   <li><strong>Curadoria do gestor:</strong> três sliders 1 a 10 na tela de detalhe da ideia, atualizando o score em tempo real. O botão "Aprovar" usa o ICE atual da matriz; não há botão separado de "salvar avaliação".</li>
-  <li><strong>Persistência:</strong> ao salvar pela primeira vez, a ideia passa de <code>SUBMETIDA</code> para <code>EM_ANALISE</code> e ganha o objeto <code>ice = { impact, confidence, ease, score }</code>. Aprovar a ideia copia o <code>score</code> para o campo <code>priorityScore</code> do projeto criado (snapshot histórico, ver §6.2).</li>
+  <li><strong>Persistência:</strong> ao salvar pela primeira vez, a ideia passa de <code>SUBMETIDA</code> para <code>EM_ANALISE</code> e ganha o objeto <code>ice = { impact, confidence, ease, score }</code>. Aprovar a ideia copia o <code>score</code> para o campo <code>priorityScore</code> do projeto criado (snapshot histórico, ver §7.2).</li>
   <li><strong>Lista de projetos do gestor:</strong> badge "Prioridade ICE: N" aparece enquanto o projeto não está <code>CONCLUIDO</code>. Quando há ROI calculado, o ROI assume o papel de critério.</li>
 </ul>
 
 <!-- ============================================================ -->
-<h2 id="gamificacao" class="page-break">8. Pontos</h2>
+<h2 id="gamificacao" class="page-break">9. Pontos</h2>
 
 <p>
 Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pontuação, mas veem o ranking dos operadores (para saber quem está produzindo).
@@ -958,7 +960,7 @@ Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pont
 </table>
 
 <!-- ============================================================ -->
-<h2 id="testes" class="page-break">9. Testes</h2>
+<h2 id="testes" class="page-break">10. Testes</h2>
 
 <p>20 testes unitários em 3 classes:</p>
 <table>
@@ -975,9 +977,9 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 <pre><code class="language-bash">./gradlew :app:testDebugUnitTest</code></pre>
 
 <!-- ============================================================ -->
-<h2 id="build" class="page-break">10. Build e operação</h2>
+<h2 id="build" class="page-break">11. Build e operação</h2>
 
-<h3>10.1 Comandos</h3>
+<h3>11.1 Comandos</h3>
 <pre><code class="language-bash"># Compilar debug
 ./gradlew :app:compileDebugKotlin
 
@@ -994,17 +996,17 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 # Instalar direto no dispositivo conectado por USB
 ./gradlew :app:installDebug</code></pre>
 
-<h3>10.2 APK release</h3>
+<h3>11.2 APK release</h3>
 <p>
 <code>./gradlew :app:assembleRelease</code> usa o keystore de debug por padrão. Para assinar com keystore próprio, criar <code>keystore.properties</code> na raiz com <code>storeFile</code>, <code>storePassword</code>, <code>keyAlias</code> e <code>keyPassword</code> (passos detalhados no <code>README.md</code>).
 </p>
 
-<h3>10.3 Setup do Firebase</h3>
+<h3>11.3 Setup do Firebase</h3>
 <p>
 O <code>README.md</code> tem o passo-a-passo completo (criar projeto, registrar apps <code>com.aguiabranca.app</code> e <code>com.aguiabranca.app.debug</code>, habilitar Auth/Firestore/Crashlytics, baixar <code>google-services.json</code>). Para publicar regras e índices: <code>firebase deploy --only firestore</code>.
 </p>
 
-<h3>10.4 Dados de demonstração</h3>
+<h3>11.4 Dados de demonstração</h3>
 <p>
 A carga inicial é feita por scripts Python externos (não versionados) que chamam a REST API do Firebase. Estado atual no Firestore de demo: 8 usuários (3 base + 5 operadores com pontuação distribuída), 4 orientações, 15 ideias entre todos os status, 5 projetos (1 concluído com ROI positivo).
 </p>
