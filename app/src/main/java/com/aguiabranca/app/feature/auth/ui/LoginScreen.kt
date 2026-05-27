@@ -1,7 +1,7 @@
 package com.aguiabranca.app.feature.auth.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -29,11 +29,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -69,20 +67,11 @@ fun LoginScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .size(96.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .semantics { contentDescription = "Logotipo INOVAGAB" },
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "IG",
-                    color = Color.White,
-                    fontSize = 36.sp,
-                    fontWeight = FontWeight.Black
-                )
-            }
+            Image(
+                painter = painterResource(id = com.aguiabranca.app.R.drawable.ic_splash_logo),
+                contentDescription = "Logotipo INOVAGAB",
+                modifier = Modifier.size(96.dp)
+            )
             Spacer(Modifier.height(8.dp))
             Text("ÁGUIA BRANCA", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 24.sp)
             Text("Inovação que conecta", color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp)
