@@ -69,7 +69,7 @@ fun LoginScreen(
         ) {
             Image(
                 painter = painterResource(id = com.aguiabranca.app.R.drawable.ic_splash_logo),
-                contentDescription = "Logotipo INOVAGAB",
+                contentDescription = "Logotipo Águia Branca",
                 modifier = Modifier.size(96.dp)
             )
             Spacer(Modifier.height(8.dp))
