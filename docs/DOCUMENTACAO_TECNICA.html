@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Águia Branca Challenge — Documentação Técnica (Sprint 1)</title>
+  <title>Águia Branca Challenge, Documentação Técnica (Sprint 1)</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
   <script>
@@ -211,7 +211,7 @@
       margin-left: 0.5em;
       font-style: normal;
     }
-    .pkg-tree .note::before { content: "— "; color: #b8bcc2; }
+    .pkg-tree .note::before { content: "- "; color: #b8bcc2; }
     .pkg-tree .section-gap > li { margin-top: 0.25rem; }
     .pkg-tree .section-gap > li:first-child { margin-top: 0; }
 
@@ -243,7 +243,7 @@
 <body>
 
 <header class="cover">
-  <h1>Águia Branca Challenge — Documentação Técnica</h1>
+  <h1>Águia Branca Challenge, Documentação Técnica</h1>
   <div class="meta">
     <strong>Cliente:</strong> Grupo Águia Branca &middot;
     <strong>Contexto:</strong> FIAP Challenge 2026 &middot;
@@ -256,13 +256,13 @@
   <strong>Sumário</strong>
   <ol>
     <li><a href="#visao">Visão geral</a></li>
-    <li><a href="#stack">Stack</a></li>
-    <li><a href="#arquitetura">Arquitetura</a></li>
+    <li><a href="#stack">Tecnologias utilizadas</a></li>
+    <li><a href="#arquitetura">Arquitetura da solução</a></li>
     <li><a href="#dados">Modelo de dados</a></li>
     <li><a href="#regras">Regras de segurança</a></li>
-    <li><a href="#fluxos">Fluxos principais</a></li>
-    <li><a href="#gamificacao">Pontos</a></li>
+    <li><a href="#fluxos">Fluxo da aplicação</a></li>
     <li><a href="#ice">Matriz ICE</a></li>
+    <li><a href="#gamificacao">Pontos</a></li>
     <li><a href="#testes">Testes</a></li>
     <li><a href="#build">Build e operação</a></li>
   </ol>
@@ -286,7 +286,7 @@ A ideia que vira projeto e gera retorno aparece na dashboard do líder agrupada 
 </p>
 
 <!-- ============================================================ -->
-<h2 id="stack">2. Stack</h2>
+<h2 id="stack">2. Tecnologias utilizadas</h2>
 
 <table>
   <thead><tr><th>Camada</th><th>Tecnologia</th><th>Versão</th></tr></thead>
@@ -294,7 +294,7 @@ A ideia que vira projeto e gera retorno aparece na dashboard do líder agrupada 
     <tr><td>Plataforma</td><td>Android nativo</td><td>minSdk 24 · targetSdk 35</td></tr>
     <tr><td>Linguagem</td><td>Kotlin</td><td>2.1.0</td></tr>
     <tr><td>UI</td><td>Jetpack Compose + Material 3</td><td>Compose BOM 2024.12.01</td></tr>
-    <tr><td>Arquitetura</td><td>MVVM + Repository + UseCases</td><td>—</td></tr>
+    <tr><td>Arquitetura</td><td>MVVM + Repository + UseCases</td><td>-</td></tr>
     <tr><td>Estado</td><td>ViewModel + StateFlow + SavedStateHandle</td><td>lifecycle 2.8.7</td></tr>
     <tr><td>Navegação</td><td>Navigation Compose com rotas tipadas</td><td>2.8.5</td></tr>
     <tr><td>Injeção de dependência</td><td>Hilt</td><td>2.55</td></tr>
@@ -302,15 +302,15 @@ A ideia que vira projeto e gera retorno aparece na dashboard do líder agrupada 
     <tr><td>Banco</td><td>Cloud Firestore</td><td>Firebase BOM 33.7.0</td></tr>
     <tr><td>Crash report</td><td>Firebase Crashlytics + Analytics</td><td>Firebase BOM 33.7.0</td></tr>
     <tr><td>Build</td><td>Gradle Kotlin DSL + Version Catalog</td><td>Gradle 8.11.1 · AGP 8.7.3 · JDK 17</td></tr>
-    <tr><td>Testes</td><td>JUnit 4 + MockK + Turbine + coroutines-test</td><td>—</td></tr>
+    <tr><td>Testes</td><td>JUnit 4 + MockK + Turbine + coroutines-test</td><td>-</td></tr>
   </tbody>
 </table>
 
 <!-- ============================================================ -->
-<h2 id="arquitetura" class="page-break">3. Arquitetura</h2>
+<h2 id="arquitetura" class="page-break">3. Arquitetura da solução</h2>
 
 <p>
-Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin puro) → <strong>Data</strong> (Firestore). A camada de Domain define as interfaces e não conhece nada de Android nem Firebase, então pode ser trocada na Sprint 2 sem afetar o resto.
+Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> → <strong>Data</strong> (Firestore). A camada de Domain define as interfaces e não depende de Android nem Firebase, então pode ser substituída sem afetar o resto.
 </p>
 
 <div class="diagram-wrap">
@@ -346,11 +346,11 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 
   <!-- Domain layer -->
   <rect x="40" y="190" width="640" height="110" rx="12" fill="url(#domain)" stroke="#8a5a00" stroke-width="1.5"/>
-  <text x="60" y="218" font-family="-apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#8a5a00">Domain · Kotlin puro</text>
+  <text x="60" y="218" font-family="-apple-system, Segoe UI, sans-serif" font-size="16" font-weight="700" fill="#8a5a00">Domain</text>
   <text x="60" y="244" font-family="-apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#1a1a1a">Modelos (User, Idea, Project, Guideline, Ice)</text>
   <text x="60" y="262" font-family="-apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#1a1a1a">Interfaces de Repository · UseCases (transações) · BadgeEvaluator</text>
   <text x="60" y="280" font-family="-apple-system, Segoe UI, sans-serif" font-size="12.5" fill="#1a1a1a">Outcome&lt;T&gt; · DomainError (sealed)</text>
-  <text x="60" y="296" font-family="-apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#555" font-style="italic">não conhece Android nem Firebase — testável em JVM</text>
+  <text x="60" y="296" font-family="-apple-system, Segoe UI, sans-serif" font-size="11.5" fill="#555" font-style="italic">sem dependência de Android nem Firebase</text>
 
   <!-- Arrow Domain -> Data -->
   <line x1="240" y1="300" x2="240" y2="340" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -437,7 +437,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
             <li>
               <span class="folder">badge/</span>
               <ul>
-                <li><span class="file">BadgeEvaluator.kt</span><span class="note">regra pura, testada</span></li>
+                <li><span class="file">BadgeEvaluator.kt</span></li>
               </ul>
             </li>
             <li><span class="file">*Repository.kt</span><span class="note">interfaces (Users, Ideas, Projects, Guidelines)</span></li>
@@ -519,7 +519,7 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
         <li>
           <span class="folder">dashboard/</span>
           <ul>
-            <li><span class="file">DashboardComputer.kt</span><span class="note">Kotlin puro: funil, ROI, sparkline, impacto por orientação</span></li>
+            <li><span class="file">DashboardComputer.kt</span><span class="note">funil, ROI, sparkline, impacto por orientação</span></li>
             <li><span class="file">ui/DashboardScreen · DashboardViewModel · GuidelineDrillDownScreen</span></li>
           </ul>
         </li>
@@ -541,12 +541,12 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
-    <tr><td><code>name</code>, <code>email</code></td><td><span class="t-str">string</span></td><td>—</td></tr>
+    <tr><td><code>name</code>, <code>email</code></td><td><span class="t-str">string</span></td><td>-</td></tr>
     <tr><td><code>role</code></td><td><span class="t-str">string</span></td><td>OPERADOR, GESTOR ou LIDER</td></tr>
     <tr><td><code>division</code></td><td><span class="t-str">string</span></td><td>PASSAGEIROS, COMERCIO, LOGISTICA ou CORPORATIVO</td></tr>
     <tr><td><code>points</code></td><td><span class="t-num">long</span></td><td>Pontuação acumulada do operador.</td></tr>
     <tr><td><code>badges</code></td><td><span class="t-map">array&lt;string&gt;</span></td><td>Nomes legíveis das badges desbloqueadas.</td></tr>
-    <tr><td><code>createdAt</code></td><td><span class="t-time">timestamp</span></td><td>—</td></tr>
+    <tr><td><code>createdAt</code></td><td><span class="t-time">timestamp</span></td><td>-</td></tr>
   </tbody>
 </table>
 
@@ -554,10 +554,10 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
-    <tr><td><code>title</code>, <code>description</code></td><td><span class="t-str">string</span></td><td>—</td></tr>
+    <tr><td><code>title</code>, <code>description</code></td><td><span class="t-str">string</span></td><td>-</td></tr>
     <tr><td><code>pillar</code></td><td><span class="t-str">string</span></td><td>DIRECIONAMENTO, IDEIAS, PROJETOS ou MENSURACAO</td></tr>
     <tr><td><code>authorId</code>, <code>authorName</code></td><td><span class="t-str">string</span></td><td>Líder que publicou.</td></tr>
-    <tr><td><code>createdAt</code>, <code>updatedAt</code></td><td><span class="t-time">timestamp</span></td><td>—</td></tr>
+    <tr><td><code>createdAt</code>, <code>updatedAt</code></td><td><span class="t-time">timestamp</span></td><td>-</td></tr>
   </tbody>
 </table>
 
@@ -565,16 +565,16 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 <table>
   <thead><tr><th>Campo</th><th>Tipo</th><th>Observação</th></tr></thead>
   <tbody>
-    <tr><td><code>title</code>, <code>description</code></td><td><span class="t-str">string</span></td><td>—</td></tr>
+    <tr><td><code>title</code>, <code>description</code></td><td><span class="t-str">string</span></td><td>-</td></tr>
     <tr><td><code>category</code></td><td><span class="t-str">string</span></td><td>Texto livre. Há 8 sugestões em chips no cadastro.</td></tr>
     <tr><td><code>division</code></td><td><span class="t-str">string</span></td><td>Vem pré-preenchida com a divisão do autor.</td></tr>
     <tr><td><code>guidelineId</code></td><td><span class="t-str">string?</span></td><td>Opcional. Quando preenchido, conta como conexão estratégica (+5 pts).</td></tr>
     <tr><td><code>authorId</code>, <code>authorName</code></td><td><span class="t-str">string</span></td><td>Operador que criou.</td></tr>
     <tr><td><code>status</code></td><td><span class="t-str">string</span></td><td>SUBMETIDA, EM_ANALISE, APROVADA, REJEITADA ou IMPLEMENTADA</td></tr>
-    <tr><td><code>ice</code></td><td><span class="t-map">map?</span></td><td><code>{ impact, confidence, ease, score }</code> — preenchido pelo gestor.</td></tr>
+    <tr><td><code>ice</code></td><td><span class="t-map">map?</span></td><td><code>{ impact, confidence, ease, score }</code>, preenchido pelo gestor.</td></tr>
     <tr><td><code>reviewerId</code></td><td><span class="t-str">string?</span></td><td>Gestor que avaliou.</td></tr>
     <tr><td><code>reviewComment</code></td><td><span class="t-str">string?</span></td><td>Motivo da rejeição, quando aplicável.</td></tr>
-    <tr><td><code>createdAt</code>, <code>reviewedAt</code></td><td><span class="t-time">timestamp</span></td><td>—</td></tr>
+    <tr><td><code>createdAt</code>, <code>reviewedAt</code></td><td><span class="t-time">timestamp</span></td><td>-</td></tr>
   </tbody>
 </table>
 
@@ -588,13 +588,13 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
     <tr><td><code>financialReturn</code></td><td><span class="t-num">double</span></td><td>R$ de retorno. Alimenta o cálculo do ROI.</td></tr>
     <tr><td><code>productivityGain</code></td><td><span class="t-num">double</span></td><td>% de ganho de produtividade.</td></tr>
     <tr><td><code>costReduction</code></td><td><span class="t-num">double</span></td><td>R$ de redução de custo.</td></tr>
-    <tr><td><code>division</code>, <code>guidelineId</code></td><td><span class="t-str">string</span> / <span class="t-str">string?</span></td><td>—</td></tr>
+    <tr><td><code>division</code>, <code>guidelineId</code></td><td><span class="t-str">string</span> / <span class="t-str">string?</span></td><td>-</td></tr>
     <tr><td><code>creatorManagerId</code></td><td><span class="t-str">string</span></td><td>Gestor que aprovou a ideia e criou o projeto. Imutável (auditoria).</td></tr>
     <tr><td><code>originatingIdeaId</code></td><td><span class="t-str">string?</span></td><td>Id da ideia origem.</td></tr>
     <tr><td><code>priorityScore</code></td><td><span class="t-num">int?</span></td><td>Cópia do score ICE no momento da aprovação. Mostrado enquanto o projeto não está concluído.</td></tr>
     <tr><td><code>reporterId</code>, <code>reporterName</code></td><td><span class="t-str">string?</span></td><td>Cópia do autor da ideia (relator). Não muda mesmo se a ideia for editada ou excluída.</td></tr>
     <tr><td><code>responsibleId</code>, <code>responsibleName</code></td><td><span class="t-str">string?</span></td><td>Gestor responsável atual. Começa igual a <code>creatorManagerId</code>; editável depois.</td></tr>
-    <tr><td><code>targetDate</code>, <code>createdAt</code>, <code>updatedAt</code></td><td><span class="t-time">timestamp</span></td><td>—</td></tr>
+    <tr><td><code>targetDate</code>, <code>createdAt</code>, <code>updatedAt</code></td><td><span class="t-time">timestamp</span></td><td>-</td></tr>
   </tbody>
 </table>
 
@@ -604,23 +604,23 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
   <tbody>
     <tr><td><code>authorId</code>, <code>authorName</code></td><td><span class="t-str">string</span></td><td>Quem fez a edição.</td></tr>
     <tr><td><code>note</code></td><td><span class="t-str">string</span></td><td>Nota livre do gestor.</td></tr>
-    <tr><td><code>changes</code></td><td><span class="t-map">array&lt;map&gt;</span></td><td><code>{ field, from, to }</code> — gerado por comparação automática. Inclui troca de responsável.</td></tr>
-    <tr><td><code>createdAt</code></td><td><span class="t-time">timestamp</span></td><td>—</td></tr>
+    <tr><td><code>changes</code></td><td><span class="t-map">array&lt;map&gt;</span></td><td><code>{ field, from, to }</code>, gerado por comparação automática. Inclui troca de responsável.</td></tr>
+    <tr><td><code>createdAt</code></td><td><span class="t-time">timestamp</span></td><td>-</td></tr>
   </tbody>
 </table>
 
 <h3>4.6 Índices compostos</h3>
 <p>Em <code>firebase/firestore.indexes.json</code>:</p>
 <ul>
-  <li><code>ideas</code>: <code>authorId</code> + <code>createdAt</code> (desc) — tela "Minhas ideias".</li>
-  <li><code>users</code>: <code>role</code> + <code>points</code> (desc) — ranking dos operadores.</li>
+  <li><code>ideas</code>: <code>authorId</code> + <code>createdAt</code> (desc), tela "Minhas ideias".</li>
+  <li><code>users</code>: <code>role</code> + <code>points</code> (desc), ranking dos operadores.</li>
 </ul>
 
 <!-- ============================================================ -->
 <h2 id="regras" class="page-break">5. Regras de segurança</h2>
 
 <p>
-As regras estão em <code>firestore.rules</code> e controlam o acesso por papel buscando o documento do usuário a cada requisição. São a fonte de verdade — mesmo se a UI esconder um botão, o backend rejeita ações não autorizadas.
+As regras estão em <code>firestore.rules</code> e controlam o acesso por papel buscando o documento do usuário a cada requisição. São a fonte de verdade, mesmo se a UI esconder um botão, o backend rejeita ações não autorizadas.
 </p>
 
 <pre><code class="language-javascript">service cloud.firestore {
@@ -685,7 +685,7 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
 </p>
 
 <!-- ============================================================ -->
-<h2 id="fluxos" class="page-break">6. Fluxos principais</h2>
+<h2 id="fluxos" class="page-break">6. Fluxo da aplicação</h2>
 
 <h3>6.1 Cadastrar uma ideia</h3>
 <div class="diagram-wrap">
@@ -825,7 +825,7 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
 
 <h3>6.5 Dashboard do líder</h3>
 <p>
-<code>DashboardComputer</code> é Kotlin puro (testável). Combina os flows do Firestore com o estado de filtros e devolve um <code>DashboardState</code> que a tela renderiza.
+<code>DashboardComputer</code> combina os flows do Firestore com o estado de filtros e devolve um <code>DashboardState</code> que a tela renderiza.
 </p>
 <div class="diagram-wrap">
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 230" role="img" aria-label="Fluxo do dashboard do líder">
@@ -850,8 +850,7 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
     <!-- Computer -->
     <rect x="210" y="75" width="200" height="80" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
     <text x="310" y="100" text-anchor="middle" font-weight="600" fill="#8a5a00">DashboardComputer</text>
-    <text x="310" y="118" text-anchor="middle" fill="#555" font-size="11">Kotlin puro · testável</text>
-    <text x="310" y="135" text-anchor="middle" fill="#555" font-size="11">combine(...) em StateFlow</text>
+    <text x="310" y="125" text-anchor="middle" fill="#555" font-size="11">combine(...) em StateFlow</text>
     <line x1="410" y1="115" x2="440" y2="115" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar6)"/>
 
     <!-- Saídas (DashboardState) -->
@@ -883,7 +882,65 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
 </div>
 
 <!-- ============================================================ -->
-<h2 id="gamificacao" class="page-break">7. Pontos</h2>
+<h2 id="ice" class="page-break">7. Matriz ICE</h2>
+
+<p>
+ICE é um framework de priorização leve, comum em produto e inovação. Em vez de discutir cada ideia em comitê, o avaliador estima três dimensões em escala 1 a 10 e o score sai por multiplicação. A escala multiplicativa amplifica diferenças: uma ideia 9·9·9 = 729 fica visivelmente acima de 7·7·7 = 343, mesmo as médias estando próximas.
+</p>
+
+<table>
+  <thead><tr><th style="width:130px">Dimensão</th><th style="width:60px">Escala</th><th>O que medir</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Impacto</strong> (I)</td>
+      <td>1 a 10</td>
+      <td>Quanto a ideia move o ponteiro do negócio se for implementada com sucesso. Receita gerada, custo reduzido, satisfação do cliente, alinhamento estratégico.</td>
+    </tr>
+    <tr>
+      <td><strong>Confiança</strong> (C)</td>
+      <td>1 a 10</td>
+      <td>Quão certo o avaliador está de que a ideia vai entregar o impacto previsto. Baseado em evidência: dados, benchmark, piloto, experiência prévia. Penaliza otimismo sem lastro.</td>
+    </tr>
+    <tr>
+      <td><strong>Facilidade</strong> (E, <em>Ease</em>)</td>
+      <td>1 a 10</td>
+      <td>O inverso do esforço. Tempo, complexidade técnica, dependências, custo de implementação. Quanto mais simples e barato, maior a nota.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>7.1 Cálculo</h3>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 130" role="img" aria-label="Fórmula e faixas do score ICE">
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <rect x="10" y="20" width="290" height="90" rx="8" fill="#fff" stroke="#777"/>
+    <text x="155" y="42" text-anchor="middle" font-weight="600">Fórmula</text>
+    <text x="155" y="78" text-anchor="middle" font-family="SF Mono, Menlo, Consolas, monospace" font-size="18" fill="#1a3a8e">score = I × C × E</text>
+    <text x="155" y="100" text-anchor="middle" font-size="11" fill="#555">faixa possível: 1 a 1000</text>
+
+    <rect x="320" y="20" width="390" height="90" rx="8" fill="#fff" stroke="#777"/>
+    <text x="515" y="42" text-anchor="middle" font-weight="600">Interpretação (referencial)</text>
+
+    <rect x="335" y="55" width="60" height="22" rx="11" fill="#e0f3e3" stroke="#1f6b35"/>
+    <text x="365" y="70" text-anchor="middle" font-size="11" fill="#1f6b35" font-weight="600">≥ 500</text>
+    <text x="408" y="70" font-size="11.5" fill="#1a1a1a">prioridade alta, aprovar e priorizar fila</text>
+
+    <rect x="335" y="83" width="60" height="22" rx="11" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="365" y="98" text-anchor="middle" font-size="11" fill="#8a5a00" font-weight="600">200 a 499</text>
+    <text x="408" y="98" font-size="11.5" fill="#1a1a1a">média, analisar dependências antes de aprovar</text>
+  </g>
+</svg>
+</div>
+
+<h3>7.2 Como aparece no app</h3>
+<ul>
+  <li><strong>Curadoria do gestor:</strong> três sliders 1 a 10 na tela de detalhe da ideia, atualizando o score em tempo real. O botão "Aprovar" usa o ICE atual da matriz; não há botão separado de "salvar avaliação".</li>
+  <li><strong>Persistência:</strong> ao salvar pela primeira vez, a ideia passa de <code>SUBMETIDA</code> para <code>EM_ANALISE</code> e ganha o objeto <code>ice = { impact, confidence, ease, score }</code>. Aprovar a ideia copia o <code>score</code> para o campo <code>priorityScore</code> do projeto criado (snapshot histórico, ver §6.2).</li>
+  <li><strong>Lista de projetos do gestor:</strong> badge "Prioridade ICE: N" aparece enquanto o projeto não está <code>CONCLUIDO</code>. Quando há ROI calculado, o ROI assume o papel de critério.</li>
+</ul>
+
+<!-- ============================================================ -->
+<h2 id="gamificacao" class="page-break">8. Pontos</h2>
 
 <p>
 Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pontuação, mas veem o ranking dos operadores (para saber quem está produzindo).
@@ -901,68 +958,6 @@ Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pont
 </table>
 
 <!-- ============================================================ -->
-<h2 id="ice" class="page-break">8. Matriz ICE</h2>
-
-<p>
-ICE é um framework de priorização leve, comum em produto e inovação. Em vez de discutir cada ideia em comitê, o avaliador estima três dimensões em escala 1–10 e o score sai por multiplicação. A escala multiplicativa amplifica diferenças: uma ideia 9·9·9 = 729 fica visivelmente acima de 7·7·7 = 343, mesmo as médias estando próximas.
-</p>
-
-<table>
-  <thead><tr><th style="width:130px">Dimensão</th><th style="width:60px">Escala</th><th>O que medir</th></tr></thead>
-  <tbody>
-    <tr>
-      <td><strong>Impacto</strong> (I)</td>
-      <td>1–10</td>
-      <td>Quanto a ideia move o ponteiro do negócio se for implementada com sucesso. Receita gerada, custo reduzido, satisfação do cliente, alinhamento estratégico.</td>
-    </tr>
-    <tr>
-      <td><strong>Confiança</strong> (C)</td>
-      <td>1–10</td>
-      <td>Quão certo o avaliador está de que a ideia vai entregar o impacto previsto. Baseado em evidência: dados, benchmark, piloto, experiência prévia. Penaliza otimismo sem lastro.</td>
-    </tr>
-    <tr>
-      <td><strong>Facilidade</strong> (E — <em>Ease</em>)</td>
-      <td>1–10</td>
-      <td>O inverso do esforço. Tempo, complexidade técnica, dependências, custo de implementação. Quanto mais simples e barato, maior a nota.</td>
-    </tr>
-  </tbody>
-</table>
-
-<h3>8.1 Cálculo</h3>
-<div class="diagram-wrap">
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 130" role="img" aria-label="Fórmula e faixas do score ICE">
-  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
-    <!-- Fórmula -->
-    <rect x="10" y="20" width="290" height="90" rx="8" fill="#fff" stroke="#777"/>
-    <text x="155" y="42" text-anchor="middle" font-weight="600">Fórmula</text>
-    <text x="155" y="78" text-anchor="middle" font-family="SF Mono, Menlo, Consolas, monospace" font-size="18" fill="#1a3a8e">score = I × C × E</text>
-    <text x="155" y="100" text-anchor="middle" font-size="11" fill="#555">faixa possível: 1 a 1000</text>
-
-    <!-- Faixas de interpretação -->
-    <rect x="320" y="20" width="390" height="90" rx="8" fill="#fff" stroke="#777"/>
-    <text x="515" y="42" text-anchor="middle" font-weight="600">Interpretação (referencial)</text>
-
-    <rect x="335" y="55" width="60" height="22" rx="11" fill="#e0f3e3" stroke="#1f6b35"/>
-    <text x="365" y="70" text-anchor="middle" font-size="11" fill="#1f6b35" font-weight="600">≥ 500</text>
-    <text x="408" y="70" font-size="11.5" fill="#1a1a1a">prioridade alta — aprovar e priorizar fila</text>
-
-    <rect x="335" y="83" width="60" height="22" rx="11" fill="#fff4d6" stroke="#8a5a00"/>
-    <text x="365" y="98" text-anchor="middle" font-size="11" fill="#8a5a00" font-weight="600">200–499</text>
-    <text x="408" y="98" font-size="11.5" fill="#1a1a1a">média — analisar dependências antes de aprovar</text>
-
-    <rect x="335" y="111" width="60" height="0" />
-  </g>
-</svg>
-</div>
-
-<h3>8.2 Como aparece no app</h3>
-<ul>
-  <li><strong>Curadoria do gestor:</strong> três sliders 1–10 na tela de detalhe da ideia, atualizando o score em tempo real. O botão "Aprovar" usa o ICE atual da matriz; não há botão separado de "salvar avaliação".</li>
-  <li><strong>Persistência:</strong> ao salvar pela primeira vez, a ideia passa de <code>SUBMETIDA</code> para <code>EM_ANALISE</code> e ganha o objeto <code>ice = { impact, confidence, ease, score }</code>. Aprovar a ideia copia o <code>score</code> para o campo <code>priorityScore</code> do projeto criado (snapshot histórico, ver §6.2).</li>
-  <li><strong>Lista de projetos do gestor:</strong> badge "Prioridade ICE: N" aparece enquanto o projeto não está <code>CONCLUIDO</code>. Quando há ROI calculado, o ROI assume o papel de critério.</li>
-</ul>
-
-<!-- ============================================================ -->
 <h2 id="testes" class="page-break">9. Testes</h2>
 
 <p>20 testes unitários em 3 classes:</p>
@@ -975,7 +970,7 @@ ICE é um framework de priorização leve, comum em produto e inovação. Em vez
   </tbody>
 </table>
 <p>
-Os use cases que envolvem transações no Firestore não têm testes automatizados — exigem emulador, ficou para a Sprint 2.
+Os use cases que envolvem transações no Firestore não têm testes automatizados, exigem emulador, ficou para a Sprint 2.
 </p>
 <pre><code class="language-bash">./gradlew :app:testDebugUnitTest</code></pre>
 
@@ -1015,7 +1010,7 @@ A carga inicial é feita por scripts Python externos (não versionados) que cham
 </p>
 
 <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 0.85rem;">
-  Challenge FIAP × Grupo Águia Branca — Sprint 1, entrega 26/05/2026.
+  Challenge FIAP × Grupo Águia Branca, Sprint 1, entrega 26/05/2026.
 </footer>
 
 </body>
