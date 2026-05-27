@@ -265,9 +265,7 @@
     <li><a href="#navegacao">Navegação</a></li>
     <li><a href="#decisoes">Decisões de produto</a></li>
     <li><a href="#testes">Testes</a></li>
-    <li><a href="#build">Build do app</a></li>
-    <li><a href="#setup">Setup do Firebase</a></li>
-    <li><a href="#seed">Carga inicial de dados</a></li>
+    <li><a href="#build">Build e operação</a></li>
     <li><a href="#limitacoes">Limitações conhecidas</a></li>
     <li><a href="#sprint2">Sprint 2</a></li>
   </ol>
@@ -873,31 +871,6 @@ Enquanto o projeto não está concluído, mostramos o score ICE da ideia origem 
 Dois campos diferentes no projeto: <strong>relator</strong> (quem teve a ideia, imutável) e <strong>responsável</strong> (quem está conduzindo, editável). Reflete o dia-a-dia: gestores trocam de área, saem de férias, redistribuem portfólio, mas o crédito do operador permanece.
 </p>
 
-<h3>9.4 Curadoria sem botão extra</h3>
-<p>
-A matriz ICE não tem botão próprio de "salvar avaliação". Os sliders alimentam direto o botão "Aprovar", que salva o ICE e aprova em sequência. Menos cliques.
-</p>
-
-<h3>9.5 Estados vazios com explicação</h3>
-<p>
-Em vez de "Sem dados", as listas vazias têm um título curto e uma frase explicando o que faria a tela ter conteúdo. Ex.: na curadoria, "Nenhuma ideia para curar — ideias submetidas pelos operadores aparecem aqui para avaliação com a matriz ICE."
-</p>
-
-<h3>9.6 Tendência de ROI condicional</h3>
-<p>
-O gráfico de tendência só aparece com pelo menos dois meses de ROI calculado. Com menos dados, o gráfico passaria informação enganosa (linha plana ou pico isolado) em um dashboard executivo.
-</p>
-
-<h3>9.7 Pontos só para quem participa</h3>
-<p>
-Gestor e líder não veem o próprio score nem as regras de pontuação no perfil. Para esses papéis, a tela de perfil mostra apenas a identidade e uma frase curta sobre o papel.
-</p>
-
-<h3>9.8 Botões de demo na tela de login</h3>
-<p>
-Abaixo do formulário há três botões ("Líder", "Gestor", "Operador") que entram direto com credenciais de demonstração. Serve para acelerar a apresentação. Sai na Sprint 2.
-</p>
-
 <!-- ============================================================ -->
 <h2 id="testes">10. Testes</h2>
 
@@ -916,7 +889,7 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 <pre><code class="language-bash">./gradlew :app:testDebugUnitTest</code></pre>
 
 <!-- ============================================================ -->
-<h2 id="build" class="page-break">11. Build do app</h2>
+<h2 id="build" class="page-break">11. Build e operação</h2>
 
 <h3>11.1 Comandos</h3>
 <pre><code class="language-bash"># Compilar debug
@@ -935,55 +908,23 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 # Instalar direto no dispositivo conectado por USB
 ./gradlew :app:installDebug</code></pre>
 
-<h3>11.2 Assinatura do APK release</h3>
-<p>Criar <code>keystore.properties</code> na raiz (ignorado pelo git):</p>
-<pre><code class="language-properties">storeFile=keystore/release.jks
-storePassword=...
-keyAlias=aguiabranca
-keyPassword=...</code></pre>
-<p>Gerar o keystore:</p>
-<pre><code class="language-bash">keytool -genkey -v -keystore keystore/release.jks \
-  -alias aguiabranca -keyalg RSA -keysize 2048 -validity 10000</code></pre>
-
-<!-- ============================================================ -->
-<h2 id="setup" class="page-break">12. Setup do Firebase</h2>
-
-<ol>
-  <li>Criar projeto no <a href="https://console.firebase.google.com/">Firebase Console</a>.</li>
-  <li>Registrar dois apps Android: <code>com.aguiabranca.app</code> (release) e <code>com.aguiabranca.app.debug</code> (suffix usado no build debug).</li>
-  <li>Em Authentication, habilitar o método Email/Senha.</li>
-  <li>Habilitar o Cloud Firestore em modo produção. Região sugerida: <code>southamerica-east1</code>.</li>
-  <li>Habilitar Crashlytics e Analytics.</li>
-  <li>Baixar o <code>google-services.json</code> agregado (contém os dois apps) e substituir <code>app/google-services.json</code>.</li>
-  <li>Publicar regras e índices:
-    <pre><code class="language-bash">npm i -g firebase-tools
-firebase login
-firebase deploy --only firestore</code></pre>
-    Ou colar manualmente o conteúdo de <code>firestore.rules</code> e os índices na interface do Console.
-  </li>
-</ol>
-
-<!-- ============================================================ -->
-<h2 id="seed">13. Carga inicial de dados</h2>
-
+<h3>11.2 APK release</h3>
 <p>
-O carregamento de dados de demonstração que existia no app (toque longo no logo) foi removido. Esse caminho criava conflito de sessão no Auth ao tentar criar vários usuários em sequência.
+<code>./gradlew :app:assembleRelease</code> usa o keystore de debug por padrão. Para assinar com keystore próprio, criar <code>keystore.properties</code> na raiz com <code>storeFile</code>, <code>storePassword</code>, <code>keyAlias</code> e <code>keyPassword</code> (passos detalhados no <code>README.md</code>).
 </p>
+
+<h3>11.3 Setup do Firebase</h3>
 <p>
-A carga atual é feita por scripts Python externos que chamam a REST API do Firebase. Os dados ficam no Firestore do projeto de demonstração (os scripts não estão versionados):
+O <code>README.md</code> tem o passo-a-passo completo (criar projeto, registrar apps <code>com.aguiabranca.app</code> e <code>com.aguiabranca.app.debug</code>, habilitar Auth/Firestore/Crashlytics, baixar <code>google-services.json</code>). Para publicar regras e índices: <code>firebase deploy --only firestore</code>.
 </p>
-<table>
-  <thead><tr><th>Coleção</th><th>Conteúdo</th></tr></thead>
-  <tbody>
-    <tr><td>users</td><td>3 contas base (líder, gestor, operador) + 5 operadores adicionais com pontuação distribuída (50 a 320 pts).</td></tr>
-    <tr><td>strategicGuidelines</td><td>4 orientações, uma por pilar.</td></tr>
-    <tr><td>ideas</td><td>15 ideias entre todos os status.</td></tr>
-    <tr><td>projects</td><td>5 projetos (1 concluído com ROI positivo, demais em execução ou planejamento).</td></tr>
-  </tbody>
-</table>
+
+<h3>11.4 Dados de demonstração</h3>
+<p>
+A carga inicial é feita por scripts Python externos (não versionados) que chamam a REST API do Firebase. Estado atual no Firestore de demo: 8 usuários (3 base + 5 operadores com pontuação distribuída), 4 orientações, 15 ideias entre todos os status, 5 projetos (1 concluído com ROI positivo).
+</p>
 
 <!-- ============================================================ -->
-<h2 id="limitacoes">14. Limitações conhecidas</h2>
+<h2 id="limitacoes">12. Limitações conhecidas</h2>
 
 <ul>
   <li>Sem testes integrados com Firestore. Use cases com transação são exercitados manualmente.</li>
@@ -997,7 +938,7 @@ A carga atual é feita por scripts Python externos que chamam a REST API do Fire
 </ul>
 
 <!-- ============================================================ -->
-<h2 id="sprint2">15. Sprint 2</h2>
+<h2 id="sprint2">13. Sprint 2</h2>
 
 <ul>
   <li>Trocar a camada Firestore por uma API REST em Java ou C#. As interfaces de Domain (<code>core/domain/*Repository.kt</code>) permanecem; só as implementações em <code>feature/&lt;X&gt;/data/Firestore&lt;X&gt;Repository.kt</code> mudam.</li>
