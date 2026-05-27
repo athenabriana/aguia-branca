@@ -26,7 +26,7 @@ fun RankingTop5(users: List<User>, highlightUid: String? = null, modifier: Modif
         color = MaterialTheme.colorScheme.surface
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("🏆 Top 5 inovadores do mês", fontWeight = FontWeight.SemiBold)
+            Text("Top 5 inovadores do mês", fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.padding(4.dp))
             if (users.isEmpty()) {
                 Text("Sem pontuações ainda este mês.", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)

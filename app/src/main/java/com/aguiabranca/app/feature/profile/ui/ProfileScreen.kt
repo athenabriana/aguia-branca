@@ -41,6 +41,7 @@ import com.aguiabranca.app.core.domain.model.IdeaStatus
 import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.components.BadgeChip
 import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.components.PointsRulesCard
 import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.local.LocalSession
 import com.aguiabranca.app.feature.ideas.ui.divisionLabel
@@ -94,6 +95,8 @@ fun ProfileScreen(
                     Text("${user?.points ?: 0}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 36.sp)
                 }
             }
+            Spacer(Modifier.height(16.dp))
+            PointsRulesCard()
             Spacer(Modifier.height(20.dp))
 
             Text("Badges", fontWeight = FontWeight.SemiBold)

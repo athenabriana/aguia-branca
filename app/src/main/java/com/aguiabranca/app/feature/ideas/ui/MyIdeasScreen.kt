@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.ui.components.GuidelineBadge
 import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.components.PointsRulesCard
 import com.aguiabranca.app.core.ui.components.RankingTop5
 import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.components.StatusBadge
@@ -69,7 +70,12 @@ fun MyIdeasScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(16.dp)
             ) {
-                item { RankingTop5(ranking, highlightUid = session.uid); Spacer(Modifier.height(12.dp)) }
+                item {
+                    RankingTop5(ranking, highlightUid = session.uid)
+                    Spacer(Modifier.height(12.dp))
+                    PointsRulesCard()
+                    Spacer(Modifier.height(12.dp))
+                }
                 if (items.isEmpty()) {
                     item {
                         Text(
