@@ -262,7 +262,7 @@
     <li><a href="#regras">Regras de segurança</a></li>
     <li><a href="#fluxos">Fluxos principais</a></li>
     <li><a href="#gamificacao">Pontos</a></li>
-    <li><a href="#decisoes">Decisões de produto</a></li>
+    <li><a href="#ice">Matriz ICE</a></li>
     <li><a href="#testes">Testes</a></li>
     <li><a href="#build">Build e operação</a></li>
   </ol>
@@ -825,16 +825,62 @@ Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <co
 
 <h3>6.5 Dashboard do líder</h3>
 <p>
-<code>DashboardComputer</code> (Kotlin puro, testável) recebe ideias, projetos, orientações e filtros (período + divisão) e calcula:
+<code>DashboardComputer</code> é Kotlin puro (testável). Combina os flows do Firestore com o estado de filtros e devolve um <code>DashboardState</code> que a tela renderiza.
 </p>
-<ul>
-  <li><strong>Funil</strong>: submetidas → avaliadas → aprovadas → em execução → ROI positivo.</li>
-  <li><strong>KPIs</strong>: ROI consolidado, lucro líquido, investimento total, projetos ativos, ganho médio de produtividade, redução total de custo.</li>
-  <li><strong>Tendência de ROI</strong> dos últimos 6 meses, em sparkline. Só aparece quando há pelo menos dois meses com ROI calculado.</li>
-  <li><strong>Impacto por orientação</strong>: ideias + projetos agrupados por orientação, com ROI agregado.</li>
-  <li><strong>Projetos por ROI</strong>: lista ordenada.</li>
-  <li><strong>Ranking</strong>: top 5 operadores por pontos.</li>
-</ul>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 230" role="img" aria-label="Fluxo do dashboard do líder">
+  <defs>
+    <marker id="ar6" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1a3a8e"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <!-- Entradas -->
+    <rect x="10" y="20" width="170" height="190" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
+    <text x="95" y="42" text-anchor="middle" font-weight="600" fill="#1a3a8e">Entradas</text>
+    <line x1="20" y1="52" x2="170" y2="52" stroke="#1a3a8e" stroke-opacity="0.25"/>
+    <text x="25" y="72" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" fill="#1a1a1a">ideias</text>
+    <text x="25" y="92" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" fill="#1a1a1a">projects</text>
+    <text x="25" y="112" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" fill="#1a1a1a">strategicGuidelines</text>
+    <text x="25" y="132" font-family="SF Mono, Menlo, Consolas, monospace" font-size="11" fill="#1a1a1a">filters</text>
+    <text x="40" y="152" font-size="10.5" fill="#555">• period</text>
+    <text x="40" y="168" font-size="10.5" fill="#555">• division</text>
+    <line x1="180" y1="115" x2="210" y2="115" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar6)"/>
+
+    <!-- Computer -->
+    <rect x="210" y="75" width="200" height="80" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="310" y="100" text-anchor="middle" font-weight="600" fill="#8a5a00">DashboardComputer</text>
+    <text x="310" y="118" text-anchor="middle" fill="#555" font-size="11">Kotlin puro · testável</text>
+    <text x="310" y="135" text-anchor="middle" fill="#555" font-size="11">combine(...) em StateFlow</text>
+    <line x1="410" y1="115" x2="440" y2="115" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar6)"/>
+
+    <!-- Saídas (DashboardState) -->
+    <rect x="440" y="20" width="270" height="190" rx="8" fill="#e0f3e3" stroke="#1f6b35"/>
+    <text x="575" y="42" text-anchor="middle" font-weight="600" fill="#1f6b35">DashboardState</text>
+    <line x1="450" y1="52" x2="700" y2="52" stroke="#1f6b35" stroke-opacity="0.25"/>
+
+    <!-- 6 widgets como chips -->
+    <rect x="452" y="62" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="512" y="77" text-anchor="middle" font-size="11" fill="#1a1a1a">Funil</text>
+    <rect x="582" y="62" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="642" y="77" text-anchor="middle" font-size="11" fill="#1a1a1a">KPIs (6)</text>
+
+    <rect x="452" y="92" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="512" y="107" text-anchor="middle" font-size="11" fill="#1a1a1a">Sparkline ROI</text>
+    <rect x="582" y="92" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="642" y="107" text-anchor="middle" font-size="11" fill="#1a1a1a">Impacto/orient.</text>
+
+    <rect x="452" y="122" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="512" y="137" text-anchor="middle" font-size="11" fill="#1a1a1a">Projetos por ROI</text>
+    <rect x="582" y="122" width="120" height="22" rx="11" fill="#fff" stroke="#1f6b35"/>
+    <text x="642" y="137" text-anchor="middle" font-size="11" fill="#1a1a1a">Ranking top 5</text>
+
+    <text x="575" y="170" text-anchor="middle" font-size="10.5" fill="#555">funil: submetidas → avaliadas → aprovadas →</text>
+    <text x="575" y="184" text-anchor="middle" font-size="10.5" fill="#555">em execução → ROI positivo</text>
+    <text x="575" y="200" text-anchor="middle" font-size="10.5" fill="#555" font-style="italic">sparkline escondido se &lt; 2 meses de ROI</text>
+  </g>
+</svg>
+</div>
 
 <!-- ============================================================ -->
 <h2 id="gamificacao" class="page-break">7. Pontos</h2>
@@ -855,25 +901,66 @@ Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pont
 </table>
 
 <!-- ============================================================ -->
-<h2 id="decisoes" class="page-break">8. Decisões de produto</h2>
+<h2 id="ice" class="page-break">8. Matriz ICE</h2>
+
+<p>
+ICE é um framework de priorização leve, comum em produto e inovação. Em vez de discutir cada ideia em comitê, o avaliador estima três dimensões em escala 1–10 e o score sai por multiplicação. A escala multiplicativa amplifica diferenças: uma ideia 9·9·9 = 729 fica visivelmente acima de 7·7·7 = 343, mesmo as médias estando próximas.
+</p>
 
 <table>
-  <thead><tr><th>Decisão</th><th>Como funciona</th></tr></thead>
+  <thead><tr><th style="width:130px">Dimensão</th><th style="width:60px">Escala</th><th>O que medir</th></tr></thead>
   <tbody>
     <tr>
-      <td><strong>Categoria de ideia</strong></td>
-      <td>Texto livre com 8 chips de sugestão. Permite padronizar quando faz sentido sem impedir uma categoria nova.</td>
+      <td><strong>Impacto</strong> (I)</td>
+      <td>1–10</td>
+      <td>Quanto a ideia move o ponteiro do negócio se for implementada com sucesso. Receita gerada, custo reduzido, satisfação do cliente, alinhamento estratégico.</td>
     </tr>
     <tr>
-      <td><strong>Prioridade ICE no projeto</strong></td>
-      <td>Score ICE da ideia é copiado para o projeto na aprovação e exibido enquanto o projeto não está concluído. Depois disso, o ROI assume o papel de critério.</td>
+      <td><strong>Confiança</strong> (C)</td>
+      <td>1–10</td>
+      <td>Quão certo o avaliador está de que a ideia vai entregar o impacto previsto. Baseado em evidência: dados, benchmark, piloto, experiência prévia. Penaliza otimismo sem lastro.</td>
     </tr>
     <tr>
-      <td><strong>Relator e responsável</strong></td>
-      <td>Campos separados: relator (autor da ideia, imutável) e responsável (gestor conduzindo, editável). Refletem dia-a-dia: handoff entre gestores não apaga o crédito do operador.</td>
+      <td><strong>Facilidade</strong> (E — <em>Ease</em>)</td>
+      <td>1–10</td>
+      <td>O inverso do esforço. Tempo, complexidade técnica, dependências, custo de implementação. Quanto mais simples e barato, maior a nota.</td>
     </tr>
   </tbody>
 </table>
+
+<h3>8.1 Cálculo</h3>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 130" role="img" aria-label="Fórmula e faixas do score ICE">
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <!-- Fórmula -->
+    <rect x="10" y="20" width="290" height="90" rx="8" fill="#fff" stroke="#777"/>
+    <text x="155" y="42" text-anchor="middle" font-weight="600">Fórmula</text>
+    <text x="155" y="78" text-anchor="middle" font-family="SF Mono, Menlo, Consolas, monospace" font-size="18" fill="#1a3a8e">score = I × C × E</text>
+    <text x="155" y="100" text-anchor="middle" font-size="11" fill="#555">faixa possível: 1 a 1000</text>
+
+    <!-- Faixas de interpretação -->
+    <rect x="320" y="20" width="390" height="90" rx="8" fill="#fff" stroke="#777"/>
+    <text x="515" y="42" text-anchor="middle" font-weight="600">Interpretação (referencial)</text>
+
+    <rect x="335" y="55" width="60" height="22" rx="11" fill="#e0f3e3" stroke="#1f6b35"/>
+    <text x="365" y="70" text-anchor="middle" font-size="11" fill="#1f6b35" font-weight="600">≥ 500</text>
+    <text x="408" y="70" font-size="11.5" fill="#1a1a1a">prioridade alta — aprovar e priorizar fila</text>
+
+    <rect x="335" y="83" width="60" height="22" rx="11" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="365" y="98" text-anchor="middle" font-size="11" fill="#8a5a00" font-weight="600">200–499</text>
+    <text x="408" y="98" font-size="11.5" fill="#1a1a1a">média — analisar dependências antes de aprovar</text>
+
+    <rect x="335" y="111" width="60" height="0" />
+  </g>
+</svg>
+</div>
+
+<h3>8.2 Como aparece no app</h3>
+<ul>
+  <li><strong>Curadoria do gestor:</strong> três sliders 1–10 na tela de detalhe da ideia, atualizando o score em tempo real. O botão "Aprovar" usa o ICE atual da matriz; não há botão separado de "salvar avaliação".</li>
+  <li><strong>Persistência:</strong> ao salvar pela primeira vez, a ideia passa de <code>SUBMETIDA</code> para <code>EM_ANALISE</code> e ganha o objeto <code>ice = { impact, confidence, ease, score }</code>. Aprovar a ideia copia o <code>score</code> para o campo <code>priorityScore</code> do projeto criado (snapshot histórico, ver §6.2).</li>
+  <li><strong>Lista de projetos do gestor:</strong> badge "Prioridade ICE: N" aparece enquanto o projeto não está <code>CONCLUIDO</code>. Quando há ROI calculado, o ROI assume o papel de critério.</li>
+</ul>
 
 <!-- ============================================================ -->
 <h2 id="testes" class="page-break">9. Testes</h2>
