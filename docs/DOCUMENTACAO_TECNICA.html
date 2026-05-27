@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <title>Águia Branca Challenge — Documentação Técnica (Sprint 1)</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
+  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.hljs) document.querySelectorAll('pre code').forEach(b => window.hljs.highlightElement(b));
+    });
+  </script>
   <style>
     /* ============ Base ============ */
     *, *::before, *::after { box-sizing: border-box; }
@@ -55,17 +62,23 @@
       color: var(--brand);
     }
     pre {
-      font-family: "SF Mono", Menlo, Consolas, monospace;
       font-size: 0.78rem;
-      background: var(--code-bg);
       border: 1px solid var(--line);
       border-radius: 8px;
-      padding: 14px 16px;
       overflow-x: auto;
       line-height: 1.5;
       page-break-inside: avoid;
+      margin: 0.8rem 0;
     }
-    pre code { background: none; padding: 0; color: inherit; }
+    /* highlight.js github theme já injeta padding/bg em pre code.hljs.
+       Garante padding consistente quando JS não roda (fallback offline). */
+    pre code {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      display: block;
+      padding: 14px 16px;
+      background: var(--code-bg);
+    }
+    pre code.hljs { background: #f6f8fa; }
 
     /* ============ Tables ============ */
     table {
@@ -620,20 +633,20 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 As regras estão em <code>firestore.rules</code> e controlam o acesso por papel buscando o documento do usuário a cada requisição. São a fonte de verdade — mesmo se a UI esconder um botão, o backend rejeita ações não autorizadas.
 </p>
 
-<pre>service cloud.firestore {
+<pre><code class="language-javascript">service cloud.firestore {
   match /databases/{database}/documents {
 
     function isAuth()     { return request.auth != null; }
     function userDoc()    { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
     function role()       { return userDoc().role; }
-    function isOperador() { return isAuth() && role() == 'OPERADOR'; }
-    function isGestor()   { return isAuth() && role() == 'GESTOR'; }
-    function isLider()    { return isAuth() && role() == 'LIDER'; }
+    function isOperador() { return isAuth() &amp;&amp; role() == 'OPERADOR'; }
+    function isGestor()   { return isAuth() &amp;&amp; role() == 'GESTOR'; }
+    function isLider()    { return isAuth() &amp;&amp; role() == 'LIDER'; }
     function affected()   { return request.resource.data.diff(resource.data).affectedKeys(); }
 
     // regras por coleção (ver firestore.rules)
   }
-}</pre>
+}</code></pre>
 
 <h3>5.1 Resumo por coleção</h3>
 <table>
@@ -895,13 +908,13 @@ Abaixo do formulário há três botões ("Líder", "Gestor", "Operador") que ent
 <p>
 Os use cases que envolvem transações no Firestore não têm testes automatizados — exigem emulador, ficou para a Sprint 2.
 </p>
-<pre>./gradlew :app:testDebugUnitTest</pre>
+<pre><code class="language-bash">./gradlew :app:testDebugUnitTest</code></pre>
 
 <!-- ============================================================ -->
 <h2 id="build" class="page-break">11. Build do app</h2>
 
 <h3>11.1 Comandos</h3>
-<pre># Compilar debug
+<pre><code class="language-bash"># Compilar debug
 ./gradlew :app:compileDebugKotlin
 
 # Rodar testes
@@ -915,17 +928,17 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 ./gradlew :app:assembleRelease
 
 # Instalar direto no dispositivo conectado por USB
-./gradlew :app:installDebug</pre>
+./gradlew :app:installDebug</code></pre>
 
 <h3>11.2 Assinatura do APK release</h3>
 <p>Criar <code>keystore.properties</code> na raiz (ignorado pelo git):</p>
-<pre>storeFile=keystore/release.jks
+<pre><code class="language-properties">storeFile=keystore/release.jks
 storePassword=...
 keyAlias=aguiabranca
-keyPassword=...</pre>
+keyPassword=...</code></pre>
 <p>Gerar o keystore:</p>
-<pre>keytool -genkey -v -keystore keystore/release.jks \
-  -alias aguiabranca -keyalg RSA -keysize 2048 -validity 10000</pre>
+<pre><code class="language-bash">keytool -genkey -v -keystore keystore/release.jks \
+  -alias aguiabranca -keyalg RSA -keysize 2048 -validity 10000</code></pre>
 
 <!-- ============================================================ -->
 <h2 id="setup" class="page-break">12. Setup do Firebase</h2>
@@ -938,9 +951,9 @@ keyPassword=...</pre>
   <li>Habilitar Crashlytics e Analytics.</li>
   <li>Baixar o <code>google-services.json</code> agregado (contém os dois apps) e substituir <code>app/google-services.json</code>.</li>
   <li>Publicar regras e índices:
-    <pre>npm i -g firebase-tools
+    <pre><code class="language-bash">npm i -g firebase-tools
 firebase login
-firebase deploy --only firestore</pre>
+firebase deploy --only firestore</code></pre>
     Ou colar manualmente o conteúdo de <code>firestore.rules</code> e os índices na interface do Console.
   </li>
 </ol>
