@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -15,8 +16,10 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -146,6 +149,42 @@ fun LoginScreen(
                         }
                     }
                 }
+            }
+
+            Spacer(Modifier.height(20.dp))
+            Text(
+                "Entrar como demo",
+                color = Color.White.copy(alpha = 0.85f),
+                fontSize = 12.sp
+            )
+            Spacer(Modifier.height(8.dp))
+            val quickEnabled = state !is UiState.Loading
+            val quickColors = ButtonDefaults.outlinedButtonColors(
+                contentColor = Color.White,
+                disabledContentColor = Color.White.copy(alpha = 0.4f)
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { vm.quickLogin("lider@aguiabranca.com", "aguiabranca123") },
+                    enabled = quickEnabled,
+                    colors = quickColors,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Líder") }
+                OutlinedButton(
+                    onClick = { vm.quickLogin("gestor@aguiabranca.com", "aguiabranca123") },
+                    enabled = quickEnabled,
+                    colors = quickColors,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Gestor") }
+                OutlinedButton(
+                    onClick = { vm.quickLogin("operador@aguiabranca.com", "aguiabranca123") },
+                    enabled = quickEnabled,
+                    colors = quickColors,
+                    modifier = Modifier.weight(1f)
+                ) { Text("Operador") }
             }
         }
     }

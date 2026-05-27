@@ -86,6 +86,12 @@ class LoginViewModel @Inject constructor(
         if (_state.value is UiState.Error) _state.value = UiState.Idle
     }
 
+    fun quickLogin(email: String, password: String) {
+        onEmailChange(email)
+        onPasswordChange(password)
+        submit()
+    }
+
     private companion object {
         const val KEY_EMAIL = "login.email"
         const val KEY_PASSWORD = "login.password"
