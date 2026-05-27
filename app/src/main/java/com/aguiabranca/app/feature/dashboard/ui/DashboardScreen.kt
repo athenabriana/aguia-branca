@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -125,7 +126,10 @@ private fun FiltersBar(
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
         Text("Período", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Period.entries.forEach { p ->
                 FilterChip(
                     selected = period == p,
@@ -143,7 +147,10 @@ private fun FiltersBar(
         }
         Spacer(Modifier.height(8.dp))
         Text("Divisão", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             FilterChip(selected = division == null, onClick = { onDivision(null) }, label = { Text("Tudo") })
             Division.entries.forEach { d ->
                 FilterChip(selected = division == d, onClick = { onDivision(d) }, label = { Text(divisionLabel(d)) })
