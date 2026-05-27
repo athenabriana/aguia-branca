@@ -261,13 +261,10 @@
     <li><a href="#dados">Modelo de dados</a></li>
     <li><a href="#regras">Regras de segurança</a></li>
     <li><a href="#fluxos">Fluxos principais</a></li>
-    <li><a href="#gamificacao">Pontos e badges</a></li>
-    <li><a href="#navegacao">Navegação</a></li>
+    <li><a href="#gamificacao">Pontos</a></li>
     <li><a href="#decisoes">Decisões de produto</a></li>
     <li><a href="#testes">Testes</a></li>
     <li><a href="#build">Build e operação</a></li>
-    <li><a href="#limitacoes">Limitações conhecidas</a></li>
-    <li><a href="#sprint2">Sprint 2</a></li>
   </ol>
 </nav>
 
@@ -722,40 +719,109 @@ Além das regras, o <code>ApproveIdeaUseCase</code> faz verificação extra para
 </div>
 
 <h3>6.2 Aprovar uma ideia (gera projeto)</h3>
-<p>
-Tudo acontece em uma transação no Firestore via <code>ApproveIdeaUseCase</code>:
-</p>
-<ol>
-  <li>Verifica que o gestor não é o autor.</li>
-  <li>Atualiza a ideia: <code>status = APROVADA</code>, grava <code>reviewerId</code> e <code>reviewedAt</code>.</li>
-  <li>Cria documento em <code>projects</code> com <code>stage = PLANEJAMENTO</code> e <strong>snapshots</strong> da ideia origem:
-    <ul>
-      <li><code>priorityScore</code> ← <code>idea.ice.score</code></li>
-      <li><code>reporterId</code> / <code>reporterName</code> ← autor da ideia</li>
-      <li><code>responsibleId</code> / <code>responsibleName</code> ← gestor que aprovou</li>
-      <li><code>originatingIdeaId</code> ← id da ideia</li>
-    </ul>
-  </li>
-  <li>Cria a primeira entrada no histórico do projeto.</li>
-  <li>Credita <strong>+50</strong> pontos no operador autor.</li>
-</ol>
+<p>Tudo acontece em uma transação no Firestore via <code>ApproveIdeaUseCase</code>:</p>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220" role="img" aria-label="Fluxo de aprovação de ideia">
+  <defs>
+    <marker id="ar3" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1a3a8e"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <!-- Gestor -->
+    <rect x="10" y="35" width="90" height="42" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
+    <text x="55" y="60" text-anchor="middle" fill="#1a3a8e" font-weight="600">Gestor</text>
+    <line x1="100" y1="56" x2="130" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar3)"/>
 
+    <!-- Verifica autoria -->
+    <rect x="130" y="20" width="160" height="72" rx="8" fill="#fff" stroke="#777"/>
+    <text x="210" y="42" text-anchor="middle" font-weight="600">Verifica autoria</text>
+    <text x="210" y="60" text-anchor="middle" fill="#555">não pode aprovar</text>
+    <text x="210" y="76" text-anchor="middle" fill="#555">a própria ideia</text>
+    <line x1="290" y1="56" x2="320" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+    <!-- Transação -->
+    <rect x="320" y="20" width="260" height="72" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="450" y="42" text-anchor="middle" font-weight="600" fill="#8a5a00">Transação Firestore</text>
+    <text x="450" y="60" text-anchor="middle" fill="#555">ideia → APROVADA · cria projeto</text>
+    <text x="450" y="76" text-anchor="middle" fill="#555">grava snapshots · primeira entrada timeline</text>
+    <line x1="580" y1="56" x2="610" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar3)"/>
+
+    <!-- +50 pts -->
+    <rect x="610" y="35" width="100" height="42" rx="8" fill="#e0f3e3" stroke="#1f6b35"/>
+    <text x="660" y="60" text-anchor="middle" fill="#1f6b35" font-weight="600">+50 pts</text>
+
+    <!-- Snapshots detail panel -->
+    <rect x="320" y="115" width="260" height="90" rx="8" fill="#fffaeb" stroke="#d4a300" stroke-dasharray="3 3"/>
+    <text x="450" y="135" text-anchor="middle" font-weight="600" fill="#8a5a00" font-size="11">Snapshots gravados no projeto</text>
+    <text x="335" y="155" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" fill="#1a1a1a">priorityScore     ← idea.ice.score</text>
+    <text x="335" y="170" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" fill="#1a1a1a">reporterId/Name   ← autor da ideia</text>
+    <text x="335" y="185" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" fill="#1a1a1a">responsibleId/Name ← gestor que aprovou</text>
+    <text x="335" y="200" font-family="SF Mono, Menlo, Consolas, monospace" font-size="10.5" fill="#1a1a1a">originatingIdeaId  ← id da ideia</text>
+    <line x1="450" y1="92" x2="450" y2="115" stroke="#8a5a00" stroke-width="1" stroke-dasharray="2 2"/>
+  </g>
+</svg>
+</div>
 <p>
 A cópia é proposital. Se a ideia for editada ou excluída depois, o projeto ainda preserva o critério que justificou aprovar, o crédito do autor e o ponto de responsabilidade inicial.
 </p>
 
 <h3>6.3 Trocar o responsável de um projeto</h3>
-<ol>
-  <li>Gestor abre o projeto e toca em "Editar".</li>
-  <li>No formulário aparece o campo "Responsável" com todos os gestores cadastrados.</li>
-  <li>Ao salvar, o repositório compara campo a campo e, se o responsável mudou, escreve no histórico uma entrada com <code>field = "responsável"</code>, <code>from = nomeAntigo</code>, <code>to = nomeNovo</code>.</li>
-</ol>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 110" role="img" aria-label="Fluxo de troca de responsável">
+  <defs>
+    <marker id="ar4" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1a3a8e"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <rect x="10" y="35" width="160" height="42" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
+    <text x="90" y="60" text-anchor="middle" fill="#1a3a8e" font-weight="600">Gestor edita projeto</text>
+    <line x1="170" y1="56" x2="200" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+    <rect x="200" y="20" width="200" height="72" rx="8" fill="#fff" stroke="#777"/>
+    <text x="300" y="42" text-anchor="middle" font-weight="600">Picker de responsável</text>
+    <text x="300" y="60" text-anchor="middle" fill="#555">lista todos os gestores</text>
+    <text x="300" y="76" text-anchor="middle" fill="#555">cadastrados</text>
+    <line x1="400" y1="56" x2="430" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar4)"/>
+
+    <rect x="430" y="20" width="280" height="72" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="570" y="42" text-anchor="middle" font-weight="600" fill="#8a5a00">Repository.update</text>
+    <text x="570" y="60" text-anchor="middle" fill="#555">diff automático campo a campo</text>
+    <text x="570" y="76" text-anchor="middle" fill="#555">se muda → entrada na timeline</text>
+  </g>
+</svg>
+</div>
+<p>
+Quando o <code>responsibleId</code> muda, o histórico ganha uma entrada com <code>field = "responsável"</code>, <code>from = nomeAntigo</code>, <code>to = nomeNovo</code>.
+</p>
 
 <h3>6.4 Concluir um projeto</h3>
-<ol>
-  <li>Gestor edita e seleciona <code>stage = CONCLUIDO</code>.</li>
-  <li>Após o salvamento, <code>CompleteProjectUseCase</code> roda. Se há <code>originatingIdeaId</code>, marca a ideia como <code>IMPLEMENTADA</code> e credita <strong>+200</strong> pontos no autor.</li>
-</ol>
+<div class="diagram-wrap">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 110" role="img" aria-label="Fluxo de conclusão de projeto">
+  <defs>
+    <marker id="ar5" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1a3a8e"/>
+    </marker>
+  </defs>
+  <g font-family="-apple-system, Segoe UI, sans-serif" font-size="12">
+    <rect x="10" y="20" width="180" height="72" rx="8" fill="#eef2ff" stroke="#1a3a8e"/>
+    <text x="100" y="42" text-anchor="middle" fill="#1a3a8e" font-weight="600">Gestor edita</text>
+    <text x="100" y="60" text-anchor="middle" fill="#555">stage = CONCLUIDO</text>
+    <text x="100" y="76" text-anchor="middle" fill="#555">+ retorno financeiro</text>
+    <line x1="190" y1="56" x2="220" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar5)"/>
+
+    <rect x="220" y="20" width="230" height="72" rx="8" fill="#fff4d6" stroke="#8a5a00"/>
+    <text x="335" y="42" text-anchor="middle" font-weight="600" fill="#8a5a00">CompleteProjectUseCase</text>
+    <text x="335" y="60" text-anchor="middle" fill="#555">se há originatingIdeaId:</text>
+    <text x="335" y="76" text-anchor="middle" fill="#555">marca ideia como IMPLEMENTADA</text>
+    <line x1="450" y1="56" x2="480" y2="56" stroke="#1a3a8e" stroke-width="1.5" marker-end="url(#ar5)"/>
+
+    <rect x="480" y="35" width="230" height="42" rx="8" fill="#e0f3e3" stroke="#1f6b35"/>
+    <text x="595" y="60" text-anchor="middle" fill="#1f6b35" font-weight="600">+200 pts ao autor</text>
+  </g>
+</svg>
+</div>
 
 <h3>6.5 Dashboard do líder</h3>
 <p>
@@ -770,19 +836,13 @@ A cópia é proposital. Se a ideia for editada ou excluída depois, o projeto ai
   <li><strong>Ranking</strong>: top 5 operadores por pontos.</li>
 </ul>
 
-<h3>6.6 Logout sem travar o app</h3>
-<p>
-No logout, os listeners ativos do Firestore retornam <code>PERMISSION_DENIED</code> (as regras exigem autenticação). Sem tratamento, o <code>callbackFlow</code> propagaria isso como exceção e derrubaria o <code>viewModelScope</code>, fechando o app. A função <code>snapshotsAsFlow</code> em <code>FirestoreHelpers</code> ignora o erro do listener — o flow apenas para de emitir e o app navega pra tela de login normalmente.
-</p>
-
 <!-- ============================================================ -->
-<h2 id="gamificacao" class="page-break">7. Pontos e badges</h2>
+<h2 id="gamificacao" class="page-break">7. Pontos</h2>
 
 <p>
-Pontos e badges são visíveis apenas para operadores. Gestor e líder não acumulam pontuação, mas veem o ranking dos operadores (para saber quem está produzindo).
+Pontos são visíveis apenas para operadores. Gestor e líder não acumulam pontuação, mas veem o ranking dos operadores (para saber quem está produzindo).
 </p>
 
-<h3>7.1 Pontos</h3>
 <table>
   <thead><tr><th>Ação</th><th>Pontos</th><th>Onde está implementado</th></tr></thead>
   <tbody>
@@ -794,75 +854,29 @@ Pontos e badges são visíveis apenas para operadores. Gestor e líder não acum
   </tbody>
 </table>
 
-<h3>7.2 Badges</h3>
-<p>Avaliadas em <code>BadgeEvaluator</code> (regra pura, testada):</p>
+<!-- ============================================================ -->
+<h2 id="decisoes" class="page-break">8. Decisões de produto</h2>
+
 <table>
-  <thead><tr><th>Badge</th><th>Como desbloqueia</th></tr></thead>
+  <thead><tr><th>Decisão</th><th>Como funciona</th></tr></thead>
   <tbody>
-    <tr><td>Primeira Ideia</td><td>Ao menos 1 ideia cadastrada.</td></tr>
-    <tr><td>Estrategista</td><td>Ao menos 1 ideia aprovada vinculada a uma orientação.</td></tr>
-    <tr><td>Inovador do Mês</td><td>5 ou mais ideias submetidas no mesmo mês.</td></tr>
-    <tr><td>Impacto Real</td><td>Ao menos 1 ideia que chegou em IMPLEMENTADA.</td></tr>
-    <tr><td>Visionário</td><td>Ideias aprovadas em 3 ou mais orientações diferentes.</td></tr>
+    <tr>
+      <td><strong>Categoria de ideia</strong></td>
+      <td>Texto livre com 8 chips de sugestão. Permite padronizar quando faz sentido sem impedir uma categoria nova.</td>
+    </tr>
+    <tr>
+      <td><strong>Prioridade ICE no projeto</strong></td>
+      <td>Score ICE da ideia é copiado para o projeto na aprovação e exibido enquanto o projeto não está concluído. Depois disso, o ROI assume o papel de critério.</td>
+    </tr>
+    <tr>
+      <td><strong>Relator e responsável</strong></td>
+      <td>Campos separados: relator (autor da ideia, imutável) e responsável (gestor conduzindo, editável). Refletem dia-a-dia: handoff entre gestores não apaga o crédito do operador.</td>
+    </tr>
   </tbody>
 </table>
 
-<h3>7.3 Onde aparecem na UI</h3>
-<ul>
-  <li><strong>Perfil do operador</strong>: pontos totais, regras (card recolhível), badges, ideias por status.</li>
-  <li><strong>"Minhas ideias" (operador)</strong>: ranking top 5 e o card de regras no topo da lista.</li>
-  <li><strong>Curadoria (gestor)</strong>: ranking top 5 no topo da fila.</li>
-  <li><strong>Dashboard (líder)</strong>: ranking top 5 após o bloco "Impacto por orientação".</li>
-</ul>
-
 <!-- ============================================================ -->
-<h2 id="navegacao" class="page-break">8. Navegação</h2>
-
-<h3>8.1 Abas com estado preservado</h3>
-<p>
-O <code>AppNavHost</code> tem um helper <code>navController.navigateTab(route)</code> que aplica três flags juntas: <code>popUpTo(start, saveState = true)</code>, <code>launchSingleTop = true</code> e <code>restoreState = true</code>. O efeito é:
-</p>
-<ul>
-  <li>Trocar de aba preserva o scroll e o estado da aba anterior.</li>
-  <li>Voltar para uma aba já visitada restaura o estado salvo.</li>
-  <li>O botão "voltar" do sistema na tela inicial fecha o app, sem reabrir abas anteriores.</li>
-</ul>
-
-<h3>8.2 Abas por papel</h3>
-<table>
-  <thead><tr><th>Papel</th><th>Tela inicial</th><th>Abas disponíveis</th></tr></thead>
-  <tbody>
-    <tr><td>Operador</td><td>Minhas Ideias</td><td>Ideias · Orientações · Perfil</td></tr>
-    <tr><td>Gestor</td><td>Curadoria</td><td>Curadoria · Projetos · Orientações · Perfil</td></tr>
-    <tr><td>Líder</td><td>Dashboard</td><td>Dashboard · Projetos · Orientações · Perfil</td></tr>
-  </tbody>
-</table>
-
-<h3>8.3 RoleGate</h3>
-<p>
-Composable no <code>AppNavHost</code> que volta uma tela atrás se o papel atual não pode acessar a rota. Usado em rotas sensíveis (criar/editar projeto, criar/editar orientação, curadoria). Complementa as regras do Firestore.
-</p>
-
-<!-- ============================================================ -->
-<h2 id="decisoes" class="page-break">9. Decisões de produto</h2>
-
-<h3>9.1 Categoria: texto livre + sugestões</h3>
-<p>
-A categoria é um campo de texto livre, mas há 8 chips de sugestão abaixo (Operações, Atendimento ao cliente, Tecnologia, Comercial e vendas, Pessoas e cultura, Sustentabilidade, Segurança, Inovação aberta). Permite padronização quando faz sentido, sem impedir uma categoria nova.
-</p>
-
-<h3>9.2 Prioridade ICE no projeto</h3>
-<p>
-Enquanto o projeto não está concluído, mostramos o score ICE da ideia origem como "Prioridade ICE". Serve para o gestor priorizar a fila quando ainda não há ROI calculado. Quando o projeto chega em CONCLUIDO, o ICE deixa de ser exibido — o ROI passa a ser o critério.
-</p>
-
-<h3>9.3 Relator e responsável</h3>
-<p>
-Dois campos diferentes no projeto: <strong>relator</strong> (quem teve a ideia, imutável) e <strong>responsável</strong> (quem está conduzindo, editável). Reflete o dia-a-dia: gestores trocam de área, saem de férias, redistribuem portfólio, mas o crédito do operador permanece.
-</p>
-
-<!-- ============================================================ -->
-<h2 id="testes">10. Testes</h2>
+<h2 id="testes" class="page-break">9. Testes</h2>
 
 <p>20 testes unitários em 3 classes:</p>
 <table>
@@ -879,9 +893,9 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 <pre><code class="language-bash">./gradlew :app:testDebugUnitTest</code></pre>
 
 <!-- ============================================================ -->
-<h2 id="build" class="page-break">11. Build e operação</h2>
+<h2 id="build" class="page-break">10. Build e operação</h2>
 
-<h3>11.1 Comandos</h3>
+<h3>10.1 Comandos</h3>
 <pre><code class="language-bash"># Compilar debug
 ./gradlew :app:compileDebugKotlin
 
@@ -898,47 +912,20 @@ Os use cases que envolvem transações no Firestore não têm testes automatizad
 # Instalar direto no dispositivo conectado por USB
 ./gradlew :app:installDebug</code></pre>
 
-<h3>11.2 APK release</h3>
+<h3>10.2 APK release</h3>
 <p>
 <code>./gradlew :app:assembleRelease</code> usa o keystore de debug por padrão. Para assinar com keystore próprio, criar <code>keystore.properties</code> na raiz com <code>storeFile</code>, <code>storePassword</code>, <code>keyAlias</code> e <code>keyPassword</code> (passos detalhados no <code>README.md</code>).
 </p>
 
-<h3>11.3 Setup do Firebase</h3>
+<h3>10.3 Setup do Firebase</h3>
 <p>
 O <code>README.md</code> tem o passo-a-passo completo (criar projeto, registrar apps <code>com.aguiabranca.app</code> e <code>com.aguiabranca.app.debug</code>, habilitar Auth/Firestore/Crashlytics, baixar <code>google-services.json</code>). Para publicar regras e índices: <code>firebase deploy --only firestore</code>.
 </p>
 
-<h3>11.4 Dados de demonstração</h3>
+<h3>10.4 Dados de demonstração</h3>
 <p>
 A carga inicial é feita por scripts Python externos (não versionados) que chamam a REST API do Firebase. Estado atual no Firestore de demo: 8 usuários (3 base + 5 operadores com pontuação distribuída), 4 orientações, 15 ideias entre todos os status, 5 projetos (1 concluído com ROI positivo).
 </p>
-
-<!-- ============================================================ -->
-<h2 id="limitacoes">12. Limitações conhecidas</h2>
-
-<ul>
-  <li>Sem testes integrados com Firestore. Use cases com transação são exercitados manualmente.</li>
-  <li>As regras dependem de um lookup no documento de usuário a cada requisição. Funciona no porte da Sprint 1; na Sprint 2 vai migrar para custom claims.</li>
-  <li>Não há recuperação de senha nem cadastro de novo usuário pelo app.</li>
-  <li>Sem upload de anexos em ideias ou projetos.</li>
-  <li>UI fixa em português.</li>
-  <li>Sem notificações push.</li>
-  <li>Modo offline usa o cache padrão do Firestore (sem UI específica).</li>
-  <li>Botões de demo na tela de login com credenciais hardcoded — saem na Sprint 2.</li>
-</ul>
-
-<!-- ============================================================ -->
-<h2 id="sprint2">13. Sprint 2</h2>
-
-<ul>
-  <li>Trocar a camada Firestore por uma API REST em Java ou C#. As interfaces de Domain (<code>core/domain/*Repository.kt</code>) permanecem; só as implementações em <code>feature/&lt;X&gt;/data/Firestore&lt;X&gt;Repository.kt</code> mudam.</li>
-  <li>Login com custom claims para evitar lookup do documento de usuário nas regras.</li>
-  <li>Testes com emulador Firestore em CI.</li>
-  <li>Refinamentos do dashboard: "Projetos por gestor responsável", filtros por relator e responsável.</li>
-  <li>Notificações push (Firebase Cloud Messaging) para curadoria.</li>
-  <li>Upload de anexos (Cloud Storage) em ideias e atualizações de projeto.</li>
-  <li>Remover os botões de demo na tela de login.</li>
-</ul>
 
 <footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: 0.85rem;">
   Challenge FIAP × Grupo Águia Branca — Sprint 1, entrega 26/05/2026.
