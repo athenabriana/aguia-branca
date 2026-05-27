@@ -95,41 +95,62 @@ fun ProfileScreen(
             }
             Spacer(Modifier.height(20.dp))
 
-            Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text("Pontos totais", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
-                    Text("${user?.points ?: 0}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 36.sp)
+            if (session.role == Role.OPERADOR) {
+                Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.primary, modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text("Pontos totais", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
+                        Text("${user?.points ?: 0}", color = Color.White, fontWeight = FontWeight.Black, fontSize = 36.sp)
+                    }
                 }
-            }
-            Spacer(Modifier.height(16.dp))
-            PointsRulesCard()
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(16.dp))
+                PointsRulesCard()
+                Spacer(Modifier.height(20.dp))
 
-            Text("Badges", fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(8.dp))
-            val allBadges = listOf(Badges.PRIMEIRA_IDEIA, Badges.ESTRATEGISTA, Badges.INOVADOR_MES, Badges.IMPACTO_REAL, Badges.VISIONARIO)
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
-                items(items = allBadges, key = { it }) { name ->
-                    BadgeChip(name = name, unlocked = (user?.badges ?: emptyList()).contains(name))
+                Text("Badges", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                val allBadges = listOf(Badges.PRIMEIRA_IDEIA, Badges.ESTRATEGISTA, Badges.INOVADOR_MES, Badges.IMPACTO_REAL, Badges.VISIONARIO)
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(vertical = 4.dp)) {
+                    items(items = allBadges, key = { it }) { name ->
+                        BadgeChip(name = name, unlocked = (user?.badges ?: emptyList()).contains(name))
+                    }
                 }
-            }
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(20.dp))
 
-            Text("Minhas ideias por status", fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(8.dp))
-            IdeaStatus.entries.forEach { s ->
-                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text(when (s) {
-                        IdeaStatus.SUBMETIDA -> "Submetidas"
-                        IdeaStatus.EM_ANALISE -> "Em análise"
-                        IdeaStatus.APROVADA -> "Aprovadas"
-                        IdeaStatus.REJEITADA -> "Rejeitadas"
-                        IdeaStatus.IMPLEMENTADA -> "Implementadas"
-                    })
-                    Text((ui.ideasByStatus[s] ?: 0).toString(), fontWeight = FontWeight.SemiBold)
+                Text("Minhas ideias por status", fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.height(8.dp))
+                IdeaStatus.entries.forEach { s ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(when (s) {
+                            IdeaStatus.SUBMETIDA -> "Submetidas"
+                            IdeaStatus.EM_ANALISE -> "Em análise"
+                            IdeaStatus.APROVADA -> "Aprovadas"
+                            IdeaStatus.REJEITADA -> "Rejeitadas"
+                            IdeaStatus.IMPLEMENTADA -> "Implementadas"
+                        })
+                        Text((ui.ideasByStatus[s] ?: 0).toString(), fontWeight = FontWeight.SemiBold)
+                    }
                 }
+                Spacer(Modifier.height(28.dp))
+            } else {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(20.dp)) {
+                        Text(
+                            when (session.role) {
+                                Role.GESTOR -> "Você é responsável pela curadoria das ideias e pelo ciclo de vida dos projetos da sua divisão."
+                                Role.LIDER -> "Você define as orientações estratégicas e acompanha o impacto consolidado da inovação."
+                                else -> ""
+                            },
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+                Spacer(Modifier.height(28.dp))
             }
-            Spacer(Modifier.height(28.dp))
             OutlinedButton(onClick = { showLogoutConfirm = true }, modifier = Modifier.fillMaxWidth()) { Text("Sair") }
             Spacer(Modifier.height(24.dp))
         }
