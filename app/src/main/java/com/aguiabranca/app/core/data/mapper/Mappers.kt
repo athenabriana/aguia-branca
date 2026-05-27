@@ -126,6 +126,7 @@ fun ProjectDto.toDomain(id: String): Project = Project(
     guidelineId = guidelineId,
     creatorManagerId = creatorManagerId,
     originatingIdeaId = originatingIdeaId,
+    priorityScore = priorityScore?.toInt(),
     createdAt = createdAt.toMillis(),
     updatedAt = updatedAt.toMillis()
 )
@@ -144,6 +145,7 @@ fun Project.toDto(): ProjectDto = ProjectDto(
     guidelineId = guidelineId,
     creatorManagerId = creatorManagerId,
     originatingIdeaId = originatingIdeaId,
+    priorityScore = priorityScore?.toLong(),
     createdAt = createdAt.toTimestamp(),
     updatedAt = updatedAt.toTimestamp()
 )

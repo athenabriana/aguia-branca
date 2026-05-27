@@ -113,6 +113,15 @@ fun ProjectsListScreen(
                             }
                             Spacer(Modifier.height(4.dp))
                             Text("atualizado em ${formatDateShort(p.updatedAt)}", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (p.priorityScore != null && p.stage != ProjectStage.CONCLUIDO) {
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "Prioridade ICE: ${p.priorityScore}",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
                             if (p.guidelineId != null) {
                                 Spacer(Modifier.height(6.dp))
                                 GuidelineBadge(title = "Vinculado a orientação")
@@ -185,6 +194,10 @@ fun ProjectDetailScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 Kpi("Produtividade", formatPercent(project.productivityGain), Modifier.weight(1f))
                 Kpi("Redução custo", formatCurrency(project.costReduction), Modifier.weight(1f))
+            }
+            if (project.priorityScore != null && project.stage != ProjectStage.CONCLUIDO) {
+                Spacer(Modifier.height(8.dp))
+                Kpi("Prioridade ICE", project.priorityScore.toString(), Modifier.fillMaxWidth())
             }
             Spacer(Modifier.height(8.dp))
             Text("Prazo: ${formatDateShort(project.targetDate)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)

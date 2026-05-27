@@ -15,6 +15,7 @@ data class Project(
     val guidelineId: String?,
     val creatorManagerId: String,
     val originatingIdeaId: String?,
+    val priorityScore: Int? = null,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 )

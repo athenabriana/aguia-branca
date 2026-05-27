@@ -40,6 +40,7 @@ class ApproveIdeaUseCase @Inject constructor(
                     return@runTransaction projectRef.id
                 }
                 val ideaDto = ideaSnap.toObject(IdeaDto::class.java) ?: throw IllegalStateException("malformed idea")
+                val priorityScore = (ideaDto.ice?.get("score") as? Number)?.toLong()
                 val authorId = ideaDto.authorId
                 val authorRef = firestore.collection("users").document(authorId)
                 val authorSnap = tx.get(authorRef)
@@ -68,6 +69,7 @@ class ApproveIdeaUseCase @Inject constructor(
                         guidelineId = ideaDto.guidelineId,
                         creatorManagerId = reviewerId,
                         originatingIdeaId = ideaId,
+                        priorityScore = priorityScore,
                         createdAt = now,
                         updatedAt = now
                     )

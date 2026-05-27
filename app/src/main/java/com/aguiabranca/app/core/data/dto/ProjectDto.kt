@@ -30,6 +30,8 @@ data class ProjectDto(
     var creatorManagerId: String = "",
     @get:PropertyName("originatingIdeaId") @set:PropertyName("originatingIdeaId")
     var originatingIdeaId: String? = null,
+    @get:PropertyName("priorityScore") @set:PropertyName("priorityScore")
+    var priorityScore: Long? = null,
     @get:PropertyName("createdAt") @set:PropertyName("createdAt")
     var createdAt: Timestamp? = null,
     @get:PropertyName("updatedAt") @set:PropertyName("updatedAt")
