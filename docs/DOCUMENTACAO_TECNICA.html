@@ -142,6 +142,66 @@
       margin-top: 0.6rem;
     }
 
+    /* ============ Package tree ============ */
+    .pkg-tree {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px 22px;
+      margin: 1rem 0 1.4rem;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      page-break-inside: avoid;
+    }
+    .pkg-tree .root-path {
+      color: var(--ink-soft);
+      font-size: 0.78rem;
+      padding-bottom: 0.6rem;
+      margin-bottom: 0.6rem;
+      border-bottom: 1px dashed var(--line);
+    }
+    .pkg-tree ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .pkg-tree ul ul {
+      padding-left: 1.1rem;
+      margin-left: 0.45rem;
+      border-left: 1px dashed #e3e6ea;
+    }
+    .pkg-tree li { padding: 2px 0 2px 0; }
+    .pkg-tree .folder {
+      color: var(--brand);
+      font-weight: 600;
+    }
+    .pkg-tree .folder::before {
+      content: "▾";
+      display: inline-block;
+      width: 1.1em;
+      color: var(--brand);
+      font-size: 0.78em;
+    }
+    .pkg-tree .file { color: #333; }
+    .pkg-tree .file::before {
+      content: "·";
+      display: inline-block;
+      width: 1.1em;
+      color: #b8bcc2;
+      text-align: center;
+    }
+    .pkg-tree .note {
+      color: #777;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 0.84rem;
+      margin-left: 0.5em;
+      font-style: normal;
+    }
+    .pkg-tree .note::before { content: "— "; color: #b8bcc2; }
+    .pkg-tree .section-gap > li { margin-top: 0.45rem; }
+    .pkg-tree .section-gap > li:first-child { margin-top: 0; }
+
     /* ============ Print ============ */
     @page { size: A4; margin: 18mm 16mm; }
     @media print {
@@ -293,54 +353,173 @@ Três camadas: <strong>UI</strong> (Compose) → <strong>Domain</strong> (Kotlin
 </div>
 
 <h3>3.1 Pacotes</h3>
-<pre>app/src/main/java/com/aguiabranca/app/
-├── AguiaBrancaApplication.kt        # @HiltAndroidApp + Crashlytics
-├── MainActivity.kt                  # Splash, edge-to-edge, LocalSession provider
-│
-├── navigation/
-│   ├── Routes.kt                    # rotas tipadas (kotlinx.serialization)
-│   └── AppNavHost.kt                # NavHost + navigateTab + RoleGate
-│
-├── core/
-│   ├── auth/SessionManager.kt
-│   ├── data/
-│   │   ├── FirestoreHelpers.kt      # snapshotsAsFlow · toDomainError · runOutcome
-│   │   ├── dto/                     # UserDto · IdeaDto · ProjectDto · GuidelineDto
-│   │   └── mapper/Mappers.kt        # DTO ↔ Domain
-│   ├── di/                          # FirebaseModule · RepositoryModule
-│   ├── domain/
-│   │   ├── model/                   # User · Idea · Project · Guideline · Ice · Enums · AuthSession
-│   │   ├── error/                   # DomainError · Outcome
-│   │   ├── usecase/                 # ApproveIdea · RejectIdea · CompleteProject
-│   │   ├── badge/BadgeEvaluator.kt
-│   │   └── *Repository.kt           # interfaces (Users, Ideas, Projects, Guidelines)
-│   ├── ui/
-│   │   ├── components/              # RoleScaffold · RankingTop5 · PointsRulesCard ·
-│   │   │                            # IceMatrix · JourneyStepper · Charts · TimelineEntry ·
-│   │   │                            # GuidelineImpactCard · GuidelinePicker · Common (badges, pills)
-│   │   ├── local/LocalSession.kt
-│   │   ├── state/UiState.kt
-│   │   └── theme/                   # Color · Type · AguiaBrancaTheme
-│   └── util/Analytics.kt
-│
-└── feature/
-    ├── auth/
-    │   ├── data/FirestoreUsersRepository.kt
-    │   └── ui/{LoginScreen, LoginViewModel}.kt
-    ├── guidelines/
-    │   ├── data/FirestoreGuidelinesRepository.kt
-    │   └── ui/{GuidelinesScreen, GuidelinesAdminScreen, GuidelinesViewModel}.kt
-    ├── ideas/
-    │   ├── data/FirestoreIdeasRepository.kt
-    │   └── ui/{MyIdeas, NewIdea, IdeaDetail, Curation}Screen + IdeasViewModels.kt
-    ├── projects/
-    │   ├── data/FirestoreProjectsRepository.kt
-    │   └── ui/{ProjectsScreens, ProjectsViewModels}.kt
-    ├── dashboard/
-    │   ├── DashboardComputer.kt     # Kotlin puro (cálculo de funil, ROI, sparkline)
-    │   └── ui/{DashboardScreen, DashboardViewModel, GuidelineDrillDownScreen}.kt
-    └── profile/
-        └── ui/{ProfileScreen, ProfileViewModel}.kt</pre>
+<div class="pkg-tree">
+  <div class="root-path">app/src/main/java/com/aguiabranca/app/</div>
+  <ul class="section-gap">
+    <li><span class="file">AguiaBrancaApplication.kt</span><span class="note">@HiltAndroidApp + Crashlytics</span></li>
+    <li><span class="file">MainActivity.kt</span><span class="note">Splash, edge-to-edge, LocalSession provider</span></li>
+
+    <li>
+      <span class="folder">navigation/</span>
+      <ul>
+        <li><span class="file">Routes.kt</span><span class="note">rotas tipadas (kotlinx.serialization)</span></li>
+        <li><span class="file">AppNavHost.kt</span><span class="note">NavHost + navigateTab + RoleGate</span></li>
+      </ul>
+    </li>
+
+    <li>
+      <span class="folder">core/</span>
+      <ul>
+        <li>
+          <span class="folder">auth/</span>
+          <ul>
+            <li><span class="file">SessionManager.kt</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">data/</span>
+          <ul>
+            <li><span class="file">FirestoreHelpers.kt</span><span class="note">snapshotsAsFlow · toDomainError · runOutcome</span></li>
+            <li>
+              <span class="folder">dto/</span>
+              <ul>
+                <li><span class="file">UserDto.kt · IdeaDto.kt · ProjectDto.kt · GuidelineDto.kt</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">mapper/</span>
+              <ul>
+                <li><span class="file">Mappers.kt</span><span class="note">DTO ↔ Domain</span></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">di/</span>
+          <ul>
+            <li><span class="file">FirebaseModule.kt · RepositoryModule.kt</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">domain/</span>
+          <ul>
+            <li>
+              <span class="folder">model/</span>
+              <ul>
+                <li><span class="file">User · Idea · Project · Guideline · Ice · Enums · AuthSession</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">error/</span>
+              <ul>
+                <li><span class="file">DomainError.kt · Outcome.kt</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">usecase/</span>
+              <ul>
+                <li><span class="file">ApproveIdeaUseCase · RejectIdeaUseCase · CompleteProjectUseCase</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">badge/</span>
+              <ul>
+                <li><span class="file">BadgeEvaluator.kt</span><span class="note">regra pura, testada</span></li>
+              </ul>
+            </li>
+            <li><span class="file">*Repository.kt</span><span class="note">interfaces (Users, Ideas, Projects, Guidelines)</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">ui/</span>
+          <ul>
+            <li>
+              <span class="folder">components/</span>
+              <ul>
+                <li><span class="file">RoleScaffold · RankingTop5 · PointsRulesCard</span></li>
+                <li><span class="file">IceMatrix · JourneyStepper · TimelineEntry</span></li>
+                <li><span class="file">GuidelineImpactCard · GuidelinePicker</span></li>
+                <li><span class="file">Charts · Common (badges, pills, formatters)</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">local/</span>
+              <ul>
+                <li><span class="file">LocalSession.kt</span><span class="note">CompositionLocal&lt;AuthSession?&gt;</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">state/</span>
+              <ul>
+                <li><span class="file">UiState.kt</span><span class="note">Idle · Loading · Success · Error</span></li>
+              </ul>
+            </li>
+            <li>
+              <span class="folder">theme/</span>
+              <ul>
+                <li><span class="file">Color · Type · AguiaBrancaTheme</span></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">util/</span>
+          <ul>
+            <li><span class="file">Analytics.kt</span></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+
+    <li>
+      <span class="folder">feature/</span>
+      <ul class="section-gap">
+        <li>
+          <span class="folder">auth/</span>
+          <ul>
+            <li><span class="file">data/FirestoreUsersRepository.kt</span></li>
+            <li><span class="file">ui/LoginScreen.kt · LoginViewModel.kt</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">guidelines/</span>
+          <ul>
+            <li><span class="file">data/FirestoreGuidelinesRepository.kt</span></li>
+            <li><span class="file">ui/GuidelinesScreen · GuidelinesAdminScreen · GuidelinesViewModel</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">ideas/</span>
+          <ul>
+            <li><span class="file">data/FirestoreIdeasRepository.kt</span></li>
+            <li><span class="file">ui/MyIdeasScreen · NewIdeaScreen · IdeaDetailScreen · CurationScreen</span></li>
+            <li><span class="file">ui/IdeasViewModels.kt</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">projects/</span>
+          <ul>
+            <li><span class="file">data/FirestoreProjectsRepository.kt</span></li>
+            <li><span class="file">ui/ProjectsScreens.kt · ProjectsViewModels.kt</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">dashboard/</span>
+          <ul>
+            <li><span class="file">DashboardComputer.kt</span><span class="note">Kotlin puro: funil, ROI, sparkline, impacto por orientação</span></li>
+            <li><span class="file">ui/DashboardScreen · DashboardViewModel · GuidelineDrillDownScreen</span></li>
+          </ul>
+        </li>
+        <li>
+          <span class="folder">profile/</span>
+          <ul>
+            <li><span class="file">ui/ProfileScreen.kt · ProfileViewModel.kt</span></li>
+          </ul>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>
 
 <h3>3.2 Conceitos que aparecem em todo lugar</h3>
 <ul>
