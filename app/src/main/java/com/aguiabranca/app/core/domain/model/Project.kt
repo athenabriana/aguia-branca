@@ -16,6 +16,10 @@ data class Project(
     val creatorManagerId: String,
     val originatingIdeaId: String?,
     val priorityScore: Int? = null,
+    val reporterId: String? = null,
+    val reporterName: String? = null,
+    val responsibleId: String? = null,
+    val responsibleName: String? = null,
     val createdAt: Long = 0L,
     val updatedAt: Long = 0L
 )

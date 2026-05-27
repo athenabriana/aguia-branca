@@ -16,4 +16,5 @@ interface UsersRepository {
         division: Division
     ): Outcome<Unit>
     suspend fun topByPointsThisMonth(limit: Int): Outcome<List<User>>
+    suspend fun listByRole(role: Role): Outcome<List<User>>
 }

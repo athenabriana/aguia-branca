@@ -72,6 +72,12 @@ class FirestoreUsersRepository @Inject constructor(
         }
     }
 
+    override suspend fun listByRole(role: Role): Outcome<List<User>> = runOutcome {
+        val snap = col.whereEqualTo("role", role.name).get().await()
+        snap.documents.mapNotNull { d -> d.toObject(UserDto::class.java)?.toDomain(d.id) }
+            .sortedBy { it.name.lowercase() }
+    }
+
     suspend fun creditPoints(uid: String, delta: Long): Outcome<Unit> = runOutcome {
         firestore.runTransaction { tx ->
             val ref = col.document(uid)

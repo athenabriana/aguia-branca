@@ -32,6 +32,14 @@ data class ProjectDto(
     var originatingIdeaId: String? = null,
     @get:PropertyName("priorityScore") @set:PropertyName("priorityScore")
     var priorityScore: Long? = null,
+    @get:PropertyName("reporterId") @set:PropertyName("reporterId")
+    var reporterId: String? = null,
+    @get:PropertyName("reporterName") @set:PropertyName("reporterName")
+    var reporterName: String? = null,
+    @get:PropertyName("responsibleId") @set:PropertyName("responsibleId")
+    var responsibleId: String? = null,
+    @get:PropertyName("responsibleName") @set:PropertyName("responsibleName")
+    var responsibleName: String? = null,
     @get:PropertyName("createdAt") @set:PropertyName("createdAt")
     var createdAt: Timestamp? = null,
     @get:PropertyName("updatedAt") @set:PropertyName("updatedAt")

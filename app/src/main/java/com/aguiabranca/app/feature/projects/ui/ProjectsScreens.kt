@@ -184,6 +184,13 @@ fun ProjectDetailScreen(
                 GuidelineBadge(title = ui.guidelineTitle)
             }
             Spacer(Modifier.height(8.dp))
+            if (project.reporterName != null) {
+                Text("Relator: ${project.reporterName}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            }
+            if (project.responsibleName != null) {
+                Text("Responsável: ${project.responsibleName}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            }
+            Spacer(Modifier.height(8.dp))
             Text(project.description)
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -271,8 +278,10 @@ private fun ProjectFormUi(
 ) {
     val form by vm.form.collectAsState()
     val guidelines by vm.guidelines.collectAsState()
+    val managers by vm.managers.collectAsState()
     var stageExpanded by remember { mutableStateOf(false) }
     var divExpanded by remember { mutableStateOf(false) }
+    var responsibleExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -320,6 +329,25 @@ private fun ProjectFormUi(
                 }
             }
             GuidelinePicker(guidelines = guidelines, selectedId = form.guidelineId, onSelect = vm::onGuideline)
+            if (isEditing && managers.isNotEmpty()) {
+                ExposedDropdownMenuBox(expanded = responsibleExpanded, onExpandedChange = { responsibleExpanded = it }) {
+                    OutlinedTextField(
+                        value = form.responsibleName ?: "Sem responsável",
+                        onValueChange = {}, readOnly = true,
+                        label = { Text("Responsável") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = responsibleExpanded) },
+                        modifier = Modifier.menuAnchor().fillMaxWidth()
+                    )
+                    ExposedDropdownMenu(expanded = responsibleExpanded, onDismissRequest = { responsibleExpanded = false }) {
+                        managers.forEach { m ->
+                            DropdownMenuItem(
+                                text = { Text(m.name) },
+                                onClick = { vm.onResponsible(m.id, m.name); responsibleExpanded = false }
+                            )
+                        }
+                    }
+                }
+            }
             if (isEditing) {
                 OutlinedTextField(form.note, vm::onNote, label = { Text("Nota desta atualização (opcional)") }, modifier = Modifier.fillMaxWidth())
             }

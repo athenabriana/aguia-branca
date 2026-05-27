@@ -76,6 +76,8 @@ data class ProjectForm(
     val targetDate: Long? = null,
     val division: Division = Division.CORPORATIVO,
     val guidelineId: String? = null,
+    val responsibleId: String? = null,
+    val responsibleName: String? = null,
     val note: String = "",
     val saving: Boolean = false,
     val error: String? = null
@@ -86,11 +88,22 @@ class ProjectFormViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val projectsRepo: ProjectsRepository,
     private val guidelinesRepo: GuidelinesRepository,
+    private val usersRepo: com.aguiabranca.app.core.domain.UsersRepository,
     private val completeUseCase: CompleteProjectUseCase
 ) : ViewModel() {
     private val _form = MutableStateFlow(restore())
     val form: StateFlow<ProjectForm> = _form.asStateFlow()
     val guidelines: StateFlow<List<Guideline>> = guidelinesRepo.observeAll().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    private val _managers = MutableStateFlow<List<com.aguiabranca.app.core.domain.model.User>>(emptyList())
+    val managers: StateFlow<List<com.aguiabranca.app.core.domain.model.User>> = _managers.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            val r = usersRepo.listByRole(com.aguiabranca.app.core.domain.model.Role.GESTOR)
+            _managers.value = (r as? Outcome.Success)?.value.orEmpty()
+        }
+    }
 
     private var editingId: String? = null
 
@@ -107,7 +120,9 @@ class ProjectFormViewModel @Inject constructor(
                 costReduction = safeWholeNumber(p.costReduction),
                 targetDate = p.targetDate,
                 division = p.division,
-                guidelineId = p.guidelineId
+                guidelineId = p.guidelineId,
+                responsibleId = p.responsibleId,
+                responsibleName = p.responsibleName
             )
             persist()
         }
@@ -130,6 +145,7 @@ class ProjectFormViewModel @Inject constructor(
     fun onDivision(v: Division) { _form.update { it.copy(division = v) }; persist() }
     fun onGuideline(id: String?) { _form.update { it.copy(guidelineId = id) }; persist() }
     fun onTargetDate(ts: Long?) { _form.update { it.copy(targetDate = ts) }; persist() }
+    fun onResponsible(uid: String?, name: String?) { _form.update { it.copy(responsibleId = uid, responsibleName = name) }; persist() }
     fun onNote(v: String) { _form.update { it.copy(note = v) } }
 
     fun submit(managerId: String, managerName: String, onDone: (String) -> Unit) {
@@ -145,7 +161,9 @@ class ProjectFormViewModel @Inject constructor(
                 productivityGain = f.productivityGain.replace(',', '.').toDoubleOrNull() ?: 0.0,
                 costReduction = f.costReduction.toDoubleOrNull() ?: 0.0,
                 division = f.division,
-                guidelineId = f.guidelineId
+                guidelineId = f.guidelineId,
+                responsibleId = f.responsibleId,
+                responsibleName = f.responsibleName
             )
             val id = editingId
             val result = if (id == null) projectsRepo.create(input, managerId, managerName)

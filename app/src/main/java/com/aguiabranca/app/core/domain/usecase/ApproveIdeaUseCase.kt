@@ -70,6 +70,10 @@ class ApproveIdeaUseCase @Inject constructor(
                         creatorManagerId = reviewerId,
                         originatingIdeaId = ideaId,
                         priorityScore = priorityScore,
+                        reporterId = ideaDto.authorId,
+                        reporterName = ideaDto.authorName,
+                        responsibleId = reviewerId,
+                        responsibleName = reviewerName,
                         createdAt = now,
                         updatedAt = now
                     )

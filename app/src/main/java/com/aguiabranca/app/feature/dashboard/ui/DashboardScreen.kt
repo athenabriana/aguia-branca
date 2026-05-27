@@ -48,6 +48,7 @@ import com.aguiabranca.app.core.ui.components.GuidelineImpactCard
 import com.aguiabranca.app.core.ui.components.KpiCard
 import com.aguiabranca.app.core.ui.components.KpiCardAnimated
 import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.components.RankingTop5
 import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.components.SparklineChart
 import com.aguiabranca.app.core.ui.components.StageBadge
@@ -69,12 +70,14 @@ fun DashboardScreen(
     onOpenProject: (String) -> Unit,
     onTab: (NavTab) -> Unit,
     vm: DashboardViewModel = hiltViewModel(),
+    rankingVm: com.aguiabranca.app.feature.profile.ui.UsersRankingViewModel = hiltViewModel(),
     analytics: Analytics? = null
 ) {
     val session = LocalSession.current ?: return
     val state by vm.state.collectAsState()
     val filters by vm.filters.collectAsState()
     val isPresenting by vm.presentation.collectAsState()
+    val ranking by rankingVm.ranking.collectAsState()
 
     if (isPresenting) {
         PresentationMode(state = state, onExit = { vm.togglePresentation() })
@@ -107,6 +110,7 @@ fun DashboardScreen(
             when (val s = state) {
                 is UiState.Success -> DashboardBody(
                     s.data,
+                    ranking = ranking,
                     onOpenGuideline = onOpenGuideline,
                     onOpenProject = onOpenProject
                 )
@@ -162,6 +166,7 @@ private fun FiltersBar(
 @Composable
 private fun DashboardBody(
     state: com.aguiabranca.app.feature.dashboard.DashboardState,
+    ranking: List<com.aguiabranca.app.core.domain.model.User>,
     onOpenGuideline: (String) -> Unit,
     onOpenProject: (String) -> Unit
 ) {
@@ -220,6 +225,9 @@ private fun DashboardBody(
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }
+
+        Spacer(Modifier.height(16.dp))
+        RankingTop5(ranking)
 
         Spacer(Modifier.height(16.dp))
         Text("Projetos por ROI", fontWeight = FontWeight.SemiBold)

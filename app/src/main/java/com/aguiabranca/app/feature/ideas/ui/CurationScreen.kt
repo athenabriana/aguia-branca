@@ -28,20 +28,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.ui.components.NavTab
+import com.aguiabranca.app.core.ui.components.RankingTop5
 import com.aguiabranca.app.core.ui.components.RoleScaffold
 import com.aguiabranca.app.core.ui.components.StatusBadge
 import com.aguiabranca.app.core.ui.local.LocalSession
+import com.aguiabranca.app.feature.profile.ui.UsersRankingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CurationScreen(
     onOpenIdea: (String) -> Unit,
     onTab: (NavTab) -> Unit,
-    vm: CurationViewModel = hiltViewModel()
+    vm: CurationViewModel = hiltViewModel(),
+    rankingVm: UsersRankingViewModel = hiltViewModel()
 ) {
     val session = LocalSession.current ?: return
     val raw by vm.ideas.collectAsState()
     val ideas = vm.sorted(raw)
+    val ranking by rankingVm.ranking.collectAsState()
 
     RoleScaffold(
         role = session.role,
@@ -70,6 +74,10 @@ fun CurationScreen(
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp)) {
+                item {
+                    RankingTop5(ranking)
+                    Spacer(Modifier.height(12.dp))
+                }
                 items(ideas, key = { it.id }) { idea ->
                     Surface(
                         shape = RoundedCornerShape(14.dp),

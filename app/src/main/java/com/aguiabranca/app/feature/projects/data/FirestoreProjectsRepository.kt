@@ -74,6 +74,8 @@ class FirestoreProjectsRepository @Inject constructor(
             guidelineId = input.guidelineId,
             creatorManagerId = creatorManagerId,
             originatingIdeaId = originatingIdeaId,
+            responsibleId = input.responsibleId ?: creatorManagerId,
+            responsibleName = input.responsibleName ?: creatorManagerName,
             createdAt = now,
             updatedAt = now
         )
@@ -120,24 +122,30 @@ class FirestoreProjectsRepository @Inject constructor(
             add("guidelineId", prior.guidelineId, input.guidelineId)
             val priorTarget = prior.targetDate?.toDate()?.time
             add("targetDate", priorTarget, input.targetDate)
+            val responsibleChanged = input.responsibleId != null && input.responsibleId != prior.responsibleId
+            if (responsibleChanged) {
+                add("responsável", prior.responsibleName ?: "—", input.responsibleName ?: "—")
+            }
 
             val now = Timestamp.now()
-            tx.update(
-                ref,
-                mapOf(
-                    "title" to input.title.trim(),
-                    "description" to input.description.trim(),
-                    "stage" to input.stage.name,
-                    "statusText" to input.statusText.trim(),
-                    "investment" to input.investment,
-                    "targetDate" to input.targetDate?.let { Timestamp(java.util.Date(it)) },
-                    "financialReturn" to input.financialReturn,
-                    "productivityGain" to input.productivityGain,
-                    "costReduction" to input.costReduction,
-                    "guidelineId" to input.guidelineId,
-                    "updatedAt" to now
-                )
+            val updateMap = mutableMapOf<String, Any?>(
+                "title" to input.title.trim(),
+                "description" to input.description.trim(),
+                "stage" to input.stage.name,
+                "statusText" to input.statusText.trim(),
+                "investment" to input.investment,
+                "targetDate" to input.targetDate?.let { Timestamp(java.util.Date(it)) },
+                "financialReturn" to input.financialReturn,
+                "productivityGain" to input.productivityGain,
+                "costReduction" to input.costReduction,
+                "guidelineId" to input.guidelineId,
+                "updatedAt" to now
             )
+            if (responsibleChanged) {
+                updateMap["responsibleId"] = input.responsibleId
+                updateMap["responsibleName"] = input.responsibleName
+            }
+            tx.update(ref, updateMap)
             tx.set(
                 updatesRef,
                 ProjectUpdateDto(

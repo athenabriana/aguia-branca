@@ -18,7 +18,9 @@ data class ProjectInput(
     val productivityGain: Double,
     val costReduction: Double,
     val division: Division,
-    val guidelineId: String?
+    val guidelineId: String?,
+    val responsibleId: String? = null,
+    val responsibleName: String? = null
 )
 
 interface ProjectsRepository {
