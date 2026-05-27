@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Águia Branca — Documentação Técnica (Sprint 1)</title>
+  <style>
+    /* ---------- Reset & base ---------- */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { font-size: 14px; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #1a1a1a;
+      line-height: 1.55;
+      margin: 0;
+      padding: 40px;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+      background: #fafafa;
+    }
+    h1, h2, h3, h4 {
+      font-weight: 700;
+      line-height: 1.25;
+      color: #111;
+      page-break-after: avoid;
+    }
+    h1 {
+      font-size: 2.2rem;
+      margin: 0 0 0.4rem;
+      letter-spacing: -0.02em;
+    }
+    h2 {
+      font-size: 1.4rem;
+      margin: 2rem 0 0.6rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid #1a3a8e;
+    }
+    h3 { font-size: 1.1rem; margin: 1.4rem 0 0.4rem; color: #1a3a8e; }
+    h4 { font-size: 1rem; margin: 1rem 0 0.3rem; }
+    p, ul, ol { margin: 0.5rem 0; }
+    ul, ol { padding-left: 1.5rem; }
+    li { margin: 0.2rem 0; }
+    strong { color: #111; }
+    code {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      background: #eef0f3;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #1a3a8e;
+    }
+    pre {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      background: #f4f6f8;
+      border: 1px solid #e3e6ea;
+      border-radius: 6px;
+      padding: 12px 14px;
+      overflow-x: auto;
+      line-height: 1.45;
+      page-break-inside: avoid;
+    }
+    pre code { background: none; padding: 0; color: inherit; }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0.6rem 0 0.8rem;
+      font-size: 0.92rem;
+      page-break-inside: avoid;
+    }
+    th, td {
+      border: 1px solid #d9dde2;
+      padding: 7px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eef0f3; font-weight: 600; }
+    tr:nth-child(even) td { background: #f7f8f9; }
+    .cover {
+      border-bottom: 3px solid #1a3a8e;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .cover .meta {
+      color: #555;
+      font-size: 0.95rem;
+      margin-top: 0.3rem;
+    }
+    .toc {
+      background: #fff;
+      border: 1px solid #d9dde2;
+      border-radius: 6px;
+      padding: 14px 20px;
+      margin-bottom: 2rem;
+    }
+    .toc ol { margin: 0.3rem 0; padding-left: 1.4rem; }
+    .toc a { color: #1a3a8e; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .callout {
+      background: #fff8e0;
+      border-left: 4px solid #d4a300;
+      padding: 10px 14px;
+      margin: 0.8rem 0;
+      border-radius: 4px;
+      font-size: 0.93rem;
+    }
+    .callout.info { background: #e8f1ff; border-left-color: #1a3a8e; }
+    .callout.note { background: #f0f0f0; border-left-color: #777; }
+    .arch {
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.72rem;
+      background: #f4f6f8;
+      border: 1px solid #e3e6ea;
+      border-radius: 6px;
+      padding: 14px;
+      white-space: pre;
+      line-height: 1.4;
+      overflow-x: auto;
+    }
+    .pill {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .pill.ok { background: #e0f3e3; color: #1f6b35; }
+    .pill.new { background: #e0ebff; color: #1a3a8e; }
+    .pill.warn { background: #fff0d6; color: #8a5a00; }
+
+    /* ---------- Print ---------- */
+    @page {
+      size: A4;
+      margin: 18mm 16mm;
+    }
+    @media print {
+      html { font-size: 11.5pt; }
+      body {
+        background: white;
+        padding: 0;
+        margin: 0;
+        max-width: none;
+      }
+      h1 { font-size: 1.8rem; }
+      h2 {
+        font-size: 1.2rem;
+        page-break-before: auto;
+        page-break-after: avoid;
+      }
+      h2.page-break { page-break-before: always; }
+      h3 { font-size: 1rem; }
+      .toc { page-break-after: always; background: transparent; border: none; padding: 0; }
+      pre, table, .arch, .callout { page-break-inside: avoid; }
+      a { color: #1a3a8e; text-decoration: none; }
+      a[href^="http"]::after {
+        content: " (" attr(href) ")";
+        font-size: 0.8em;
+        color: #777;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="cover">
+  <h1>ÁGUIA BRANCA — Documentação Técnica</h1>
+  <div class="meta">
+    <strong>Cliente:</strong> Grupo Águia Branca &middot;
+    <strong>Contexto:</strong> FIAP Challenge 2026 &middot;
+    <strong>Sprint:</strong> 1 (26/05/2026)<br />
+    Plataforma de inovação corporativa (Android nativo) — <em>INOVAGAB</em>
+  </div>
+</header>
+
+<nav class="toc">
+  <strong>Sumário</strong>
+  <ol>
+    <li><a href="#visao">Visão e proposta de valor</a></li>
+    <li><a href="#stack">Stack tecnológica</a></li>
+    <li><a href="#arquitetura">Arquitetura</a></li>
+    <li><a href="#dados">Modelo de dados (Firestore)</a></li>
+    <li><a href="#regras">Regras de segurança (Firestore)</a></li>
+    <li><a href="#fluxos">Fluxos críticos</a></li>
+    <li><a href="#gamificacao">Gamificação</a></li>
+    <li><a href="#navegacao">Navegação e RoleGate</a></li>
+    <li><a href="#decisoes">Decisões de produto e UX</a></li>
+    <li><a href="#testes">Testes</a></li>
+    <li><a href="#build">Build e distribuição</a></li>
+    <li><a href="#setup">Setup do projeto Firebase</a></li>
+    <li><a href="#seed">Carga inicial de dados (seed)</a></li>
+    <li><a href="#limitacoes">Limitações conhecidas</a></li>
+    <li><a href="#sprint2">Sprint 2 (próximo)</a></li>
+  </ol>
+</nav>
+
+<!-- =========================================================== -->
+<h2 id="visao">1. Visão e proposta de valor</h2>
+
+<p>
+Aplicativo móvel Android nativo que integra a <strong>gestão da inovação corporativa</strong> do Grupo Águia Branca, conectando três níveis organizacionais — operacional, tático e estratégico — em um único ambiente para capturar, estruturar e acompanhar iniciativas que gerem <strong>impacto mensurável</strong>.
+</p>
+
+<p>
+<strong>Eixo central — Conexão Estratégica:</strong> toda ideia pode ser vinculada a uma orientação estratégica publicada pelo líder. Esse vínculo amarra os três níveis na mesma narrativa:
+</p>
+
+<ul>
+  <li><strong>Líder</strong> direciona (publica orientações estratégicas) e acompanha o impacto consolidado.</li>
+  <li><strong>Operador</strong> captura ideias do dia-a-dia, idealmente conectadas à estratégia.</li>
+  <li><strong>Gestor</strong> cura as ideias usando matriz <strong>ICE</strong> (Impacto × Confiança × Facilidade), aprova, gera projeto, conduz a execução.</li>
+  <li>O líder fecha o ciclo vendo <strong>qual direcionamento dele virou resultado real</strong> (ROI por orientação).</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="stack">2. Stack tecnológica</h2>
+
+<table>
+  <thead>
+    <tr><th>Camada</th><th>Tecnologia</th><th>Versão</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Plataforma</td><td>Android nativo</td><td>minSdk 24 · targetSdk 35 · compileSdk 35</td></tr>
+    <tr><td>Linguagem</td><td>Kotlin</td><td>2.1.0</td></tr>
+    <tr><td>UI</td><td>Jetpack Compose + Material 3</td><td>Compose BOM 2024.12.01</td></tr>
+    <tr><td>Arquitetura</td><td>MVVM + Repository + UseCases + DTO↔Domain</td><td>—</td></tr>
+    <tr><td>Estado</td><td>ViewModel + StateFlow + SavedStateHandle</td><td>lifecycle 2.8.7</td></tr>
+    <tr><td>Navegação</td><td>Navigation Compose type-safe (kotlinx.serialization)</td><td>2.8.5</td></tr>
+    <tr><td>Injeção de dependências</td><td>Hilt</td><td>2.55</td></tr>
+    <tr><td>Auth</td><td>Firebase Authentication (email/senha)</td><td>Firebase BOM 33.7.0</td></tr>
+    <tr><td>Banco</td><td>Cloud Firestore (transações + listeners)</td><td>Firebase BOM 33.7.0</td></tr>
+    <tr><td>Observabilidade</td><td>Firebase Crashlytics + Analytics</td><td>Firebase BOM 33.7.0</td></tr>
+    <tr><td>Splash</td><td>androidx.core:core-splashscreen</td><td>1.0.1</td></tr>
+    <tr><td>Edge-to-edge</td><td>activity-compose <code>enableEdgeToEdge()</code></td><td>1.9.3</td></tr>
+    <tr><td>Build</td><td>Gradle Kotlin DSL + Version Catalog</td><td>Gradle 8.11.1 · AGP 8.7.3 · JDK 17</td></tr>
+    <tr><td>Testes</td><td>JUnit 4 + MockK + Turbine + kotlinx-coroutines-test</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<!-- =========================================================== -->
+<h2 id="arquitetura" class="page-break">3. Arquitetura</h2>
+
+<p>
+Arquitetura em três camadas com regra de dependência <em>de fora pra dentro</em>: UI depende de Domain; Data implementa as interfaces de Domain. Domain é puro Kotlin (testável sem Android).
+</p>
+
+<div class="arch">
+┌───────────────────────────────────────────────────────────┐
+│                       Compose UI                          │
+│  Screens · ViewModels (Hilt) · Components · LocalSession  │
+└───────────▲───────────────────────────────────▲───────────┘
+            │                                   │
+            │ StateFlow                         │ UseCases (transações)
+            │                                   │
+┌───────────┴───────────────────────────────────┴───────────┐
+│                  Domain (puro Kotlin)                     │
+│   Models  ·  Repository interfaces  ·  DomainError        │
+│   Outcome wrapper  ·  BadgeEvaluator (regra pura)         │
+└───────────▲───────────────────────────────────▲───────────┘
+            │                                   │
+            │ DTO ↔ Domain mappers              │ Hilt @Binds
+            │                                   │
+┌───────────┴───────────────────────────────────┴───────────┐
+│              Data (Firestore impl)                        │
+│   FirestoreUsersRepository · GuidelinesRepository         │
+│   IdeasRepository · ProjectsRepository                    │
+│   (transações + snapshot listeners)                       │
+└───────────────────────────────────────────────────────────┘
+</div>
+
+<h3>3.1 Pacotes</h3>
+<pre>app/src/main/java/com/aguiabranca/app/
+├── AguiaBrancaApplication.kt    # Hilt root + Crashlytics
+├── MainActivity.kt              # Splash, edge-to-edge, predictive back, LocalSession provider
+├── navigation/
+│   ├── Routes.kt                # Type-safe routes (kotlinx.serialization)
+│   └── AppNavHost.kt            # NavHost + navigateTab + RoleGate
+├── core/
+│   ├── auth/SessionManager.kt   # Auth + currentUser StateFlow
+│   ├── data/
+│   │   ├── dto/                 # UserDto, IdeaDto, ProjectDto, GuidelineDto
+│   │   ├── mapper/Mappers.kt    # DTO ↔ Domain
+│   │   └── FirestoreHelpers.kt  # snapshotsAsFlow, runOutcome, toDomainError
+│   ├── di/                      # FirebaseModule, RepositoryModule
+│   ├── domain/
+│   │   ├── model/               # User, Guideline, Idea, Project, Ice, IdeaCategory…
+│   │   ├── error/               # DomainError + Outcome
+│   │   ├── usecase/             # ApproveIdea, RejectIdea, CompleteProject
+│   │   ├── badge/BadgeEvaluator.kt
+│   │   └── *Repository.kt       # Interfaces
+│   ├── ui/components/           # Theme, charts, badges, scaffolds, PointsRulesCard…
+│   ├── ui/local/LocalSession.kt
+│   └── util/Analytics.kt
+└── feature/
+    ├── auth/                    # Login + quick-actions de demo
+    ├── guidelines/              # CRUD + listagem
+    ├── ideas/                   # CRUD + curadoria + ICE + jornada
+    ├── projects/                # CRUD + timeline + responsável
+    ├── dashboard/               # Computer + screen + drill-down + modo apresentação
+    └── profile/                 # Pontos + badges + ranking</pre>
+
+<h3>3.2 Conceitos transversais</h3>
+<ul>
+  <li><strong>Outcome&lt;T&gt;</strong> — wrapper <code>Success(T)</code> / <code>Failure(DomainError)</code>. Substitui exceptions cruzando a fronteira de Data → Domain.</li>
+  <li><strong>DomainError</strong> — hierarquia selada: <code>NetworkUnavailable</code>, <code>PermissionDenied</code>, <code>NotFound</code>, <code>ValidationFailed</code>, <code>Unknown</code>. Mapeada para português na UI via <code>toPtBr()</code>.</li>
+  <li><strong>LocalSession</strong> — <code>CompositionLocal&lt;AuthSession?&gt;</code>. Provido no <code>MainActivity</code>, consumido em qualquer tela. Permite UI reagir a logout / troca de perfil.</li>
+  <li><strong>RoleGate</strong> — composable que pop-stack se a sessão não tem o papel exigido (defesa-em-profundidade junto com regras Firestore).</li>
+  <li><strong>snapshotsAsFlow</strong> — extensão sobre <code>Query</code> e <code>DocumentReference</code>. <strong>Ignora erros silenciosamente</strong> (evita propagar <code>PERMISSION_DENIED</code> ao signOut, que matava o <code>viewModelScope</code>).</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="dados" class="page-break">4. Modelo de dados (Firestore)</h2>
+
+<h3>4.1 <code>users/{uid}</code></h3>
+<table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td><code>name</code></td><td>string</td><td>—</td></tr>
+    <tr><td><code>email</code></td><td>string</td><td>—</td></tr>
+    <tr><td><code>role</code></td><td>string</td><td>OPERADOR · GESTOR · LIDER</td></tr>
+    <tr><td><code>division</code></td><td>string</td><td>PASSAGEIROS · COMERCIO · LOGISTICA · CORPORATIVO</td></tr>
+    <tr><td><code>points</code></td><td>long</td><td>Acumula via transações na criação/aprovação/conclusão.</td></tr>
+    <tr><td><code>badges</code></td><td>array&lt;string&gt;</td><td>Nomes legíveis ("Primeira Ideia" etc.).</td></tr>
+    <tr><td><code>createdAt</code></td><td>timestamp</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>4.2 <code>strategicGuidelines/{id}</code></h3>
+<table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td><code>title</code>, <code>description</code></td><td>string</td><td>—</td></tr>
+    <tr><td><code>pillar</code></td><td>string</td><td>DIRECIONAMENTO · IDEIAS · PROJETOS · MENSURACAO</td></tr>
+    <tr><td><code>authorId</code>, <code>authorName</code></td><td>string</td><td>Líder que publicou.</td></tr>
+    <tr><td><code>createdAt</code>, <code>updatedAt</code></td><td>timestamp</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>4.3 <code>ideas/{id}</code></h3>
+<table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td><code>title</code>, <code>description</code></td><td>string</td><td>—</td></tr>
+    <tr><td><code>category</code></td><td>string</td><td>Texto livre — sugestões em <code>IdeaCategory</code> (8 opções).</td></tr>
+    <tr><td><code>division</code></td><td>string</td><td>Padrão = divisão do autor.</td></tr>
+    <tr><td><code>guidelineId</code></td><td>string?</td><td>Conexão estratégica (opcional).</td></tr>
+    <tr><td><code>authorId</code>, <code>authorName</code></td><td>string</td><td>Operador autor.</td></tr>
+    <tr><td><code>status</code></td><td>string</td><td>SUBMETIDA · EM_ANALISE · APROVADA · REJEITADA · IMPLEMENTADA</td></tr>
+    <tr><td><code>ice</code></td><td>map?</td><td><code>{ impact, confidence, ease, score }</code> — preenchida na curadoria.</td></tr>
+    <tr><td><code>reviewerId</code></td><td>string?</td><td>Gestor que curou.</td></tr>
+    <tr><td><code>reviewComment</code></td><td>string?</td><td>Motivo da rejeição.</td></tr>
+    <tr><td><code>createdAt</code>, <code>reviewedAt</code></td><td>timestamp</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>4.4 <code>projects/{id}</code></h3>
+<table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td><code>title</code>, <code>description</code>, <code>statusText</code></td><td>string</td><td>—</td></tr>
+    <tr><td><code>stage</code></td><td>string</td><td>PLANEJAMENTO · EM_EXECUCAO · CONCLUIDO · CANCELADO</td></tr>
+    <tr><td><code>investment</code></td><td>double</td><td>R$ investido.</td></tr>
+    <tr><td><code>financialReturn</code></td><td>double</td><td>R$ de retorno (alimenta ROI).</td></tr>
+    <tr><td><code>productivityGain</code></td><td>double</td><td>% de ganho.</td></tr>
+    <tr><td><code>costReduction</code></td><td>double</td><td>R$ de redução de custo.</td></tr>
+    <tr><td><code>division</code>, <code>guidelineId</code></td><td>string / string?</td><td>—</td></tr>
+    <tr><td><code>creatorManagerId</code></td><td>string</td><td>Gestor que criou (auditoria, imutável).</td></tr>
+    <tr><td><code>originatingIdeaId</code></td><td>string?</td><td>Referência à ideia origem.</td></tr>
+    <tr><td><code>priorityScore</code> <span class="pill new">novo</span></td><td>int?</td><td>Snapshot do ICE score da ideia origem.</td></tr>
+    <tr><td><code>reporterId</code>, <code>reporterName</code> <span class="pill new">novo</span></td><td>string?</td><td>Snapshot do autor da ideia origem (relator).</td></tr>
+    <tr><td><code>responsibleId</code>, <code>responsibleName</code> <span class="pill new">novo</span></td><td>string?</td><td>Gestor responsável atual. Inicializa com quem aprovou, editável.</td></tr>
+    <tr><td><code>targetDate</code>, <code>createdAt</code>, <code>updatedAt</code></td><td>timestamp</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>4.5 <code>projects/{id}/updates/{uid}</code> (timeline)</h3>
+<table>
+  <thead><tr><th>Campo</th><th>Tipo</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td><code>authorId</code>, <code>authorName</code></td><td>string</td><td>Quem fez a edição.</td></tr>
+    <tr><td><code>note</code></td><td>string</td><td>Nota livre informada pelo gestor.</td></tr>
+    <tr><td><code>changes</code></td><td>array&lt;map&gt;</td><td><code>{ field, from, to }</code> — gerado por diff automático no <code>update</code> do repo. Inclui troca de responsável.</td></tr>
+    <tr><td><code>createdAt</code></td><td>timestamp</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3>4.6 Índices compostos (<code>firebase/firestore.indexes.json</code>)</h3>
+<ul>
+  <li><code>ideas</code>: <code>authorId</code> ASC + <code>createdAt</code> DESC — usado por "Minhas ideias".</li>
+  <li><code>users</code>: <code>role</code> ASC + <code>points</code> DESC — usado pelo ranking top 5.</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="regras" class="page-break">5. Regras de segurança (Firestore)</h2>
+
+<p>
+Controle por papel via lookup no documento de usuário a cada requisição (Sprint 2 vai migrar para <em>custom claims</em>, evitando o lookup).
+</p>
+
+<pre>service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() { return request.auth != null; }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function role()       { return userDoc().role; }
+    function isOperador() { return isAuth() && role() == 'OPERADOR'; }
+    function isGestor()   { return isAuth() && role() == 'GESTOR'; }
+    function isLider()    { return isAuth() && role() == 'LIDER'; }
+    function affected()   { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    // ... regras por coleção (ver firestore.rules)
+  }
+}</pre>
+
+<h3>5.1 Resumo por coleção</h3>
+<table>
+  <thead><tr><th>Coleção</th><th>Leitura</th><th>Criação</th><th>Atualização</th><th>Exclusão</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>users/{uid}</code></td>
+      <td>autenticado</td>
+      <td>próprio uid</td>
+      <td>próprio (exceto <code>role</code>) <strong>ou</strong> gestor (só <code>points</code> e <code>badges</code>)</td>
+      <td>nunca</td>
+    </tr>
+    <tr>
+      <td><code>strategicGuidelines/{id}</code></td>
+      <td>autenticado</td>
+      <td>só líder</td>
+      <td>só líder</td>
+      <td>só líder</td>
+    </tr>
+    <tr>
+      <td><code>ideas/{id}</code></td>
+      <td>autenticado</td>
+      <td>autor, status = SUBMETIDA</td>
+      <td>autor (campos de conteúdo, status SUBMETIDA) <strong>ou</strong> gestor (curadoria)</td>
+      <td>autor, status = SUBMETIDA</td>
+    </tr>
+    <tr>
+      <td><code>projects/{id}</code></td>
+      <td>autenticado</td>
+      <td>só gestor</td>
+      <td>só gestor</td>
+      <td>só gestor</td>
+    </tr>
+    <tr>
+      <td><code>projects/{id}/updates/{uid}</code></td>
+      <td>autenticado</td>
+      <td>só gestor</td>
+      <td>nunca</td>
+      <td>nunca</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout info">
+<strong>Defesa em camadas:</strong> as regras são a fonte de verdade. A UI esconde botões e o <code>RoleGate</code> bloqueia rotas, mas mesmo um cliente modificado não consegue, por exemplo, aprovar a própria ideia — o <code>ApproveIdeaUseCase</code> também faz <em>pre-check</em> de autoria antes de executar.
+</div>
+
+<!-- =========================================================== -->
+<h2 id="fluxos" class="page-break">6. Fluxos críticos</h2>
+
+<h3>6.1 Cadastro de ideia</h3>
+<ol>
+  <li>Operador toca em <em>"Nova ideia"</em> a partir de "Minhas ideias".</li>
+  <li>Formulário valida título, descrição, categoria. Categoria é texto livre com <strong>chips de sugestão</strong> a partir de <code>IdeaCategory</code> (8 opções). Divisão pré-selecionada com a divisão do autor.</li>
+  <li>Picker de orientação estratégica é opcional. Vincular concede <strong>+5 pts</strong> bônus.</li>
+  <li><code>FirestoreIdeasRepository.createIdea</code> executa transação: cria doc em <code>ideas</code>, credita pontos no autor (10 ou 15), avalia badges.</li>
+  <li>UI mostra snackbar <em>"+10 pts"</em> ou <em>"+15 pts (10 base + 5 conexão estratégica)"</em> e volta pra lista.</li>
+</ol>
+
+<h3>6.2 Aprovação de ideia → projeto rascunho</h3>
+<p>
+Executado por <code>ApproveIdeaUseCase</code> em uma única transação Firestore:
+</p>
+<ol>
+  <li><strong>Pre-check:</strong> impede gestor aprovar a própria ideia (auto-conflito de interesse).</li>
+  <li>Lê a ideia, marca <code>status = APROVADA</code>, grava <code>reviewerId</code> e <code>reviewedAt</code>.</li>
+  <li>Cria documento em <code>projects</code> com <code>stage = PLANEJAMENTO</code> e os <strong>snapshots</strong>:
+    <ul>
+      <li><code>priorityScore</code> ← <code>idea.ice.score</code></li>
+      <li><code>reporterId</code> / <code>reporterName</code> ← <code>idea.authorId / authorName</code></li>
+      <li><code>responsibleId</code> / <code>responsibleName</code> ← gestor que aprovou (<code>reviewerId / reviewerName</code>)</li>
+      <li><code>originatingIdeaId</code> ← id da ideia</li>
+    </ul>
+  </li>
+  <li>Cria a primeira entrada na subcoleção <code>updates</code> ("Criado automaticamente a partir da ideia: X").</li>
+  <li>Credita <strong>+50 pts</strong> ao operador autor e avalia novos badges.</li>
+</ol>
+
+<div class="callout">
+<strong>Por que <em>snapshot</em> em vez de <em>lookup</em>?</strong> A ideia pode ser editada ou deletada depois. O snapshot preserva o critério que justificou a aprovação (ICE), o crédito histórico (relator) e o ponto de responsabilidade inicial — independente do que aconteça com a ideia origem.
+</div>
+
+<h3>6.3 Edição do projeto e troca de responsável</h3>
+<ol>
+  <li>Gestor abre o projeto e toca em "Editar".</li>
+  <li>Formulário inclui um picker <strong>"Responsável"</strong> com todos os gestores cadastrados (<code>UsersRepository.listByRole(GESTOR)</code>).</li>
+  <li>Ao salvar, <code>FirestoreProjectsRepository.update</code> gera diff automático de todos os campos relevantes; se <code>responsibleId</code> mudou, registra entrada na timeline ("Responsável alterado de Carlos para Marcia").</li>
+  <li>Outra edição qualquer (ex: <code>stage = CONCLUIDO</code>) também aparece como mudança auditável.</li>
+</ol>
+
+<h3>6.4 Conclusão do projeto → ideia implementada</h3>
+<ol>
+  <li>Gestor edita projeto e seleciona <code>stage = CONCLUIDO</code>.</li>
+  <li>Após o update normal, <code>CompleteProjectUseCase</code> roda:
+    <ul>
+      <li>Se o projeto tem <code>originatingIdeaId</code>, atualiza a ideia para <code>status = IMPLEMENTADA</code>.</li>
+      <li>Credita <strong>+200 pts</strong> ao autor da ideia.</li>
+    </ul>
+  </li>
+  <li>Analytics: <code>logProjectCompleted(projectId, hasOriginatingIdea)</code>.</li>
+</ol>
+
+<h3>6.5 Dashboard — impacto por orientação</h3>
+<p>
+<code>DashboardComputer</code> (Kotlin puro, testável) recebe ideias + projetos + orientações + filtros e computa:
+</p>
+<ul>
+  <li><strong>Funil</strong>: submetidas → avaliadas → aprovadas → em execução → ROI positivo.</li>
+  <li><strong>KPIs</strong>: ROI consolidado, lucro líquido, investimento total, projetos ativos, ganho médio de produtividade, redução total de custo.</li>
+  <li><strong>Sparkline ROI</strong> dos últimos 6 meses (<em>esconde quando há &lt; 2 meses com ROI computado</em>).</li>
+  <li><strong>Impacto por orientação</strong>: agregação de ideias + projetos por <code>guidelineId</code>, com ROI agregado.</li>
+  <li><strong>Projetos por ROI</strong>: lista ordenada.</li>
+  <li><strong>Ranking top 5</strong> de operadores por pontos (mesmo card que aparece nas telas de operador e gestor).</li>
+</ul>
+
+<h3>6.6 Sign-out resiliente</h3>
+<p>
+<strong>Bug raiz fixado:</strong> ao deslogar, os listeners ativos do Firestore disparavam <code>PERMISSION_DENIED</code> (as regras exigem auth). O <code>callbackFlow</code> os propagava como exceção, derrubando o <code>viewModelScope</code> e crashando o app.
+</p>
+<p>
+<strong>Fix:</strong> <code>snapshotsAsFlow</code> em <code>FirestoreHelpers</code> ignora erros do listener (apenas para de emitir). O <code>SessionManager</code> emite <code>null</code> normalmente, o <code>AppNavHost</code> detecta e navega para Login.
+</p>
+
+<!-- =========================================================== -->
+<h2 id="gamificacao" class="page-break">7. Gamificação</h2>
+
+<p>
+Pontos e badges são <strong>visíveis apenas para operadores</strong> — gestores e líderes não acumulam nem visualizam a própria pontuação (deve ser engajamento operacional, não competição entre níveis). Gestor e líder <em>veem</em> o ranking dos operadores (contexto de quem está produzindo).
+</p>
+
+<h3>7.1 Pontos (transações Firestore)</h3>
+<table>
+  <thead><tr><th>Ação</th><th>Pontos</th><th>Onde</th></tr></thead>
+  <tbody>
+    <tr><td>Submeter ideia</td><td>+10</td><td><code>FirestoreIdeasRepository.createIdea</code></td></tr>
+    <tr><td>Ideia conectada a orientação</td><td>+15 (= 10 + 5)</td><td>idem (delta calculado por <code>guidelineId != null</code>)</td></tr>
+    <tr><td>Ideia aprovada</td><td>+50 ao autor</td><td><code>ApproveIdeaUseCase</code></td></tr>
+    <tr><td>Projeto originado da ideia concluído</td><td>+200 ao autor</td><td><code>CompleteProjectUseCase</code></td></tr>
+    <tr><td>Autor exclui própria ideia SUBMETIDA</td><td>Reverte pontos ganhos</td><td><code>FirestoreIdeasRepository.deleteIdea</code></td></tr>
+  </tbody>
+</table>
+
+<h3>7.2 Badges (<code>BadgeEvaluator</code>, regra pura)</h3>
+<table>
+  <thead><tr><th>Badge</th><th>Critério</th></tr></thead>
+  <tbody>
+    <tr><td>Primeira Ideia</td><td>Autor de ≥ 1 ideia.</td></tr>
+    <tr><td>Estrategista</td><td>≥ 1 ideia aprovada conectada a orientação.</td></tr>
+    <tr><td>Inovador do Mês</td><td>≥ 5 ideias submetidas no mesmo mês.</td></tr>
+    <tr><td>Impacto Real</td><td>≥ 1 ideia com status <code>IMPLEMENTADA</code>.</td></tr>
+    <tr><td>Visionário</td><td>Ideias aprovadas em ≥ 3 orientações distintas.</td></tr>
+  </tbody>
+</table>
+
+<h3>7.3 Onde aparece</h3>
+<ul>
+  <li><strong>Perfil do operador:</strong> pontos totais, regras colapsáveis (<code>PointsRulesCard</code>), badges desbloqueadas, ideias por status.</li>
+  <li><strong>"Minhas ideias" (operador):</strong> ranking top 5 + regras colapsáveis no topo da lista.</li>
+  <li><strong>Curadoria (gestor):</strong> ranking top 5 no topo da fila.</li>
+  <li><strong>Dashboard (líder):</strong> ranking top 5 após "Impacto por orientação".</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="navegacao" class="page-break">8. Navegação e RoleGate</h2>
+
+<h3>8.1 Bottom tabs com saveState/restoreState</h3>
+<p>
+O <code>AppNavHost</code> expõe um helper <code>navController.navigateTab(route)</code> que aplica <code>popUpTo(start, saveState = true)</code> + <code>launchSingleTop = true</code> + <code>restoreState = true</code>. Resultado:
+</p>
+<ul>
+  <li>Trocar de aba <strong>preserva o scroll/state</strong> da aba anterior.</li>
+  <li>Voltar pra aba previamente visitada <strong>restaura o estado salvo</strong>.</li>
+  <li>System back na home (Dashboard pro líder, Minhas Ideias pro operador, Curadoria pro gestor) <strong>fecha o app</strong> em vez de reabrir tabs duplicadas.</li>
+</ul>
+
+<h3>8.2 Tabs por papel</h3>
+<table>
+  <thead><tr><th>Papel</th><th>Home</th><th>Tabs</th></tr></thead>
+  <tbody>
+    <tr><td>Operador</td><td>Minhas Ideias</td><td>Ideias · Orientações · Perfil</td></tr>
+    <tr><td>Gestor</td><td>Curadoria</td><td>Curadoria · Projetos · Orientações · Perfil</td></tr>
+    <tr><td>Líder</td><td>Dashboard</td><td>Dashboard · Projetos · Orientações · Perfil</td></tr>
+  </tbody>
+</table>
+
+<h3>8.3 RoleGate</h3>
+<p>
+Composable em <code>AppNavHost</code> que faz <code>popBackStack()</code> quando a sessão não tem o papel exigido. Protege rotas sensíveis (criar/editar projeto, criar/editar orientação, curadoria) mesmo se alguém digitar a URL/deep link diretamente. Complementa as regras Firestore.
+</p>
+
+<!-- =========================================================== -->
+<h2 id="decisoes" class="page-break">9. Decisões de produto e UX</h2>
+
+<h3>9.1 Categorias de ideias</h3>
+<p>
+Texto livre + 8 chips de sugestão (<code>IdeaCategory</code>): Operações, Atendimento ao cliente, Tecnologia, Comercial e vendas, Pessoas e cultura, Sustentabilidade, Segurança, Inovação aberta. Permite respeitar realidades de cada divisão sem fragmentar em rótulos infinitos.
+</p>
+
+<h3>9.2 Prioridade vs. ROI</h3>
+<p>
+Quando o projeto ainda não tem retorno calculado (planejamento/execução), exibimos a <strong>Prioridade ICE</strong> (snapshot da matriz da curadoria). Quando atinge <code>CONCLUIDO</code>, paramos de exibir o ICE — o ROI fala por si.
+</p>
+
+<h3>9.3 Relator e Responsável</h3>
+<p>
+Distinção explícita entre <strong>quem teve a ideia</strong> (relator, imutável) e <strong>quem está conduzindo</strong> (responsável, editável). Reflete realidade corporativa: gestores trocam de time, saem de férias, redistribuem portfólio — mas o crédito do operador permanece.
+</p>
+
+<h3>9.4 Curadoria sem fricção</h3>
+<p>
+Originalmente havia dois botões na curadoria ("Salvar avaliação" dentro da matriz ICE e "Aprovar" fora). Refatorado: a matriz emite mudanças via <code>onChange</code>, e o botão "Aprovar" salva o ICE atual + aprova em sequência. Um botão só.
+</p>
+
+<h3>9.5 Empty states informativos</h3>
+<p>
+Toda lista vazia mostra um título e uma frase explicativa em vez de "Sem dados". Ex.: na curadoria, "Nenhuma ideia para curar — ideias submetidas pelos operadores aparecem aqui para avaliação com a matriz ICE."
+</p>
+
+<h3>9.6 Sparkline condicional</h3>
+<p>
+O gráfico "Tendência de ROI (últimos 6 meses)" só aparece quando há pelo menos dois meses com ROI computado. Linhas planas ou pontos isolados são informação enganosa em dashboard executivo.
+</p>
+
+<h3>9.7 Pontos só para quem deve "jogar"</h3>
+<p>
+Gestor e líder não veem o próprio score nem o card de regras de pontuação. Suas telas de perfil mostram apenas identidade e descrição do papel — pontos são mecanismo de engajamento operacional, ruído visual para quem não joga.
+</p>
+
+<h3>9.8 Quick login (demo)</h3>
+<p>
+Tela de login tem 3 botões abaixo do card principal ("Líder", "Gestor", "Operador") que fazem login direto com credenciais hardcoded. Acelera demonstração e troca de perfil. <strong>Sprint 2 remove esse atalho</strong>.
+</p>
+
+<!-- =========================================================== -->
+<h2 id="testes">10. Testes</h2>
+
+<p>
+20 testes unitários distribuídos em 3 classes (JUnit 4 + MockK + Turbine + kotlinx-coroutines-test):
+</p>
+<ul>
+  <li><code>MapperTest</code> — DTO ↔ Domain (Ideia, Projeto, Orientação, Usuário, Update).</li>
+  <li><code>BadgeEvaluatorTest</code> — todos os 5 critérios de desbloqueio e idempotência.</li>
+  <li><code>IceTest</code> — score, completude da matriz, valores limite.</li>
+</ul>
+<p>
+Fluxos com Firestore (transações em Use Cases) não têm testes unitários — exigem emulador (Sprint 2).
+</p>
+
+<pre>./gradlew :app:testDebugUnitTest</pre>
+
+<!-- =========================================================== -->
+<h2 id="build" class="page-break">11. Build e distribuição</h2>
+
+<h3>11.1 Comandos</h3>
+<pre># Compilar debug
+./gradlew :app:compileDebugKotlin
+
+# Rodar testes
+./gradlew :app:testDebugUnitTest
+
+# Gerar APK debug
+./gradlew :app:assembleDebug
+# saída: app/build/outputs/apk/debug/app-debug.apk
+
+# Gerar APK release (usa keystore debug se keystore.properties ausente)
+./gradlew :app:assembleRelease
+# saída: app/build/outputs/apk/release/app-release.apk
+
+# Instalar direto no dispositivo conectado
+./gradlew :app:installDebug</pre>
+
+<h3>11.2 Assinatura release</h3>
+<p>
+Crie <code>keystore.properties</code> na raiz (gitignored):
+</p>
+<pre>storeFile=keystore/release.jks
+storePassword=...
+keyAlias=aguiabranca
+keyPassword=...</pre>
+<p>
+Gere o keystore com:
+</p>
+<pre>keytool -genkey -v -keystore keystore/release.jks \
+  -alias aguiabranca -keyalg RSA -keysize 2048 -validity 10000</pre>
+
+<!-- =========================================================== -->
+<h2 id="setup" class="page-break">12. Setup do projeto Firebase</h2>
+
+<ol>
+  <li>Criar projeto no <a href="https://console.firebase.google.com/">Firebase Console</a>.</li>
+  <li>Registrar <strong>dois apps Android</strong>: package <code>com.aguiabranca.app</code> (release) e <code>com.aguiabranca.app.debug</code> (suffix usado em buildType debug).</li>
+  <li>Habilitar <strong>Authentication</strong> → método Email/Senha.</li>
+  <li>Habilitar <strong>Cloud Firestore</strong> em modo produção. Região sugerida: <code>southamerica-east1</code>.</li>
+  <li>Habilitar <strong>Crashlytics</strong> e <strong>Analytics</strong>.</li>
+  <li>Baixar o <code>google-services.json</code> agregado (contém os 2 apps) e substituir em <code>app/google-services.json</code>.</li>
+  <li>Publicar regras e índices:
+    <pre>npm i -g firebase-tools
+firebase login
+firebase deploy --only firestore</pre>
+    Alternativamente: copiar o conteúdo de <code>firestore.rules</code> e os índices manualmente no Console.
+  </li>
+</ol>
+
+<div class="callout note">
+<strong>SHA-1 do keystore:</strong> não necessário enquanto o app usa apenas Email/Senha. Se for adicionar Google Sign-In na Sprint 2, registrar SHA-1 do debug e do release.
+</div>
+
+<!-- =========================================================== -->
+<h2 id="seed">13. Carga inicial de dados (seed)</h2>
+
+<p>
+O seed via long-press no logo (presente no commit inicial) foi <strong>removido</strong> — o ciclo de signOut do Auth durante a criação dos usuários gerava conflito de sessão e estado inconsistente.
+</p>
+<p>
+A carga de demonstração agora é feita via <strong>Firebase REST API</strong> a partir de scripts Python externos. Os IDs gerados ficaram registrados no Firestore do projeto demo (não versionados):
+</p>
+<ul>
+  <li><strong>3 usuários base:</strong> <code>lider@</code>, <code>gestor@</code>, <code>operador@aguiabranca.com</code> (senha <code>aguiabranca123</code>).</li>
+  <li><strong>5 operadores adicionais</strong> com pontuação distribuída (50–320 pts) e badges parcialmente desbloqueadas — popular o ranking top 5.</li>
+  <li><strong>4 orientações estratégicas</strong> (uma por pilar).</li>
+  <li><strong>15 ideias</strong> distribuídas entre todos os status.</li>
+  <li><strong>5 projetos</strong> (1 concluído com ROI positivo, demais em execução/planejamento).</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="limitacoes">14. Limitações conhecidas</h2>
+
+<ul>
+  <li><strong>Sem testes integrados com Firestore.</strong> Use cases que envolvem transações são exercitados manualmente. Sprint 2 traz emulador.</li>
+  <li><strong>Regras Firestore dependem de lookup por requisição.</strong> Custo aceitável no porte da Sprint 1; Sprint 2 vai migrar para <em>custom claims</em>.</li>
+  <li><strong>Sem reset de senha</strong> ou onboarding fora dos quick-actions de demo.</li>
+  <li><strong>Sem upload de anexos</strong> em ideias/projetos (escopo para Sprint 2).</li>
+  <li><strong>Sem internacionalização</strong> — UI fixa em português.</li>
+  <li><strong>Notificações push</strong> não implementadas.</li>
+  <li><strong>Modo offline</strong> depende do cache padrão do Firestore (sem UI explícita de "sincronizando" / "offline").</li>
+  <li><strong>Quick login</strong> com credenciais hardcoded — atalho de demonstração, deve sair na Sprint 2.</li>
+</ul>
+
+<!-- =========================================================== -->
+<h2 id="sprint2">15. Sprint 2 (próximo)</h2>
+
+<ul>
+  <li>Substituir a camada Firestore por API REST em <strong>Java ou C#</strong>. As interfaces de Domain (<code>core/domain/*Repository.kt</code>) permanecem; apenas as implementações em <code>feature/&lt;X&gt;/data/Firestore&lt;X&gt;Repository.kt</code> mudam.</li>
+  <li>Auth com <strong>custom claims</strong> para evitar lookup nas regras.</li>
+  <li><strong>Emulador Firestore</strong> em CI para testes de transação.</li>
+  <li>Refinamentos do dashboard: <em>"Projetos por gestor responsável"</em>, filtro por relator, filtro por responsável.</li>
+  <li>Notificações push (Firebase Cloud Messaging) para ações de curadoria.</li>
+  <li>Upload de anexos (Cloud Storage) em ideias e atualizações de projeto.</li>
+  <li>Remover quick-actions de demo na tela de login.</li>
+</ul>
+
+<footer style="margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #d9dde2; color: #777; font-size: 0.85rem;">
+  Documentação gerada para o Challenge FIAP × Grupo Águia Branca — Sprint 1 (entrega 26/05/2026).
+</footer>
+
+</body>
+</html>

@@ -95,7 +95,7 @@ keytool -genkey -v -keystore keystore/release.jks -alias aguiabranca -keyalg RSA
 Para detalhes de arquitetura, modelo de dados, fluxos críticos (aprovação→projeto, completar projeto, impacto por orientação), consulte:
 - `.specs/features/sprint1/spec.md` — requisitos com IDs rastreáveis
 - `.specs/features/sprint1/design.md` — arquitetura completa
-- `docs/DOCUMENTACAO_TECNICA.md` — documentação técnica do Sprint 1
+- `docs/DOCUMENTACAO_TECNICA.html` — documentação técnica do Sprint 1 (otimizada para impressão)
 
 ## Estrutura do projeto
 
