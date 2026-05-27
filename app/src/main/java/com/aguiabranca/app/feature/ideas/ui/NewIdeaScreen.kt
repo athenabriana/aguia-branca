@@ -2,6 +2,8 @@ package com.aguiabranca.app.feature.ideas.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,6 +23,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,12 +38,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.domain.model.Division
-import com.aguiabranca.app.core.ui.components.CategoryAutoCompleteField
+import com.aguiabranca.app.core.domain.model.IdeaCategory
 import com.aguiabranca.app.core.ui.components.GuidelinePicker
 import com.aguiabranca.app.core.ui.local.LocalSession
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun NewIdeaScreen(
     onDone: () -> Unit,
@@ -70,7 +73,22 @@ fun NewIdeaScreen(
         ) {
             OutlinedTextField(value = form.title, onValueChange = vm::onTitle, label = { Text("Título") }, singleLine = true, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = form.description, onValueChange = vm::onDesc, label = { Text("Descrição") }, modifier = Modifier.fillMaxWidth().height(140.dp))
-            CategoryAutoCompleteField(value = form.category, onValueChange = vm::onCategory, suggestionsLoader = { vm.searchCategoryPrefix(it) })
+            OutlinedTextField(
+                value = form.category,
+                onValueChange = { vm.onCategory(it.take(40)) },
+                label = { Text("Categoria") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                IdeaCategory.entries.forEach { c ->
+                    SuggestionChip(
+                        onClick = { vm.onCategory(c.label) },
+                        label = { Text(c.label) },
+                        modifier = Modifier
+                    )
+                }
+            }
             ExposedDropdownMenuBox(expanded = divExpanded, onExpandedChange = { divExpanded = it }) {
                 OutlinedTextField(
                     value = divisionLabel(form.division),

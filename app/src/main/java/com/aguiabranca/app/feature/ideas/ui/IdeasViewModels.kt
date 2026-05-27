@@ -73,8 +73,6 @@ class NewIdeaViewModel @Inject constructor(
     fun onDivision(v: Division) { _form.value = _form.value.copy(division = v); savedStateHandle[K_DIV] = v.name }
     fun onGuideline(id: String?) { _form.value = _form.value.copy(guidelineId = id); savedStateHandle[K_G] = id }
 
-    suspend fun searchCategoryPrefix(prefix: String): List<String> = repo.searchCategoriesByPrefix(prefix).first()
-
     fun submit(authorId: String, authorName: String, onSuccess: (toast: String) -> Unit) {
         val f = _form.value
         if (f.title.isBlank() || f.description.isBlank() || f.category.length < 2) {

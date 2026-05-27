@@ -30,7 +30,6 @@ interface IdeasRepository {
     fun observeForCuration(): Flow<List<Idea>>
     fun observeByGuideline(guidelineId: String): Flow<List<Idea>>
     fun observe(id: String): Flow<Idea?>
-    fun searchCategoriesByPrefix(prefix: String, limit: Int = 20): Flow<List<String>>
 
     suspend fun createIdea(input: CreateIdeaInput): Outcome<String>
     suspend fun updateIdea(id: String, input: UpdateIdeaInput): Outcome<Unit>

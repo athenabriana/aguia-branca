@@ -11,3 +11,14 @@ enum class ProjectStage { PLANEJAMENTO, EM_EXECUCAO, CONCLUIDO, CANCELADO }
 enum class Pillar { DIRECIONAMENTO, IDEIAS, PROJETOS, MENSURACAO }
 
 enum class Period { THIS_MONTH, LAST_QUARTER, THIS_YEAR, ALL }
+
+enum class IdeaCategory(val label: String) {
+    OPERACOES("Operações"),
+    ATENDIMENTO("Atendimento ao cliente"),
+    TECNOLOGIA("Tecnologia"),
+    COMERCIAL("Comercial e vendas"),
+    PESSOAS("Pessoas e cultura"),
+    SUSTENTABILIDADE("Sustentabilidade"),
+    SEGURANCA("Segurança"),
+    INOVACAO_ABERTA("Inovação aberta"),
+}

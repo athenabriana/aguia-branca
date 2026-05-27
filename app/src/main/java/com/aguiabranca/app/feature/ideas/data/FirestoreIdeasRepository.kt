@@ -56,18 +56,6 @@ class FirestoreIdeasRepository @Inject constructor(
             else snap.toObject(IdeaDto::class.java)?.toDomain(snap.id)
         }
 
-    override fun searchCategoriesByPrefix(prefix: String, limit: Int): Flow<List<String>> =
-        col.orderBy("category")
-            .startAt(prefix)
-            .endAt(prefix + "")
-            .limit(limit.toLong())
-            .snapshotsAsFlow()
-            .map { snap ->
-                snap.documents.mapNotNull { it.getString("category") }
-                    .map { it.trim() }
-                    .filter { it.isNotEmpty() }
-                    .distinctBy { it.lowercase() }
-            }
 
     override suspend fun createIdea(input: CreateIdeaInput): Outcome<String> = runOutcome {
         val ideaRef = col.document()
