@@ -75,15 +75,25 @@ class NewIdeaViewModel @Inject constructor(
 
     fun submit(authorId: String, authorName: String, onSuccess: (toast: String) -> Unit) {
         val f = _form.value
-        if (f.title.isBlank() || f.description.isBlank() || f.category.length < 2) {
-            _form.value = f.copy(error = "Preencha título, descrição e categoria (≥ 2 chars)")
+        val title = f.title.trim()
+        val description = f.description.trim()
+        val category = f.category.trim()
+        val error = when {
+            title.length < 3 -> "Título precisa ter ao menos 3 caracteres."
+            description.length < 10 -> "Descrição precisa ter ao menos 10 caracteres."
+            category.length < 2 -> "Categoria precisa ter ao menos 2 caracteres."
+            else -> null
+        }
+        if (error != null) {
+            _form.value = f.copy(error = error)
             return
         }
+        if (f.saving) return // proteção contra clique duplo
         _form.value = f.copy(saving = true, error = null)
         viewModelScope.launch {
             val result = repo.createIdea(
                 CreateIdeaInput(
-                    title = f.title, description = f.description, category = f.category,
+                    title = title, description = description, category = category,
                     division = f.division, guidelineId = f.guidelineId,
                     authorId = authorId, authorName = authorName
                 )
@@ -172,17 +182,15 @@ class IdeaDetailViewModel @Inject constructor(
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Idle)
 
-    fun saveIce(id: String, ice: Ice, reviewerId: String, onDone: () -> Unit) {
+    fun approveWithIce(id: String, ice: Ice, reviewerId: String, reviewerName: String, onDone: (projectId: String?) -> Unit) {
         viewModelScope.launch {
-            ideasRepo.saveIce(id, ice, reviewerId)
-            onDone()
-        }
-    }
-
-    fun approve(id: String, reviewerId: String, reviewerName: String, onDone: (projectId: String?) -> Unit) {
-        viewModelScope.launch {
-            val r = approveUseCase(id, reviewerId, reviewerName)
-            onDone((r as? Outcome.Success)?.value)
+            val saved = ideasRepo.saveIce(id, ice, reviewerId)
+            if (saved is Outcome.Success) {
+                val r = approveUseCase(id, reviewerId, reviewerName)
+                onDone((r as? Outcome.Success)?.value)
+            } else {
+                onDone(null)
+            }
         }
     }
 

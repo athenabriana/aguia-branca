@@ -73,7 +73,7 @@ fun PillarChip(pillar: Pillar) {
 
 @Composable
 fun BadgeChip(name: String, unlocked: Boolean) {
-    val color = if (unlocked) MaterialTheme.colorScheme.primary else Color.Gray.copy(alpha = 0.4f)
+    val color = if (unlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     val emoji = when (name) {
         "Primeira Ideia" -> "🌱"
         "Estrategista" -> "🎯"
@@ -107,12 +107,14 @@ fun Pill(text: String, bg: Color, fg: Color, modifier: Modifier = Modifier) {
 }
 
 fun formatCurrency(value: Double): String {
+    if (value.isNaN() || value.isInfinite()) return "—"
     val nf = NumberFormat.getCurrencyInstance(Locale("pt", "BR"))
     nf.maximumFractionDigits = 0
     return nf.format(value)
 }
 
 fun formatPercent(value: Double): String {
+    if (value.isNaN() || value.isInfinite()) return "—"
     val nf = NumberFormat.getNumberInstance(Locale("pt", "BR"))
     nf.minimumFractionDigits = 1
     nf.maximumFractionDigits = 1

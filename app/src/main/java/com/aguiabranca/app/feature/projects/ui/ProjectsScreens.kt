@@ -124,7 +124,7 @@ fun ProjectsListScreen(
             if (session.role == Role.GESTOR) {
                 ExtendedFloatingActionButton(
                     onClick = onNewProject,
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = "Novo projeto") },
                     text = { Text("Novo") },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
                 )

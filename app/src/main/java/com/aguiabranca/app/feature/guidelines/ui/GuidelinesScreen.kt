@@ -116,7 +116,7 @@ fun GuidelinesScreen(
             if (session.role == Role.LIDER) {
                 ExtendedFloatingActionButton(
                     onClick = onAdmin,
-                    icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                    icon = { Icon(Icons.Outlined.Add, contentDescription = "Nova orientação") },
                     text = { Text("Nova") },
                     modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
                 )
@@ -124,16 +124,13 @@ fun GuidelinesScreen(
         }
     }
 
-    if (deleteId != null) {
+    deleteId?.let { id ->
         AlertDialog(
             onDismissRequest = { deleteId = null },
             title = { Text("Excluir orientação?") },
             text = { Text("Esta ação é permanente. Ideias vinculadas mostrarão \"Orientação removida\".") },
             confirmButton = {
-                TextButton(onClick = {
-                    val id = deleteId!!
-                    vm.delete(id) { deleteId = null }
-                }) { Text("Excluir") }
+                TextButton(onClick = { vm.delete(id) { deleteId = null } }) { Text("Excluir") }
             },
             dismissButton = { TextButton(onClick = { deleteId = null }) { Text("Cancelar") } }
         )

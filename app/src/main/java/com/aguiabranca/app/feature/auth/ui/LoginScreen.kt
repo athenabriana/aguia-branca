@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -27,7 +28,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -64,7 +69,8 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .size(96.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape),
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .semantics { contentDescription = "Logotipo INOVAGAB" },
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -85,22 +91,41 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
+                    val keyboard = LocalSoftwareKeyboardController.current
+                    val canSubmit = form.email.isNotBlank() && form.password.length >= 6 && state !is UiState.Loading
+                    val onSubmit: () -> Unit = {
+                        keyboard?.hide()
+                        if (canSubmit) vm.submit()
+                    }
                     OutlinedTextField(
                         value = form.email,
-                        onValueChange = vm::onEmailChange,
+                        onValueChange = {
+                            vm.onEmailChange(it)
+                            vm.consumeError()
+                        },
                         label = { Text("Email") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next
+                        )
                     )
                     Spacer(Modifier.height(12.dp))
                     OutlinedTextField(
                         value = form.password,
-                        onValueChange = vm::onPasswordChange,
+                        onValueChange = {
+                            vm.onPasswordChange(it)
+                            vm.consumeError()
+                        },
                         label = { Text("Senha") },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done
+                        ),
+                        keyboardActions = KeyboardActions(onDone = { onSubmit() }),
                         modifier = Modifier.fillMaxWidth()
                     )
                     val errorText = (state as? UiState.Error)?.error?.toPtBr()
@@ -109,9 +134,8 @@ fun LoginScreen(
                         Text(errorText, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
                     }
                     Spacer(Modifier.height(16.dp))
-                    val canSubmit = form.email.isNotBlank() && form.password.length >= 6 && state !is UiState.Loading
                     Button(
-                        onClick = { vm.submit() },
+                        onClick = onSubmit,
                         enabled = canSubmit,
                         modifier = Modifier.fillMaxWidth()
                     ) {

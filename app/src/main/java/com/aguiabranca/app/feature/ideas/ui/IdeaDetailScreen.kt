@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.aguiabranca.app.core.domain.model.Ice
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -55,6 +56,7 @@ fun IdeaDetailScreen(
     var rejectComment by remember { mutableStateOf("") }
     var showReject by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
+    var pendingIce by remember { mutableStateOf<Ice?>(null) }
 
     Scaffold(
         topBar = {
@@ -81,11 +83,14 @@ fun IdeaDetailScreen(
                         StatusBadge(idea.status)
                     }
                     Text(idea.description)
+                    Text("Autor: ${idea.authorName}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     Text("Categoria: ${idea.category}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
                     Text("Divisão: ${divisionLabel(idea.division)}", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
 
                     val isAuthor = session.uid == idea.authorId && session.role == Role.OPERADOR
-                    val canCurate = session.role == Role.GESTOR && idea.status in setOf(IdeaStatus.SUBMETIDA, IdeaStatus.EM_ANALISE)
+                    val canCurate = session.role == Role.GESTOR
+                        && session.uid != idea.authorId
+                        && idea.status in setOf(IdeaStatus.SUBMETIDA, IdeaStatus.EM_ANALISE)
 
                     if (isAuthor) {
                         Spacer(Modifier.height(8.dp))
@@ -120,16 +125,17 @@ fun IdeaDetailScreen(
                         Spacer(Modifier.height(8.dp))
                         IceMatrix(
                             initial = idea.ice,
-                            onSave = { ice -> vm.saveIce(idea.id, ice, session.uid) {} }
+                            onChange = { pendingIce = it }
                         )
                         Spacer(Modifier.height(8.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
                                 onClick = {
-                                    vm.approve(idea.id, session.uid, session.name) { onBack() }
+                                    val ice = pendingIce ?: idea.ice ?: return@Button
+                                    vm.approveWithIce(idea.id, ice, session.uid, session.name) { onBack() }
                                 },
                                 modifier = Modifier.weight(1f),
-                                enabled = idea.ice?.isComplete == true
+                                enabled = (pendingIce ?: idea.ice)?.isComplete == true
                             ) { Text("Aprovar") }
                             OutlinedButton(onClick = { showReject = true }, modifier = Modifier.weight(1f)) { Text("Rejeitar") }
                         }

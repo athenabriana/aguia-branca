@@ -78,10 +78,20 @@ fun MyIdeasScreen(
                 }
                 if (items.isEmpty()) {
                     item {
-                        Text(
-                            "Você ainda não cadastrou ideias. Toque em + para começar.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
+                            Text(
+                                "Nenhuma ideia ainda",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 16.sp
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                "Compartilhe sua primeira ideia: toque em \"Nova ideia\" abaixo. " +
+                                    "Vincular a uma orientação estratégica rende bônus de pontos.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 13.sp
+                            )
+                        }
                     }
                 }
                 items(items, key = { it.id }) { idea ->
@@ -110,7 +120,7 @@ fun MyIdeasScreen(
             }
             ExtendedFloatingActionButton(
                 onClick = onNewIdea,
-                icon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+                icon = { Icon(Icons.Outlined.Add, contentDescription = "Nova ideia") },
                 text = { Text("Nova ideia") },
                 modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
             )

@@ -101,10 +101,10 @@ class ProjectFormViewModel @Inject constructor(
             val p = projectsRepo.observe(id).first() ?: return@launch
             _form.value = ProjectForm(
                 title = p.title, description = p.description, stage = p.stage, statusText = p.statusText,
-                investment = p.investment.toLong().toString(),
-                financialReturn = p.financialReturn.toLong().toString(),
-                productivityGain = p.productivityGain.toString(),
-                costReduction = p.costReduction.toLong().toString(),
+                investment = safeWholeNumber(p.investment),
+                financialReturn = safeWholeNumber(p.financialReturn),
+                productivityGain = safeDecimal(p.productivityGain),
+                costReduction = safeWholeNumber(p.costReduction),
                 targetDate = p.targetDate,
                 division = p.division,
                 guidelineId = p.guidelineId
@@ -112,6 +112,12 @@ class ProjectFormViewModel @Inject constructor(
             persist()
         }
     }
+
+    private fun safeWholeNumber(v: Double): String =
+        if (v.isNaN() || v.isInfinite()) "" else v.toLong().toString()
+
+    private fun safeDecimal(v: Double): String =
+        if (v.isNaN() || v.isInfinite()) "" else v.toString()
 
     fun onTitle(v: String) { _form.update { it.copy(title = v) }; persist() }
     fun onDescription(v: String) { _form.update { it.copy(description = v) }; persist() }

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
@@ -27,14 +26,15 @@ import com.aguiabranca.app.core.domain.model.Ice
 @Composable
 fun IceMatrix(
     initial: Ice?,
-    onSave: (Ice) -> Unit,
-    modifier: Modifier = Modifier,
-    saveLabel: String = "Salvar avaliação"
+    onChange: (Ice) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var impact by remember { mutableIntStateOf(initial?.impact ?: 5) }
     var confidence by remember { mutableIntStateOf(initial?.confidence ?: 5) }
     var ease by remember { mutableIntStateOf(initial?.ease ?: 5) }
     val ice = Ice(impact, confidence, ease)
+
+    androidx.compose.runtime.LaunchedEffect(impact, confidence, ease) { onChange(ice) }
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -54,12 +54,6 @@ fun IceMatrix(
                 fontSize = 28.sp,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(Modifier.height(12.dp))
-            Button(
-                enabled = ice.isComplete,
-                onClick = { onSave(ice) },
-                modifier = Modifier.fillMaxWidth()
-            ) { Text(saveLabel) }
         }
     }
 }

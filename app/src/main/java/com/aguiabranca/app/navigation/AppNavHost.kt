@@ -36,6 +36,20 @@ private fun NavController.navigateTab(route: Route) {
 }
 
 @Composable
+private fun RoleGate(
+    allowed: Set<Role>,
+    onDenied: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    val session = LocalSession.current
+    if (session == null || session.role !in allowed) {
+        LaunchedEffect(session?.role) { onDenied() }
+        return
+    }
+    content()
+}
+
+@Composable
 fun AppNavHost(navController: NavHostController) {
     val session = LocalSession.current
 
@@ -113,17 +127,21 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
         composable<Route.GuidelinesAdmin> {
-            GuidelinesAdminScreen(
-                guidelineId = null,
-                onDone = { navController.popBackStack() }
-            )
+            RoleGate(allowed = setOf(Role.LIDER), onDenied = { navController.popBackStack() }) {
+                GuidelinesAdminScreen(
+                    guidelineId = null,
+                    onDone = { navController.popBackStack() }
+                )
+            }
         }
         composable<Route.GuidelineEdit> { entry ->
             val args = entry.toRoute<Route.GuidelineEdit>()
-            GuidelinesAdminScreen(
-                guidelineId = args.id,
-                onDone = { navController.popBackStack() }
-            )
+            RoleGate(allowed = setOf(Role.LIDER), onDenied = { navController.popBackStack() }) {
+                GuidelinesAdminScreen(
+                    guidelineId = args.id,
+                    onDone = { navController.popBackStack() }
+                )
+            }
         }
         composable<Route.Profile> {
             ProfileScreen(
@@ -136,10 +154,12 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
         composable<Route.Curation> {
-            CurationScreen(
-                onOpenIdea = { id -> navController.navigate(Route.IdeaDetail(id)) },
-                onTab = onTab
-            )
+            RoleGate(allowed = setOf(Role.GESTOR), onDenied = { navController.popBackStack() }) {
+                CurationScreen(
+                    onOpenIdea = { id -> navController.navigate(Route.IdeaDetail(id)) },
+                    onTab = onTab
+                )
+            }
         }
         composable<Route.Projects> {
             ProjectsListScreen(
@@ -157,33 +177,41 @@ fun AppNavHost(navController: NavHostController) {
             )
         }
         composable<Route.NewProject> {
-            NewProjectScreen(
-                onDone = { id -> navController.navigate(Route.ProjectDetail(id)) { popUpTo(Route.Projects) } },
-                onCancel = { navController.popBackStack() }
-            )
+            RoleGate(allowed = setOf(Role.GESTOR), onDenied = { navController.popBackStack() }) {
+                NewProjectScreen(
+                    onDone = { id -> navController.navigate(Route.ProjectDetail(id)) { popUpTo(Route.Projects) } },
+                    onCancel = { navController.popBackStack() }
+                )
+            }
         }
         composable<Route.EditProject> { entry ->
             val args = entry.toRoute<Route.EditProject>()
-            ProjectEditScreen(
-                projectId = args.id,
-                onDone = { navController.popBackStack() },
-                onCancel = { navController.popBackStack() }
-            )
+            RoleGate(allowed = setOf(Role.GESTOR), onDenied = { navController.popBackStack() }) {
+                ProjectEditScreen(
+                    projectId = args.id,
+                    onDone = { navController.popBackStack() },
+                    onCancel = { navController.popBackStack() }
+                )
+            }
         }
         composable<Route.Dashboard> {
-            DashboardScreen(
-                onOpenGuideline = { id -> navController.navigate(Route.GuidelineDrillDown(id)) },
-                onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) },
-                onTab = onTab
-            )
+            RoleGate(allowed = setOf(Role.LIDER), onDenied = { navController.popBackStack() }) {
+                DashboardScreen(
+                    onOpenGuideline = { id -> navController.navigate(Route.GuidelineDrillDown(id)) },
+                    onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) },
+                    onTab = onTab
+                )
+            }
         }
         composable<Route.GuidelineDrillDown> { entry ->
             val args = entry.toRoute<Route.GuidelineDrillDown>()
-            GuidelineDrillDownScreen(
-                guidelineId = args.id,
-                onBack = { navController.popBackStack() },
-                onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) }
-            )
+            RoleGate(allowed = setOf(Role.LIDER), onDenied = { navController.popBackStack() }) {
+                GuidelineDrillDownScreen(
+                    guidelineId = args.id,
+                    onBack = { navController.popBackStack() },
+                    onOpenProject = { id -> navController.navigate(Route.ProjectDetail(id)) }
+                )
+            }
         }
     }
 }

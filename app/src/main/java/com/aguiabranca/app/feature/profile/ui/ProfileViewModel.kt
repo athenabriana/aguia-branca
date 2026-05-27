@@ -49,7 +49,7 @@ class ProfileViewModel @Inject constructor(
 
     fun logout(onDone: () -> Unit) {
         viewModelScope.launch {
-            sessionManager.signOut()
+            runCatching { sessionManager.signOut() }
             onDone()
         }
     }

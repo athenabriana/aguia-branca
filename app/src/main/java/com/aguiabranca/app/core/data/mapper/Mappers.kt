@@ -153,11 +153,13 @@ fun ProjectUpdateDto.toDomain(id: String): ProjectUpdate = ProjectUpdate(
     authorId = authorId,
     authorName = authorName,
     note = note,
-    changes = changes.map {
+    changes = changes.mapNotNull { raw ->
+        @Suppress("UNCHECKED_CAST")
+        val m = raw as? Map<String, Any?> ?: return@mapNotNull null
         FieldChange(
-            field = it["field"] as? String ?: "",
-            from = it["from"],
-            to = it["to"]
+            field = m["field"] as? String ?: return@mapNotNull null,
+            from = m["from"],
+            to = m["to"]
         )
     },
     createdAt = createdAt.toMillis()

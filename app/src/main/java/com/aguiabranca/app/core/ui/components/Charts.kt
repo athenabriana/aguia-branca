@@ -77,11 +77,15 @@ fun SparklineChart(
 ) {
     Canvas(modifier = modifier.fillMaxWidth().height(60.dp)) {
         if (values.isEmpty()) return@Canvas
-        val pairs = values.mapIndexed { idx, v -> idx to v }.filter { it.second != null }
+        // Descartar NaN/Infinity para evitar Canvas inválido.
+        val pairs = values.mapIndexed { idx, v -> idx to v }
+            .filter { (_, v) -> v != null && !v.isNaN() && !v.isInfinite() }
+        if (pairs.isEmpty()) return@Canvas
+        val denom = (values.size - 1).coerceAtLeast(1).toFloat()
         if (pairs.size < 2) {
             pairs.forEach { (i, v) ->
                 if (v != null) {
-                    val x = size.width * i / (values.size - 1).coerceAtLeast(1).toFloat()
+                    val x = size.width * i / denom
                     drawCircle(color = color, radius = 4f, center = Offset(x, size.height / 2))
                 }
             }
@@ -95,7 +99,7 @@ fun SparklineChart(
         var first = true
         pairs.forEach { (i, vv) ->
             val v = vv ?: return@forEach
-            val x = size.width * i / (values.size - 1).coerceAtLeast(1).toFloat()
+            val x = size.width * i / denom
             val y = size.height - (v - minY) / range * size.height
             if (first) { path.moveTo(x, y); first = false } else path.lineTo(x, y)
             drawCircle(color = color, radius = 3f, center = Offset(x, y))
@@ -126,7 +130,7 @@ fun KpiCardAnimated(
     format: (Double) -> String,
     modifier: Modifier = Modifier
 ) {
-    if (targetValue == null) {
+    if (targetValue == null || targetValue.isNaN() || targetValue.isInfinite()) {
         KpiCard(label = label, value = "—", modifier = modifier)
         return
     }
