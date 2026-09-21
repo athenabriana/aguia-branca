@@ -10,6 +10,8 @@ namespace AguiaBranca.Infrastructure.Persistence.Indexes;
 public static class IndexInitializer
 {
     public static readonly TimeSpan RefreshTokenRetentionAfterExpiry = TimeSpan.FromDays(1);
+    /// <summary>Os contadores diários de IA só importam no próprio dia; sobram 2 dias para fusos e depuração.</summary>
+    public static readonly TimeSpan AiUsageRetention = TimeSpan.FromDays(2);
 
     private static IndexKeysDefinitionBuilder<BsonDocument> Keys => Builders<BsonDocument>.IndexKeys;
 
@@ -70,9 +72,14 @@ public static class IndexInitializer
         await db.GetCollection<BsonDocument>(Collections.AiInsights).Indexes.CreateManyAsync(
         [
             Unique("ux_aiInsights_cacheKey", Keys.Ascending("cacheKey")),
-            Plain("ix_aiInsights_createdAt", Keys.Ascending("createdAt")),
             new CreateIndexModel<BsonDocument>(Keys.Ascending("expiresAt"),
                 new CreateIndexOptions { Name = "ttl_aiInsights_expiresAt", ExpireAfter = TimeSpan.Zero })
+        ], ct);
+
+        await db.GetCollection<BsonDocument>(Collections.AiUsage).Indexes.CreateManyAsync(
+        [
+            new CreateIndexModel<BsonDocument>(Keys.Ascending("expiresAt"),
+                new CreateIndexOptions { Name = "ttl_aiUsage_expiresAt", ExpireAfter = TimeSpan.Zero })
         ], ct);
     }
 

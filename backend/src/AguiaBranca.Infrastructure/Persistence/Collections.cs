@@ -12,4 +12,6 @@ public static class Collections
     public const string ProjectUpdates = "projectUpdates";
     public const string PointEvents = "pointEvents";
     public const string AiInsights = "aiInsights";
+    /// <summary>Contador diário de gerações de IA (um documento por dia, <c>_id</c> = yyyy-MM-dd).</summary>
+    public const string AiUsage = "aiUsage";
 }

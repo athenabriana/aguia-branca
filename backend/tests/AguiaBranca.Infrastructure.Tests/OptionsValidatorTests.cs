@@ -90,6 +90,30 @@ public class OptionsValidatorTests
         options.IsConfigured.Should().BeTrue();
     }
 
+    [Theory]
+    [InlineData(255, false)]
+    [InlineData(256, true)]
+    [InlineData(8192, true)]
+    [InlineData(8193, false)]
+    public void Gemini_MaxOutputTokens_IsBounded(int tokens, bool ok) =>
+        new GeminiOptionsValidator().Validate(null, new GeminiOptions { MaxOutputTokens = tokens }).Succeeded.Should().Be(ok);
+
+    [Theory]
+    [InlineData(-1, false)]
+    [InlineData(0, true)]
+    [InlineData(10_000, true)]
+    [InlineData(10_001, false)]
+    public void Gemini_RetryDelay_IsBounded(int delay, bool ok) =>
+        new GeminiOptionsValidator().Validate(null, new GeminiOptions { RetryDelayMilliseconds = delay }).Succeeded.Should().Be(ok);
+
+    [Theory]
+    [InlineData("", true)]
+    [InlineData("minimal", true)]
+    [InlineData("High", true)]
+    [InlineData("extreme", false)]
+    public void Gemini_ThinkingLevel_IsRestrictedToKnownValues(string level, bool ok) =>
+        new GeminiOptionsValidator().Validate(null, new GeminiOptions { ThinkingLevel = level }).Succeeded.Should().Be(ok);
+
     [Fact]
     public void Gemini_NonHttpsBaseUrl_Fails()
     {

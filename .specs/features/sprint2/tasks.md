@@ -484,20 +484,21 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 ### B17: ReportCalculator + testes de paridade (golden)
 
 **What**: Porte do `DashboardComputer.kt` para C# como função pura + adição de `overdue/daysToDeadline`.
-**Where**: `Application/Features/Reports/{ReportCalculator,ReportFilters,ReportSummary}.cs`, `Application.Tests/Reports/*` (+ `golden/*.json`)
+**Where**: `Application/Features/Reports/{ReportCalculator,ReportContracts}.cs`, `Application.Tests/Reports/*` (+ `golden/*.json`)
 **Depends on**: B16
 **Reuses**: `mobile/.../feature/dashboard/DashboardComputer.kt` (fonte da verdade da lógica), R-05
 **Requirement**: R2-06.1–R2-06.6
 
 **Done when**:
-- [ ] Funil (submitted/evaluated/approved/inExecution/roiPositive), KPIs, sparkline 6 meses (janela fixa, sensível a divisão, `null` para mês com investimento 0), impacto por orientação (ordenação: com projeto primeiro, ROI desc), lista por ROI desc
-- [ ] ROI = (Σretorno−Σinvest)/Σinvest×100; Σinvest=0 → `null`
-- [ ] Janelas de período idênticas às do Kotlin (`THIS_MONTH`, `LAST_QUARTER`, `THIS_YEAR`, `ALL`) usando `IClock` e fuso `America/Sao_Paulo`
-- [ ] `overdueProjects` e `daysToDeadline/overdue` por projeto (projetos `CONCLUIDO/CANCELADO` nunca "atrasados")
-- [ ] **Golden**: ≥ 3 conjuntos de dados de referência com resultado esperado calculado à mão/derivado do Kotlin; asserts numéricos exatos
-- [ ] Testes: filtros combinados, investimento 0, < 6 meses de dados, orientação sem projeto
-- [ ] Gate: unit (≥ 12 testes)
+- [x] Funil (submitted/evaluated/approved/inExecution/roiPositive), KPIs, sparkline 6 meses (janela fixa, sensível a divisão, `null` para mês com investimento 0), impacto por orientação (ordenação: com projeto primeiro, ROI desc), lista por ROI desc
+- [x] ROI = (Σretorno−Σinvest)/Σinvest×100; Σinvest=0 → `null`
+- [x] Janelas de período idênticas às do Kotlin (`THIS_MONTH`, `LAST_QUARTER`, `THIS_YEAR`, `ALL`) usando `IClock` e fuso `America/Sao_Paulo`
+- [x] `overdueProjects` e `daysToDeadline/overdue` por projeto (projetos `CONCLUIDO/CANCELADO` nunca "atrasados")
+- [x] **Golden**: 3 conjuntos de dados de referência com resultado esperado **calculado à mão** a partir das regras do Kotlin (não existe teste Kotlin do dashboard); asserts numéricos exatos
+- [x] Testes: filtros combinados, investimento 0, < 6 meses de dados, orientação sem projeto
+- [x] Gate: unit (≥ 12 testes)
 
+**Notas de execução**: `ReportCalculator` é uma função estática pura (`Compute`, `ComputeGuideline`, `ToProjectReport`), recebe `now` e o fuso — nada de relógio próprio. **Premissa corrigida:** o planejamento dizia "vetores derivados do teste Kotlin", mas esse teste nunca existiu (o app só testa Mapper, Badge e Ice); os 3 golden (`Application.Tests/Reports/Golden/*.json`: período ALL; THIS_MONTH + divisão com bordas de início/fim/futuro; LAST_QUARTER na virada de ano com "agora" às 22h locais) foram calculados à mão e passaram contra o código de primeira — confirmei que pegam regressão trocando propositalmente a janela do trimestre (3→2 meses) e `>` por `>=` no ROI positivo (ambos derrubaram testes). Decisões: ROI e média com **2 casas** (AwayFromZero; ordenação usa o valor exato), `LAST_QUARTER` = janela móvel de 3 meses (paridade com o app; o rótulo pode enganar), "atrasado" definido **pelo dia do prazo** no fuso do relatório (`Project.IsOverdue(DateOnly)`/`DaysToDeadline(DateOnly)`, substituindo o `IsOverdue(DateTime)` que marcava atrasado no próprio dia do prazo), empates por título/id. **22 testes unitários** (3 golden + 19: vazio, investimento 0, < 6 meses, sparkline×período/divisão, filtros combinados, fuso na virada de ano/mês, borda `[início, agora]`, arredondamento, orientação sem projeto, detalhe de orientação) + 7 novos no domínio.
 **Tests**: unit
 **Gate**: unit
 
@@ -512,14 +513,15 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-06.1–R2-06.6
 
 **Done when**:
-- [ ] `summary?period&division` retorna exatamente o contrato do spec (funil, kpis, sparkline, guidelineImpacts, projects)
-- [ ] `guidelines/{id}` traz ideias, projetos, investimento, retorno, lucro e ROI da orientação; id inexistente → 404
-- [ ] `projects/{id}` traz investimento, retorno, lucro, ROI, produtividade, redução de custo, `targetDate`, `daysToDeadline`, `overdue`
-- [ ] Filtro `division` reduz funil/KPIs/impacto/lista; período inválido → 400
-- [ ] Gestor/operador → 403; sem token → 401
-- [ ] Teste de integração: editar `financialReturn` de um projeto altera KPIs na próxima chamada
-- [ ] Gate: integration (≥ 10 testes)
+- [x] `summary?period&division` retorna exatamente o contrato do spec (funil, kpis, sparkline, guidelineImpacts, projects)
+- [x] `guidelines/{id}` traz ideias, projetos, investimento, retorno, lucro e ROI da orientação; id inexistente → 404
+- [x] `projects/{id}` traz investimento, retorno, lucro, ROI, produtividade, redução de custo, `targetDate`, `daysToDeadline`, `overdue`
+- [x] Filtro `division` reduz funil/KPIs/impacto/lista; período inválido → 400
+- [x] Gestor/operador → 403; sem token → 401
+- [x] Teste de integração: editar `financialReturn` de um projeto altera KPIs na próxima chamada
+- [x] Gate: integration (≥ 10 testes)
 
+**Notas de execução**: `ReportsController` (`[Authorize(LiderOnly)]`) + 4 handlers de leitura; respostas: `summary` (`period`, `division`, `generatedAt`, `funnel`, `kpis` [+ `totalReturn`], `sparkline` [`month` "yyyy-MM" + `roiPercent`], `guidelineImpacts`, `projects`), `guidelines` (`items`), `guidelines/{id}` (contagem e lista de ideias por status, projetos, investimento/retorno/lucro/ROI) e `projects/{id}`. `period`/`division` inválidos → 400 (o binding de enum é case-insensitive, então `this_month` é aceito). **29 testes de integração** sobre Mongo real: contrato, totais batendo com `/projects`, filtro de divisão, os 4 períodos, 400/401/403 (todos os endpoints), 404 (id inexistente e malformado), edição de `financialReturn` refletida nos KPIs na chamada seguinte (delta exato), projeto atrasado sinalizado e contado, projeto concluído do seed com valores exatos (120000/310000/158,33).
 **Tests**: integration
 **Gate**: full
 
@@ -534,14 +536,15 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-07.1, R2-07.5, R2-07.7 · **OP-6**
 
 **Done when**:
-- [ ] Modelo definido em `Gemini:Model` (verificar em ai.google.dev o modelo disponível no free tier da conta e registrar no README/OP-6); nenhum nome de modelo hardcoded no código
-- [ ] Chave enviada no header `x-goog-api-key` (não na query); chave nunca aparece em log (teste com logger fake)
-- [ ] Timeout 20 s; 1 retry com backoff em 429/5xx/timeout; circuit breaker; falha final → `Error AI_UNAVAILABLE`
-- [ ] Resposta fora do schema/JSON inválido → `Error AI_INVALID_RESPONSE`
-- [ ] Testes com `HttpMessageHandler` fake: sucesso, 429 seguido de 200, 500 persistente, timeout, JSON inválido (≥ 8 testes)
-- [ ] Smoke manual documentado: uma chamada real com chave de teste retorna JSON válido (não roda no CI)
-- [ ] Gate: unit
+- [x] Modelo definido em `Gemini:Model` (verificar em ai.google.dev o modelo disponível no free tier da conta e registrar no README/OP-6); nenhum nome de modelo hardcoded no código
+- [x] Chave enviada no header `x-goog-api-key` (não na query); chave nunca aparece em log (teste com logger fake)
+- [x] Timeout 20 s **por tentativa**; 1 retry com backoff em 429/5xx/timeout; circuit breaker; falha final → `Error AI_UNAVAILABLE`
+- [x] Resposta fora do schema/JSON inválido → `Error AI_INVALID_RESPONSE`
+- [x] Testes com `HttpMessageHandler` fake: sucesso, 429 seguido de 200, 500 persistente, timeout, JSON inválido (37 testes)
+- [x] Smoke manual documentado: uma chamada real com chave de teste retorna JSON válido (não roda no CI)
+- [x] Gate: unit
 
+**Notas de execução**: `GeminiClient` (typed `HttpClient`) + `GeminiSchemas` + `GeminiInsightParser` (validação de schema/limites) + `AddGeminiClient()` (pipeline de resiliência); contratos `IInsightGenerator`/`IInsightPolicy`/`IInsightQuota` na Application. Modelo **`gemini-3.1-flash-lite`** (OP-6 resolvida; confirmei na conta que o id existe). **Dois achados reais:** (1) o teste "a chave nunca aparece no log" **falhou de verdade** — com log em `Trace` o `HttpClient` imprime os headers, inclusive `x-goog-api-key`; corrigido com `RedactLoggedHeaders` e o teste (que coleta desde Trace) agora protege a regressão — comprovado removendo a correção (o teste falha); (2) o smoke ao vivo mostrou uma chamada de 9 s e outra que estourou 20 s: com "20 s totais, 60 % por tentativa" o retry nunca cabia — `TimeoutSeconds` passou a valer **por tentativa** (total ≈ 2× + backoff). Também: opção `Gemini:ThinkingLevel` (opcional, não enviada por padrão), `MaxOutputTokens` (2048) e `RetryDelayMilliseconds`; o log registra contagem de tokens (nunca conteúdo). **Smoke manual (executado em 2026-09-21, fora do CI):** `POST /reports/insights` na API real com a chave da conta → `200` em ~2,7 s, ~965 tokens de prompt + ~520 de resposta, 0 de raciocínio, JSON válido em pt-BR, coerente com os dados; um timeout transitório do provedor foi observado uma vez e virou `503 AI_UNAVAILABLE` como projetado. Cobertura: sucesso e contrato da requisição, 429→200, 500 persistente (1 retry), timeout, 7 variações fora do schema, envelope inutilizável (5), 400/403/404 sem retry, partes de "thought" ignoradas, sem chave/modelo, chave nunca logada, cancelamento do chamador, circuit breaker aberto, modelo/URL vindos da configuração, thinking, uso de tokens.
 **Tests**: unit
 **Gate**: unit
 
@@ -550,22 +553,23 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 ### B20: Insights de IA — prompt, cache, cota e endpoint
 
 **What**: `GenerateInsightsHandler`, `InsightPromptBuilder` (sem PII, sanitizado), cache Mongo com TTL, rate limit por usuário + teto diário, `POST /reports/insights`.
-**Where**: `Application/Features/Reports/Insights/*`, `Infrastructure/Ai/{InsightPromptBuilder,InsightCache}.cs`, `Api/Controllers/ReportsController.cs`, testes
+**Where**: `Application/Features/Reports/Insights/*`, `Infrastructure/Ai/{MongoInsightQuota,GeminiInsightPolicy}.cs`, `Api/Controllers/ReportsController.cs`, testes
 **Depends on**: B18, B19
 **Reuses**: design §9.2–9.4; ADR-007
 **Requirement**: R2-07.1–R2-07.8
 
 **Done when**:
-- [ ] Fluxo: resumo (B17) → prompt → cache → Gemini → validação → grava → responde `{summary,highlights[],risks[],recommendations[],generatedAt,model,fromCache}`
-- [ ] **Sem PII:** teste captura o corpo enviado ao Gemini e afirma ausência de nomes, e-mails e IDs de usuário; títulos truncados em 80 chars; máx. 10 projetos e 10 orientações
-- [ ] Título malicioso ("ignore as instruções…") aparece apenas dentro do bloco `<dados>` delimitado/escapado; saída continua validada pelo schema
-- [ ] 2ª chamada idêntica → `fromCache=true`, **0** chamadas ao Gemini; `refresh=true` força nova geração
-- [ ] Mudança nos dados (ex.: retorno de projeto) altera o digest → cache miss
-- [ ] Rate limit 6/min por usuário → 429; teto diário `Gemini:DailyLimit` → 429/`RATE_LIMITED`
-- [ ] Gemini indisponível → `503 AI_UNAVAILABLE`; schema inválido → `502 AI_INVALID_RESPONSE` (nada é cacheado)
-- [ ] Operador/gestor → 403
-- [ ] Gate: unit + integration com `IInsightGenerator` fake (≥ 12 testes)
+- [x] Fluxo: resumo (B17) → prompt → cache → Gemini → validação → grava → responde `{summary,highlights[],risks[],recommendations[],generatedAt,model,fromCache}`
+- [x] **Sem PII:** teste captura o corpo enviado ao Gemini e afirma ausência de nomes, e-mails e IDs de usuário; títulos truncados em 80 chars; máx. 10 projetos e 10 orientações
+- [x] Título malicioso ("ignore as instruções…") aparece apenas dentro do bloco `<dados>` delimitado/escapado; saída continua validada pelo schema
+- [x] 2ª chamada idêntica → `fromCache=true`, **0** chamadas ao Gemini; `refresh=true` força nova geração
+- [x] Mudança nos dados (ex.: retorno de projeto) altera o digest → cache miss
+- [x] Rate limit 6/min por usuário → 429; teto diário `Gemini:DailyLimit` → 429/`RATE_LIMITED`
+- [x] Gemini indisponível → `503 AI_UNAVAILABLE`; schema inválido → `502 AI_INVALID_RESPONSE` (nada é cacheado)
+- [x] Operador/gestor → 403
+- [x] Gate: unit + integration com `IInsightGenerator` fake (35 unitários + 18 de integração + 4 de infraestrutura)
 
+**Notas de execução**: `GenerateInsightsHandler` (fluxo: resumo → prompt → cache → IA configurada? → teto diário → Gemini → mapeamento → grava cache), `InsightPromptBuilder` (na **Application**: função pura e fonte do digest do cache, não na Infrastructure), `MongoInsightQuota` (contador diário **atômico**: `findOneAndUpdate` condicional com upsert; 10 requisições simultâneas com teto 3 → exatamente 3×200 e 7×429, em teste de API e de infra) e `POST /reports/insights` com `[EnableRateLimiting(Insights)]`. **Achado (corrigido):** o rate limiter rodava *antes* da autenticação, então o "por usuário" caía no IP; a ordem do pipeline passou a ser autenticação → autorização → rate limiter (o 429 só conta requisições já autorizadas; os 336 testes de API anteriores continuam verdes). **Decisão:** o teto diário não usa mais a contagem de `aiInsights` (uma regeneração com `refresh=true` sobrescreve a mesma chave e burlaria o teto) — coleção própria `aiUsage`; removidos `CountCreatedSinceAsync` e o índice `createdAt`. Orientações vão ao modelo como `G1…G10` e a referência devolvida é mapeada de volta (inventada → `null`). Privacidade comprovada por teste com o corpo capturado (nenhum nome, e-mail, id de usuário ou qualquer ObjectId; título malicioso só dentro do bloco `<dados>` e sem conseguir fechá-lo). Cache: compartilhado entre líderes, chave = SHA-256(modelo+filtros+payload), então editar um projeto invalida; entrada corrompida = miss; corrida de gravação (chave duplicada) não derruba a resposta. Mutações feitas para validar os testes (sanitização, truncamento, teto, `refresh`, digest, gravação do cache) — todas derrubaram testes. `refresh` e cache hit servido mesmo com o teto esgotado.
 **Tests**: unit + integration
 **Gate**: full
 

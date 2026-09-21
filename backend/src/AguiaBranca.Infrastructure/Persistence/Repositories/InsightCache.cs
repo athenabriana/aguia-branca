@@ -34,9 +34,6 @@ internal sealed class InsightCache(AppDbContext db) : IInsightCache
         existing.ExpiresAt = insight.ExpiresAt;
     }
 
-    public Task<int> CountCreatedSinceAsync(DateTime since, CancellationToken ct) =>
-        db.AiInsights.AsNoTracking().CountAsync(x => x.CreatedAt >= since, ct);
-
     private static CachedInsight ToModel(InsightCacheEntry e) =>
         new(e.CacheKey, e.UserId, e.Filters, e.Model, e.PayloadJson, e.CreatedAt, e.ExpiresAt);
 }

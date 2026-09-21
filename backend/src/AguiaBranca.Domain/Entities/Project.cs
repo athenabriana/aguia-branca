@@ -60,8 +60,18 @@ public sealed class Project
     /// <summary>ROI % = (retorno − investimento) / investimento × 100; <c>null</c> quando o investimento é 0.</summary>
     public decimal? RoiPercent => Investment > 0 ? NetProfit / Investment * 100m : null;
 
-    public bool IsOverdue(DateTime now) =>
-        TargetDate is { } target && target < now && Stage is not (ProjectStage.CONCLUIDO or ProjectStage.CANCELADO);
+    /// <summary>
+    /// Dias até o prazo (negativo = passou), contando pelo <b>dia</b> do prazo (a data escolhida no app, sem hora) contra
+    /// <paramref name="today"/> (o dia corrente no fuso do relatório). <c>null</c> sem prazo ou quando o projeto já terminou
+    /// (CONCLUIDO/CANCELADO não têm pressão de prazo).
+    /// </summary>
+    public int? DaysToDeadline(DateOnly today) =>
+        TargetDate is { } target && Stage is not (ProjectStage.CONCLUIDO or ProjectStage.CANCELADO)
+            ? DateOnly.FromDateTime(target).DayNumber - today.DayNumber
+            : null;
+
+    /// <summary>Atrasado = aberto e o dia do prazo já passou (no próprio dia do prazo ainda não está atrasado).</summary>
+    public bool IsOverdue(DateOnly today) => DaysToDeadline(today) is < 0;
 
     public static Project Create(
         ProjectData data, string creatorManagerId, string creatorManagerName, DateTime now,

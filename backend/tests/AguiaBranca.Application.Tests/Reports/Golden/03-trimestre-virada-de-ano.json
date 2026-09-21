@@ -1,0 +1,49 @@
+{
+  "description": "LAST_QUARTER com 'agora' em 2026-01-15T01:00Z (14/01 22:00 em São Paulo): janela móvel de 3 meses começando em 2025-10-14T03:00Z, fim inclusivo, virada de ano na sparkline (2025-08..2026-01), item de 1 s antes da virada do mês local e prazo contado pelo dia local. Retorno == investimento não é ROI positivo.",
+  "nowUtc": "2026-01-15T01:00:00Z",
+  "filters": { "period": "LAST_QUARTER", "division": null },
+  "guidelines": [
+    { "key": "g1", "title": "Inovação aberta" },
+    { "key": "g2", "title": "Pessoas" }
+  ],
+  "ideas": [
+    { "division": "LOGISTICA",   "guideline": "g1", "status": "SUBMETIDA",    "createdAt": "2025-10-14T03:00:00Z" },
+    { "division": "PASSAGEIROS", "guideline": "g1", "status": "EM_ANALISE",   "createdAt": "2025-10-14T02:59:59Z" },
+    { "division": "COMERCIO",    "guideline": "g2", "status": "IMPLEMENTADA", "createdAt": "2025-12-20T12:00:00Z" },
+    { "division": "CORPORATIVO", "guideline": null, "status": "APROVADA",     "createdAt": "2026-01-14T23:00:00Z" },
+    { "division": "LOGISTICA",   "guideline": "g1", "status": "REJEITADA",    "createdAt": "2026-01-15T01:00:00Z" },
+    { "division": "LOGISTICA",   "guideline": "g2", "status": "SUBMETIDA",    "createdAt": "2026-01-15T01:00:01Z" }
+  ],
+  "projects": [
+    { "title": "R1", "stage": "CONCLUIDO",    "division": "LOGISTICA",   "guideline": "g1", "investment": 100000, "financialReturn": 100000, "productivityGain": 0,  "costReduction": 0,    "targetDate": "2025-12-31T00:00:00Z", "updatedAt": "2026-01-01T02:59:59Z" },
+    { "title": "R2", "stage": "EM_EXECUCAO",  "division": "COMERCIO",    "guideline": "g1", "investment": 60000,  "financialReturn": 90000,  "productivityGain": 15, "costReduction": 1000, "targetDate": "2026-01-14T00:00:00Z", "updatedAt": "2026-01-01T03:00:00Z" },
+    { "title": "R3", "stage": "PLANEJAMENTO", "division": "PASSAGEIROS", "guideline": "g2", "investment": 0,      "financialReturn": 0,      "productivityGain": 0,  "costReduction": 0,    "targetDate": "2026-01-10T00:00:00Z", "updatedAt": "2025-11-05T12:00:00Z" },
+    { "title": "R4", "stage": "EM_EXECUCAO",  "division": "LOGISTICA",   "guideline": null, "investment": 40000,  "financialReturn": 20000,  "productivityGain": 25, "costReduction": 500,  "targetDate": null,                   "updatedAt": "2025-10-14T02:59:59Z" },
+    { "title": "R5", "stage": "CONCLUIDO",    "division": "CORPORATIVO", "guideline": "g2", "investment": 25000,  "financialReturn": 75000,  "productivityGain": 5,  "costReduction": 2500, "targetDate": "2025-11-30T00:00:00Z", "updatedAt": "2025-08-05T12:00:00Z" },
+    { "title": "R6", "stage": "EM_EXECUCAO",  "division": "LOGISTICA",   "guideline": "g1", "investment": 10000,  "financialReturn": 12000,  "productivityGain": 0,  "costReduction": 0,    "targetDate": "2026-02-01T00:00:00Z", "updatedAt": "2026-01-15T01:00:01Z" }
+  ],
+  "expected": {
+    "funnel": { "submitted": 4, "evaluated": 3, "approved": 2, "inExecution": 2, "roiPositive": 0 },
+    "kpis": {
+      "roiConsolidated": 18.75, "netProfit": 30000, "totalInvestment": 160000, "totalReturn": 190000,
+      "activeProjects": 1, "avgProductivityGain": 15, "totalCostReduction": 1000, "overdueProjects": 1
+    },
+    "sparkline": [
+      { "month": "2025-08", "roiPercent": 200 },
+      { "month": "2025-09", "roiPercent": null },
+      { "month": "2025-10", "roiPercent": -50 },
+      { "month": "2025-11", "roiPercent": null },
+      { "month": "2025-12", "roiPercent": 0 },
+      { "month": "2026-01", "roiPercent": 45.71 }
+    ],
+    "guidelineImpacts": [
+      { "title": "Inovação aberta", "ideasCount": 2, "projectsCount": 2, "investment": 160000, "financialReturn": 190000, "netProfit": 30000, "roiPercent": 18.75 },
+      { "title": "Pessoas",         "ideasCount": 1, "projectsCount": 1, "investment": 0,      "financialReturn": 0,      "netProfit": 0,     "roiPercent": null }
+    ],
+    "projects": [
+      { "title": "R2", "stage": "EM_EXECUCAO",  "roiPercent": 50,   "daysToDeadline": 0,    "overdue": false },
+      { "title": "R1", "stage": "CONCLUIDO",    "roiPercent": 0,    "daysToDeadline": null, "overdue": false },
+      { "title": "R3", "stage": "PLANEJAMENTO", "roiPercent": null, "daysToDeadline": -4,   "overdue": true }
+    ]
+  }
+}

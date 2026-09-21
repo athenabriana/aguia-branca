@@ -189,13 +189,14 @@ Requisitos com IDs rastreáveis (`R2-XX`) e critérios de aceitação testáveis
 - R2-06.3 — ROI = (Σ retorno − Σ investimento) / Σ investimento × 100; Σ investimento = 0 → `null` (app mostra "—"); mês com investimento 0 → ponto `null` na sparkline
 - R2-06.4 — **Retorno por estratégia:** `GET /reports/guidelines` (lista) e `GET /reports/guidelines/{id}` (ideias, projetos, investimento, retorno, lucro, ROI da orientação)
 - R2-06.5 — **Retorno por projeto:** `GET /reports/projects/{id}` (investimento, retorno, lucro, ROI, produtividade, redução de custo, `targetDate`, `daysToDeadline`, `overdue`, estágio)
-- R2-06.6 — Respostas contêm apenas dados agregados/resumidos prontos para gráfico; valores monetários em número (BRL), percentuais com casas completas (formatação é do app)
+- R2-06.6 — Respostas contêm apenas dados agregados/resumidos prontos para gráfico; valores monetários em número (BRL, sem arredondar), **percentuais com 2 casas** (arredondamento comercial; a ordenação usa o valor exato). A formatação visual é do app
+- R2-06.8 — **Decisões de paridade com o app** (herdadas do `DashboardComputer.kt` de propósito): período filtra ideias por `createdAt` e projetos por `updatedAt`, janela `[início, agora]`; `LAST_QUARTER` é uma **janela móvel de 3 meses** (não o trimestre-calendário); ganho médio de produtividade só considera projetos com ganho > 0; "ativos" = só `EM_EXECUCAO`. **Diferenças intencionais:** meses/dias seguem o fuso do relatório (`Reports:TimeZone`), não o do aparelho; "atrasado" = projeto aberto (não `CONCLUIDO`/`CANCELADO`) cujo **dia** do prazo já passou (no próprio dia do prazo ainda não está atrasado); `daysToDeadline` é `null` para projeto concluído/cancelado ou sem prazo; empates de ordenação resolvidos por título e id (resposta determinística)
 - R2-06.7 — O app deixa de calcular o dashboard localmente (`DashboardComputer.kt` removido); mantém UI, filtros, modo apresentação e drill-down
 
 **Aceitação:**
 - Filtro `division=LOGISTICA` reduz funil, KPIs, impacto e lista; sparkline reage à divisão mas não ao período
 - Σ investimento = 0 → `roiPercent = null`
-- Conjunto de dados de referência (mesmos vetores do teste Kotlin S1) produz **exatamente** os mesmos números no servidor
+- Conjuntos de dados de referência (**calculados à mão** a partir das regras do `DashboardComputer.kt` — o app nunca teve teste unitário do dashboard) produzem **exatamente** os números esperados no servidor
 - Operador/gestor → `403` em `/reports/**`
 - Editar retorno de um projeto e recarregar o dashboard atualiza os KPIs em < 2 s (rede local)
 
@@ -210,8 +211,9 @@ Requisitos com IDs rastreáveis (`R2-XX`) e critérios de aceitação testáveis
 - R2-07.2 — Saída **estruturada** (JSON schema): `summary` (parágrafo), `highlights[]`, `risks[]`, `recommendations[]` (`title`, `detail`, `priority ALTA|MEDIA|BAIXA`, `relatedGuidelineId?`), mais `generatedAt`, `model`, `fromCache`. Resposta do modelo é validada no servidor; inválida → `502 AI_INVALID_RESPONSE`
 - R2-07.3 — Idioma pt-BR; tom executivo; análises **baseadas apenas nos dados enviados** (instrução explícita para não inventar números); aviso "Gerado por IA — valide antes de decidir" exibido no app
 - R2-07.4 — **Privacidade:** somente dados agregados + títulos truncados (80 chars, máx. 10 projetos e 10 orientações). Nunca nomes, e-mails ou IDs de usuário. Textos livres tratados como dados (delimitados no prompt) — mitigação de prompt injection
-- R2-07.5 — **Resiliência:** timeout 20 s, 1 retry com backoff em 429/5xx; falha → `503 AI_UNAVAILABLE` (o app mostra erro e "Tentar novamente"; **nunca** exibe insight falso)
-- R2-07.6 — **Cache + cota:** resultado cacheado 6 h por hash (`period`+`division`+`guidelineId`+digest dos dados), com opção `refresh=true`; rate limit por usuário (6/min) e teto diário configurável, para respeitar a cota gratuita
+- R2-07.5 — **Resiliência:** timeout de 20 s **por tentativa** (`Gemini:TimeoutSeconds`), 1 retry com backoff em 429/5xx/timeout e circuit breaker; falha → `503 AI_UNAVAILABLE` (o app mostra erro e "Tentar novamente"; **nunca** exibe insight falso)
+- R2-07.6 — **Cache + cota:** resultado cacheado 6 h por hash (`modelo`+`period`+`division`+`guidelineId`+digest dos dados), compartilhado entre líderes (são dados da empresa), com opção `refresh=true`; rate limit por usuário (6/min, 429 `RATE_LIMITED` + `Retry-After`) e **teto diário atômico** `Gemini:DailyLimit` (coleção `aiUsage`, 1 documento por dia no fuso do relatório; cache hit não consome cota; tentativas que falham no Gemini consomem, pois também gastam a cota do provedor)
+- R2-07.9 — **Prompt:** orientações vão como referência curta (`G1`…`G10`), nunca por id; a recomendação devolve `relatedGuidelineRef` que o servidor mapeia para o `relatedGuidelineId` real (referência inventada pelo modelo vira `null`). Com `guidelineId` no pedido, o resumo cobre só aquela orientação. Projetos enviados: os atrasados (até 4) + melhores/piores ROI até 10; orientações: as 10 com mais atividade (`orientacoesOmitidas`/`projetosOmitidos` informam o corte). O log registra só contagem de tokens, modelo, status e latência (nunca conteúdo nem chave; os headers do `HttpClient` são redigidos mesmo em `Trace`)
 - R2-07.7 — Chave `Gemini:ApiKey` só por variável de ambiente/secret; enviada em header `x-goog-api-key`; nunca logada
 - R2-07.8 — App: card "✨ Insights da IA" no dashboard (botão gerar, loading, seções Destaques/Riscos/Recomendações, erro com retry, selo de IA e data de geração); respeita os filtros ativos
 
@@ -370,23 +372,26 @@ Datas ISO-8601 UTC. IDs `string` (ObjectId). Listas paginadas: `?page=1&pageSize
   "division": "LOGISTICA", "guidelineId": "665f...", "responsibleId": "…",
   "note": "Meta atingida", "version": 3 }
 
-// GET /reports/summary?period=ALL&division=LOGISTICA  → 200
-{ "funnel": { "submitted": 6, "evaluated": 4, "approved": 3, "inExecution": 2, "roiPositive": 1 },
-  "kpis": { "roiPercent": 158.3, "netProfit": 190000, "totalInvestment": 120000,
-            "activeProjects": 1, "avgProductivityGain": 12.5, "totalCostReduction": 45000,
-            "overdueProjects": 0 },
-  "sparkline": [ { "month": "2026-04", "roiPercent": null }, …, { "month": "2026-09", "roiPercent": 158.3 } ],
-  "guidelineImpacts": [ { "guidelineId": "665f...", "title": "Eficiência operacional",
-                          "ideasCount": 3, "projectsCount": 2, "roiPercent": 158.3 } ],
-  "projects": [ { "id": "6661...", "title": "PROJ: Roteirização", "stage": "CONCLUIDO",
-                  "roiPercent": 158.3, "netProfit": 190000, "targetDate": "2026-12-01T00:00:00Z",
-                  "daysToDeadline": 71, "overdue": false } ] }
+// GET /reports/summary?period=ALL&division=LOGISTICA   (percentuais com 2 casas; valores em BRL)
+{ "period": "ALL", "division": "LOGISTICA", "generatedAt": "2026-09-21T22:15:00Z",
+  "funnel": { "submitted": 6, "evaluated": 5, "approved": 3, "inExecution": 2, "roiPositive": 1 },
+  "kpis": { "roiConsolidated": 36.73, "netProfit": 90000, "totalInvestment": 245000, "totalReturn": 335000,
+            "activeProjects": 1, "avgProductivityGain": 8.25, "totalCostReduction": 53000, "overdueProjects": 0 },
+  "sparkline": [ { "month": "2026-04", "roiPercent": null }, …, { "month": "2026-09", "roiPercent": 36.73 } ],
+  "guidelineImpacts": [ { "guidelineId": "665f…", "title": "Eficiência operacional", "ideasCount": 3, "projectsCount": 2,
+                          "investment": 120000, "financialReturn": 310000, "netProfit": 190000, "roiPercent": 158.33 } ],
+  "projects": [ { "id": "6661…", "title": "PROJ: Roteirização", "stage": "CONCLUIDO", "division": "LOGISTICA",
+                  "guidelineId": "665f…", "guidelineTitle": "Eficiência operacional",
+                  "investment": 120000, "financialReturn": 310000, "netProfit": 190000, "roiPercent": 158.33,
+                  "productivityGain": 12.5, "costReduction": 45000, "targetDate": "2026-12-01T00:00:00Z",
+                  "daysToDeadline": null, "overdue": false, "statusText": "Entregue", "updatedAt": "…" } ] }
+// daysToDeadline é null para projeto CONCLUIDO/CANCELADO ou sem prazo.
 
-// POST /reports/insights   { "period": "ALL", "division": "LOGISTICA", "refresh": false }
-{ "summary": "…", "highlights": [ { "title": "…", "detail": "…" } ],
-  "risks": [ { "title": "…", "detail": "…" } ],
-  "recommendations": [ { "title": "…", "detail": "…", "priority": "ALTA", "relatedGuidelineId": null } ],
-  "generatedAt": "2026-09-21T14:10:00Z", "model": "gemini-…", "fromCache": false }
+// POST /reports/insights   { "period": "ALL", "division": "LOGISTICA", "guidelineId": null, "refresh": false }   (corpo opcional: {} vale)
+{ "summary": "…", "highlights": [ "…" ], "risks": [ "…" ],
+  "recommendations": [ { "title": "…", "detail": "…", "priority": "ALTA", "relatedGuidelineId": "665f…" } ],
+  "generatedAt": "2026-09-21T14:10:00Z", "model": "gemini-3.1-flash-lite", "fromCache": false }
+// Erros: 503 AI_UNAVAILABLE · 502 AI_INVALID_RESPONSE · 429 RATE_LIMITED (+ Retry-After) · 404 (guidelineId inexistente) · 403 (não é líder)
 ```
 
 ---
@@ -433,10 +438,11 @@ pointEvents
   refId?, createdAt
 
 aiInsights                        (cache)
+aiUsage                           (contador diário de gerações; _id = yyyy-MM-dd, count, expiresAt)
   _id, cacheKey (unique), userId, filters, model, payload, createdAt, expiresAt (TTL)
 ```
 
-**Índices:** `users.normalizedEmail` (unique) · `refreshTokens.tokenHash` (unique) + TTL · `guidelines.updatedAt` desc · `guidelineHistory (guidelineId, occurredAt desc)`, `(category, occurredAt)`, `(campaign, occurredAt)` · `ideas (authorId, createdAt desc)`, `(status, ice.score desc)`, `(guidelineId, createdAt desc)` · `projects (division, updatedAt desc)`, `(guidelineId, updatedAt desc)`, `(stage, updatedAt desc)`, `originatingIdeaId` (unique parcial) · `projectUpdates (projectId, createdAt desc)` · `pointEvents (userId, createdAt)`, `(createdAt)` · `aiInsights.cacheKey` (unique) + TTL `expiresAt`.
+**Índices:** `users.normalizedEmail` (unique) · `refreshTokens.tokenHash` (unique) + TTL · `guidelines.updatedAt` desc · `guidelineHistory (guidelineId, occurredAt desc)`, `(category, occurredAt)`, `(campaign, occurredAt)` · `ideas (authorId, createdAt desc)`, `(status, ice.score desc)`, `(guidelineId, createdAt desc)` · `projects (division, updatedAt desc)`, `(guidelineId, updatedAt desc)`, `(stage, updatedAt desc)`, `originatingIdeaId` (unique parcial) · `projectUpdates (projectId, createdAt desc)` · `pointEvents (userId, createdAt)`, `(createdAt)` · `aiInsights.cacheKey` (unique) + TTL `expiresAt` · `aiUsage` (`_id` = dia `yyyy-MM-dd`, `count`) + TTL `expiresAt` (2 dias).
 
 ---
 
@@ -455,7 +461,7 @@ aiInsights                        (cache)
 | **OP-3** | Gestor pode cadastrar ideias? | Sim (as-built), bloqueando auto-aprovação |
 | **OP-4** | Manter Firebase Analytics/Crashlytics no app? | Sim; só Auth e Firestore saem |
 | **OP-5** | Onde hospedar o backend para o APK funcionar na avaliação? | Deploy gratuito (API) + MongoDB Atlas M0; fallback: `docker compose` local + IP da LAN |
-| **OP-6** | Modelo Gemini exato do free tier | Configurável (`Gemini:Model`); confirmar o modelo disponível na conta no início da B19 |
+| **OP-6** | Modelo Gemini exato do free tier | ✅ **Resolvida:** `gemini-3.1-flash-lite` (escolha do usuário, máxima economia de tokens; existe na conta e respondeu no smoke real em ~2,7 s, ~1,5 mil tokens/geração). Continua configurável (`Gemini:Model`): nomes de modelos gratuitos mudam com frequência (2.5 Flash/Flash-Lite já não aceitam contas novas) |
 | **OP-7** | Paginação no app | App pede `pageSize=200` e não pagina (volume de demo); limitação registrada |
 
 ---

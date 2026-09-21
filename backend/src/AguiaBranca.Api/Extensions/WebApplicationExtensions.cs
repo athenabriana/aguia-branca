@@ -26,9 +26,11 @@ public static class WebApplicationExtensions
         }
 
         app.UseRouting();
-        app.UseRateLimiter();          // depois do routing: usa os metadados do endpoint ([EnableRateLimiting])
         app.UseAuthentication();
         app.UseAuthorization();
+        // Depois da autenticação: o limite dos insights é por usuário (claim "sub") e só conta requisições já autorizadas.
+        // Depois do routing: usa os metadados do endpoint ([EnableRateLimiting]).
+        app.UseRateLimiter();
         app.UseMiddleware<RequestContextLoggingMiddleware>();
         return app;
     }

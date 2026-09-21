@@ -39,7 +39,8 @@ public sealed class IndexInitializerTests(MongoFixture fixture) : IAsyncLifetime
     [InlineData(Collections.Projects, "ix_projects_division_updatedAt", "ix_projects_guidelineId_updatedAt", "ix_projects_stage_updatedAt", "ux_projects_originatingIdeaId")]
     [InlineData(Collections.ProjectUpdates, "ix_projectUpdates_projectId_createdAt")]
     [InlineData(Collections.PointEvents, "ix_pointEvents_userId_createdAt", "ix_pointEvents_createdAt")]
-    [InlineData(Collections.AiInsights, "ux_aiInsights_cacheKey", "ix_aiInsights_createdAt", "ttl_aiInsights_expiresAt")]
+    [InlineData(Collections.AiInsights, "ux_aiInsights_cacheKey", "ttl_aiInsights_expiresAt")]
+    [InlineData(Collections.AiUsage, "ttl_aiUsage_expiresAt")]
     public async Task EnsureIndexes_CreatesAllExpectedIndexes(string collection, params string[] expected)
     {
         await IndexInitializer.EnsureIndexesAsync(_db.Database);
@@ -65,6 +66,9 @@ public sealed class IndexInitializerTests(MongoFixture fixture) : IAsyncLifetime
 
         var insights = (await IndexesOf(Collections.AiInsights)).Single(i => i["name"] == "ttl_aiInsights_expiresAt");
         insights["expireAfterSeconds"].ToInt64().Should().Be(0);
+
+        var usage = (await IndexesOf(Collections.AiUsage)).Single(i => i["name"] == "ttl_aiUsage_expiresAt");
+        usage["expireAfterSeconds"].ToInt64().Should().Be(0);
 
         var iceScore = (await IndexesOf(Collections.Ideas)).Single(i => i["name"] == "ix_ideas_status_iceScore");
         iceScore["key"].AsBsonDocument.Names.Should().Equal("status", "ice.score");

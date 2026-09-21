@@ -317,8 +317,6 @@ public sealed class RepositoryTests(MongoFixture fixture) : IAsyncLifetime
         await using var read = _db.CreateContext();
         var c2 = new InsightCache(read);
         (await c2.GetAsync("key-1", now.AddHours(8), default))!.PayloadJson.Should().Be("v2");
-        (await c2.CountCreatedSinceAsync(now.AddHours(1), default)).Should().Be(1);
-        (await c2.CountCreatedSinceAsync(now.AddHours(8), default)).Should().Be(0);
         (await _db.Raw(Collections.AiInsights).CountDocumentsAsync(MongoDB.Bson.BsonDocument.Parse("{}"))).Should().Be(1);
     }
 }

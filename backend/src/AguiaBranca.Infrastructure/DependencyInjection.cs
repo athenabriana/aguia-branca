@@ -1,6 +1,7 @@
 using AguiaBranca.Application.Common.Abstractions;
 using AguiaBranca.Application.Common.Abstractions.Repositories;
 using AguiaBranca.Domain.Entities;
+using AguiaBranca.Infrastructure.Ai;
 using AguiaBranca.Infrastructure.Authentication;
 using AguiaBranca.Infrastructure.Configuration;
 using AguiaBranca.Infrastructure.Identity;
@@ -49,6 +50,9 @@ public static class DependencyInjection
         services.AddScoped<IPointEventRepository, PointEventRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IInsightCache, InsightCache>();
+        services.AddSingleton<IInsightQuota, MongoInsightQuota>();
+        services.AddSingleton<IInsightPolicy, GeminiInsightPolicy>();
+        services.AddGeminiClient();
 
         AddIdentity(services);
         services.AddSingleton<ITokenService, JwtTokenService>();

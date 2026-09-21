@@ -367,10 +367,10 @@ O BSON DateTime tem precisão de **milissegundo**. O `IClock` de produção (`Sy
 ```text
 LIDER ─ POST /reports/insights {period, division, guidelineId?, refresh} ─►
   1. ReportCalculator → resumo agregado (mesmo do /reports/summary)
-  2. InsightPromptBuilder → payload minimizado (sem PII; títulos ≤ 80 chars; top 10)
-  3. cacheKey = hash(filtros + digest do payload)
+  2. InsightPromptBuilder → payload minimizado (sem PII; títulos ≤ 80 chars; top 10; orientações por ref G1…)
+  3. cacheKey = SHA-256(modelo + filtros + payload)  (o payload carrega os agregados = digest dos dados)
   4. cache HIT (e !refresh)? ─► devolve (fromCache=true)
-  5. rate limit/teto diário ok? senão 429
+  5. IA configurada? senão 503 · teto diário atômico (aiUsage) ok? senão 429 RATE_LIMITED
   6. GeminiClient.generate (resiliente) ─► JSON estruturado
   7. valida schema/limites; inválido → 502 AI_INVALID_RESPONSE
   8. grava aiInsights (TTL 6 h) ─► 200
@@ -386,7 +386,9 @@ Sanitização: remover quebras de linha/controle, truncar, escapar delimitadores
 
 ### 9.4 Resiliência e cota
 
-`HttpClientFactory` com `AddStandardResilienceHandler` ajustado (timeout total 20 s, retry 1×, circuit breaker). Rate limiter por usuário (6/min) e contador diário em `aiInsights`/memória configurável (`Gemini:DailyLimit`). A chave vem de `Gemini__ApiKey`; logs registram apenas modelo, latência e status.
+`HttpClientFactory` com `AddStandardResilienceHandler` ajustado: **timeout de 20 s por tentativa** (`Gemini:TimeoutSeconds`; o limite total ≈ 2× + backoff, para o retry caber — com 60 % do total por tentativa o retry nunca teria tempo), 1 retry com backoff exponencial + jitter em 429/5xx/timeout, circuit breaker (≥ 50 % de falhas em ≥ 4 chamadas/60 s → 30 s aberto). Rate limiter por usuário (6/min; a policy roda **depois** da autenticação para enxergar o claim `sub`) e teto diário `Gemini:DailyLimit` num contador atômico em Mongo (`aiUsage`: `findOneAndUpdate` condicional com upsert; chave duplicada = teto). A chave vem de `Gemini__ApiKey`, só no header `x-goog-api-key`; os headers do `HttpClient` são redigidos (com log em `Trace` o framework os imprimia — regressão coberta por teste); logs registram apenas modelo, status, latência e contagem de tokens.
+
+`InsightPromptBuilder` vive na **Application** (função pura sobre o `ReportSummary`, também fornece o payload do digest do cache); a Infrastructure só tem o cliente HTTP (`GeminiClient`), o schema (`GeminiSchemas`) e o validador da resposta (`GeminiInsightParser`: estrutura errada → `AI_INVALID_RESPONSE`; textos longos são truncados; máx. 8 itens por lista).
 
 ## 10. Validação e tratamento de erros
 
@@ -570,7 +572,7 @@ Firestore (service account) ─► Extract ─► Transform (IdMap, Timestamp→
 | **DS-9** | Rate limiting | ASP.NET Core Rate Limiting | **Decidido** |
 | **DS-10** | EF Core Mongo viabilidade (transações, concurrency token, Identity stores) | Viável | **Decidido — GO (spike B03)** |
 | **DS-11** | Hospedagem/URL do backend para o APK | Free host + Atlas M0 | **Pendente** (OP-5) |
-| **DS-12** | Modelo Gemini | Configurável | **Pendente** (OP-6) |
+| **DS-12** | Modelo Gemini | Configurável (`Gemini:Model`) | ✅ `gemini-3.1-flash-lite` (OP-6) |
 
 ## 21. Riscos e mitigações
 

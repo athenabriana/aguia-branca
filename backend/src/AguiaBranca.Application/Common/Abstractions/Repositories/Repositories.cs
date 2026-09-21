@@ -104,6 +104,4 @@ public interface IInsightCache
     /// <summary>Entrada ainda válida (não expirada) para a chave, ou <c>null</c>.</summary>
     Task<CachedInsight?> GetAsync(string cacheKey, DateTime now, CancellationToken ct);
     Task SetAsync(CachedInsight insight, CancellationToken ct);
-    /// <summary>Quantas gerações foram gravadas desde <paramref name="since"/> (teto diário da cota).</summary>
-    Task<int> CountCreatedSinceAsync(DateTime since, CancellationToken ct);
 }

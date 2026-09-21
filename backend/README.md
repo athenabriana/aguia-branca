@@ -33,7 +33,8 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | Ideias: cadastro, edição, exclusão, curadoria (ICE), rejeição e **aprovação → projeto rascunho** | ✅ |
 | Gamificação no servidor: pontos, badges, ranking mensal | ✅ |
 | Projetos: CRUD do gestor, histórico com diff e **conclusão → ideia implementada (+200 pontos)** | ✅ |
-| Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
+| Relatórios/dashboard: funil, KPIs, sparkline, retorno por orientação e por projeto (portados do app, com testes de paridade) | ✅ |
+| **Insights de IA (Google Gemini)** sobre o dashboard, com cache, cota diária e resiliência | ✅ |
 | Ferramenta de migração Firebase → MongoDB | ⏳ próximas fases |
 
 ### Endpoints disponíveis hoje
@@ -65,6 +66,11 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | `DELETE` | `/api/v1/projects/{id}` | **GESTOR** | Exclui o projeto e o histórico (a ideia de origem permanece) |
 | `GET` | `/api/v1/users` | GESTOR, LIDER | Usuários (`id`, `name`, `role`, `division`); filtro `role` |
 | `GET` | `/api/v1/users/ranking` | autenticado | Top do mês (operadores); `limit` 1–50 (padrão 5) |
+| `GET` | `/api/v1/reports/summary` | **LIDER** | Dashboard: `funnel`, `kpis`, `sparkline` (6 meses), `guidelineImpacts`, `projects` por ROI. Filtros `period` (`THIS_MONTH` \| `LAST_QUARTER` \| `THIS_YEAR` \| `ALL`) e `division` |
+| `GET` | `/api/v1/reports/guidelines` | **LIDER** | Retorno por estratégia: impacto de cada orientação (mesmos filtros) |
+| `GET` | `/api/v1/reports/guidelines/{id}` | **LIDER** | Ideias (por status), projetos, investimento, retorno, lucro e ROI da orientação |
+| `GET` | `/api/v1/reports/projects/{id}` | **LIDER** | Investimento, retorno, lucro, ROI, produtividade, redução de custo, `targetDate`, `daysToDeadline`, `overdue` |
+| `POST` | `/api/v1/reports/insights` | **LIDER** | **Insights de IA**: `{ period?, division?, guidelineId?, refresh? }` → `summary`, `highlights[]`, `risks[]`, `recommendations[]`, `generatedAt`, `model`, `fromCache`. Cache de 6 h; 6 req/min por usuário; teto diário. `503 AI_UNAVAILABLE` · `502 AI_INVALID_RESPONSE` · `429 RATE_LIMITED` |
 | `GET` | `/health/live` · `/health/ready` · `/health` | público | Saúde (processo · MongoDB · tudo) |
 | `GET` | `/swagger` | público* | Documentação interativa (*só em Development ou com `Swagger__Enabled=true`) |
 
@@ -241,7 +247,14 @@ A configuração vem de `appsettings*.json`, *user secrets*, variáveis de ambie
 | `RateLimiting:AuthPermitLimit` | `RateLimiting__AuthPermitLimit` | `10` | Requisições por minuto, por IP, em `/api/v1/auth/*` |
 | `Cors:Origins` | `Cors__Origins__0` … | vazio | Origens permitidas (o app nativo não usa CORS) |
 | `Reports:TimeZone` | `Reports__TimeZone` | `America/Sao_Paulo` | Fuso do "mês corrente" (ranking, badges) |
-| `Gemini:ApiKey` / `Gemini:Model` | `Gemini__ApiKey` / `Gemini__Model` | vazio | Insights de IA (fase futura). Chave gratuita em [Google AI Studio](https://aistudio.google.com/) |
+| `Gemini:ApiKey` | `Gemini__ApiKey` (`GEMINI_API_KEY` no `.env`) | vazio | Chave do [Google AI Studio](https://aistudio.google.com/). **Sem chave a API funciona normalmente** e `/reports/insights` responde `503 AI_UNAVAILABLE` |
+| `Gemini:Model` | `Gemini__Model` (`GEMINI_MODEL`) | vazio (**obrigatório com chave**) | Modelo do free tier da sua conta. Este projeto usa **`gemini-3.1-flash-lite`** (menor custo em tokens). Os nomes mudam com frequência: liste os disponíveis em [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models) |
+| `Gemini:DailyLimit` | `Gemini__DailyLimit` (`GEMINI_DAILY_LIMIT`) | `100` | Teto diário de gerações (todos os líderes juntos, dia no fuso `Reports:TimeZone`). Ajuste à cota da sua conta |
+| `Gemini:CacheHours` | `Gemini__CacheHours` | `6` | Validade do cache dos insights (`0` desliga) |
+| `Gemini:TimeoutSeconds` | `Gemini__TimeoutSeconds` | `20` | Timeout **por tentativa** (há 1 nova tentativa em 429/5xx/timeout) |
+| `Gemini:MaxOutputTokens` | `Gemini__MaxOutputTokens` | `2048` | Teto de tokens da resposta |
+| `Gemini:ThinkingLevel` | `Gemini__ThinkingLevel` (`GEMINI_THINKING_LEVEL`) | vazio | Opcional (modelos Gemini 3): `minimal` \| `low` \| `medium` \| `high` |
+| `RateLimiting:InsightsPermitLimit` | `RateLimiting__InsightsPermitLimit` | `6` | Gerações por minuto, **por usuário** |
 
 > **Segredos nunca entram no Git.** `.env`, *user secrets* e variáveis de ambiente são os lugares certos; `appsettings*.json` não contém valores reais.
 
@@ -294,6 +307,24 @@ $login = Invoke-RestMethod -Method Post -Uri http://localhost:5080/api/v1/auth/l
 Invoke-RestMethod -Uri http://localhost:5080/api/v1/auth/me -Headers @{ Authorization = "Bearer $($login.accessToken)" }
 ```
 
+### Insights de IA (Gemini)
+
+1. Crie uma chave no [Google AI Studio](https://aistudio.google.com/) e coloque no `backend/.env` (`GEMINI_API_KEY` e `GEMINI_MODEL=gemini-3.1-flash-lite`). O `.env` é ignorado pelo Git.
+2. **Docker compose:** as variáveis do `.env` já são repassadas à API. **`dotnet run`:** exporte `Gemini__ApiKey` e `Gemini__Model` no terminal (o `.env` só vale para o compose).
+3. Chame como líder:
+
+```bash
+curl -s -X POST http://localhost:5080/api/v1/reports/insights \
+  -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"period":"ALL"}'
+```
+
+- Só **dados agregados e títulos truncados (80 caracteres)** vão ao modelo — nunca nomes, e-mails ou ids de usuário; textos livres entram como dado dentro de um bloco delimitado (mitigação de *prompt injection*). Orientações são citadas por referência curta (`G1`…), não por id.
+- A 2ª chamada com os mesmos filtros e dados vem do **cache** (`fromCache: true`, sem custo); alterar um projeto invalida o cache. `"refresh": true` força nova geração.
+- **Cota:** o plano gratuito é pequeno e muda com o tempo — confira os limites da sua conta. `Gemini:DailyLimit` protege a cota (resposta `429`); cache e limite por usuário reduzem o consumo. Cada geração usa ~1,5 mil tokens.
+- A chave só trafega no header `x-goog-api-key` e **nunca é registrada em log** (o log guarda apenas modelo, status, latência e contagem de tokens).
+- **Se o Google recusar** (chave inválida, cota ou créditos esgotados — ex.: `402`/`429`), a API responde `503 AI_UNAVAILABLE`; o motivo aparece no log do servidor (`RESOURCE_EXHAUSTED`, `PERMISSION_DENIED`…).
+
 ### Formato dos erros
 
 Todos os erros seguem `application/problem+json`, com um `code` estável e o `traceId` (o mesmo valor do header `X-Correlation-ID`, útil para localizar o log):
@@ -335,6 +366,8 @@ Tudo (unitários + integração):
 ```bash
 dotnet test
 ```
+
+Os testes de IA **não chamam o Gemini** (usam um `HttpMessageHandler`/gerador falsos); a única chamada real é o *smoke* manual descrito acima.
 
 Só os unitários (rápidos, sem Docker):
 
@@ -407,9 +440,9 @@ backend/
 └── spikes/                       # prova de conceito do provider EF Core MongoDB (descartável)
 ```
 
-**Banco de dados:** MongoDB com as coleções `users`, `refreshTokens`, `guidelines`, `guidelineHistory`, `ideas`, `projects`, `projectUpdates`, `pointEvents` e `aiInsights`. O provider EF Core do MongoDB não gerencia migrations: os **índices** (únicos, parciais e TTL) são criados automaticamente no startup. O modelo completo está no [`spec.md`](../.specs/features/sprint2/spec.md#modelo-de-dados-mongodb).
+**Banco de dados:** MongoDB com as coleções `users`, `refreshTokens`, `guidelines`, `guidelineHistory`, `ideas`, `projects`, `projectUpdates`, `pointEvents`, `aiInsights` (cache dos insights) e `aiUsage` (contador diário de gerações). O provider EF Core do MongoDB não gerencia migrations: os **índices** (únicos, parciais e TTL) são criados automaticamente no startup. O modelo completo está no [`spec.md`](../.specs/features/sprint2/spec.md#modelo-de-dados-mongodb).
 
-**Segurança:** senhas com PBKDF2 (ASP.NET Identity) · JWT HS256 de 30 min com validação de emissor, audiência e expiração · refresh token opaco de uso único (só o hash é guardado; reuso de um token já trocado revoga a sessão inteira) · bloqueio de conta e rate limit contra força bruta · erros sem stack trace · segredos fora do código.
+**Segurança:** senhas com PBKDF2 (ASP.NET Identity) · JWT HS256 de 30 min com validação de emissor, audiência e expiração · refresh token opaco de uso único (só o hash é guardado; reuso de um token já trocado revoga a sessão inteira) · bloqueio de conta e rate limit contra força bruta (por IP no login; por usuário nos insights de IA) · erros sem stack trace · segredos fora do código.
 
 ---
 

@@ -160,20 +160,44 @@ public class ProjectTests
     public void Roi_WithZeroInvestment_IsNull() =>
         TestData.NewProject(TestData.ProjectData(investment: 0m, financialReturn: 50m)).RoiPercent.Should().BeNull();
 
+    private static readonly DateOnly Today = new(2026, 9, 21);
+
     [Theory]
     [InlineData(ProjectStage.EM_EXECUCAO, -1, true)]
+    [InlineData(ProjectStage.EM_EXECUCAO, 0, false)]
     [InlineData(ProjectStage.EM_EXECUCAO, 1, false)]
+    [InlineData(ProjectStage.PLANEJAMENTO, -30, true)]
     [InlineData(ProjectStage.CONCLUIDO, -1, false)]
     [InlineData(ProjectStage.CANCELADO, -1, false)]
-    public void IsOverdue_OnlyWhenOpenAndPastDeadline(ProjectStage stage, int daysFromNow, bool expected)
+    public void IsOverdue_OnlyWhenOpenAndDeadlineDayHasPassed(ProjectStage stage, int daysFromToday, bool expected)
     {
-        var data = TestData.ProjectData(stage) with { TargetDate = TestData.Now.AddDays(daysFromNow) };
-        TestData.NewProject(data).IsOverdue(TestData.Now).Should().Be(expected);
+        var data = TestData.ProjectData(stage) with { TargetDate = new DateTime(2026, 9, 21, 0, 0, 0, DateTimeKind.Utc).AddDays(daysFromToday) };
+        TestData.NewProject(data).IsOverdue(Today).Should().Be(expected);
     }
 
     [Fact]
     public void IsOverdue_WithoutDeadline_IsFalse() =>
-        TestData.NewProject().IsOverdue(TestData.Now).Should().BeFalse();
+        TestData.NewProject().IsOverdue(Today).Should().BeFalse();
+
+    [Theory]
+    [InlineData(ProjectStage.EM_EXECUCAO, 10, 10)]
+    [InlineData(ProjectStage.EM_EXECUCAO, -3, -3)]
+    [InlineData(ProjectStage.PLANEJAMENTO, 0, 0)]
+    public void DaysToDeadline_CountsCalendarDays(ProjectStage stage, int daysFromToday, int expected)
+    {
+        var data = TestData.ProjectData(stage) with { TargetDate = new DateTime(2026, 9, 21, 0, 0, 0, DateTimeKind.Utc).AddDays(daysFromToday) };
+        TestData.NewProject(data).DaysToDeadline(Today).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(ProjectStage.CONCLUIDO)]
+    [InlineData(ProjectStage.CANCELADO)]
+    public void DaysToDeadline_IsNullForFinishedProjectsAndWithoutDeadline(ProjectStage stage)
+    {
+        var withDate = TestData.ProjectData(stage) with { TargetDate = new DateTime(2026, 9, 1, 0, 0, 0, DateTimeKind.Utc) };
+        TestData.NewProject(withDate).DaysToDeadline(Today).Should().BeNull();
+        TestData.NewProject(TestData.ProjectData(ProjectStage.EM_EXECUCAO)).DaysToDeadline(Today).Should().BeNull();
+    }
 
     [Fact]
     public void ProjectUpdate_Create_TrimsNoteAndKeepsChanges()
