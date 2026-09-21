@@ -23,6 +23,8 @@ public interface IGuidelineRepository
     Task<IReadOnlyDictionary<string, string>> GetTitlesAsync(IEnumerable<string> ids, CancellationToken ct);
     /// <summary>Ordenada por <c>updatedAt</c> desc.</summary>
     Task<IReadOnlyList<Guideline>> ListAsync(CancellationToken ct);
+    /// <summary>Página de orientações, da mais recentemente alterada para a mais antiga.</summary>
+    Task<PagedResult<Guideline>> ListPagedAsync(PageRequest page, CancellationToken ct);
     Task AddAsync(Guideline guideline, CancellationToken ct);
     void Remove(Guideline guideline);
 }

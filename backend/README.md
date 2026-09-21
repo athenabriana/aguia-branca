@@ -29,7 +29,8 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | Arquitetura em camadas, persistência MongoDB (transações, índices), erros padronizados, logs, health checks, Swagger | ✅ |
 | Autenticação: login, refresh de token rotativo, logout, `/me` (JWT, lockout, rate limit) | ✅ |
 | Autorização por perfil (`OPERADOR`, `GESTOR`, `LIDER`) + dados de demonstração (seed) | ✅ |
-| Orientações + histórico · Ideias · Projetos · Gamificação · Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
+| Orientações estratégicas (CRUD do líder, leitura para todos) + **registro histórico** (id, data, categoria, campanha) | ✅ |
+| Ideias · Projetos · Gamificação · Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
 | Ferramenta de migração Firebase → MongoDB | ⏳ próximas fases |
 
 ### Endpoints disponíveis hoje
@@ -40,6 +41,12 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | `POST` | `/api/v1/auth/refresh` | público | Troca o refresh token por um novo par (o anterior deixa de valer) |
 | `POST` | `/api/v1/auth/logout` | autenticado | Revoga a sessão do refresh token informado |
 | `GET` | `/api/v1/auth/me` | autenticado | Perfil, pontos e badges atualizados |
+| `GET` | `/api/v1/guidelines` | autenticado | Lista paginada (`page`, `pageSize` ≤ 200), da mais recentemente alterada |
+| `GET` | `/api/v1/guidelines/{id}` | autenticado | Detalhe |
+| `POST` | `/api/v1/guidelines` | **LIDER** | Cria (`title`, `description`, `pillar`, `campaign?`) |
+| `PUT` | `/api/v1/guidelines/{id}` | **LIDER** | Edita |
+| `DELETE` | `/api/v1/guidelines/{id}` | **LIDER** | Exclui (o histórico é preservado) |
+| `GET` | `/api/v1/guidelines/history` | autenticado | Histórico com filtros `guidelineId`, `category`, `campaign`, `from`, `to` |
 | `GET` | `/health/live` · `/health/ready` · `/health` | público | Saúde (processo · MongoDB · tudo) |
 | `GET` | `/swagger` | público* | Documentação interativa (*só em Development ou com `Swagger__Enabled=true`) |
 

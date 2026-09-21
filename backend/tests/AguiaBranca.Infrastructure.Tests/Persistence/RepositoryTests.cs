@@ -197,6 +197,28 @@ public sealed class RepositoryTests(MongoFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Guidelines_ListPaged_IsNewestFirst_WithTotals()
+    {
+        var items = Enumerable.Range(0, 5).Select(i =>
+        {
+            var g = Builders.Guideline($"Orientação {i}");
+            g.Update($"Orientação {i}", "d", Pillar.IDEIAS, null, Builders.Now.AddMinutes(i));
+            return g;
+        }).ToList();
+        await SaveAsync(c => c.Guidelines.AddRange(items));
+
+        await using var ctx = _db.CreateContext();
+        var repo = new GuidelineRepository(ctx);
+
+        var page2 = await repo.ListPagedAsync(new PageRequest(2, 2), default);
+
+        page2.Items.Select(g => g.Title).Should().Equal("Orientação 2", "Orientação 1");
+        (page2.TotalItems, page2.TotalPages).Should().Be((5, 3));
+        (await repo.ListPagedAsync(new PageRequest(3, 2), default)).Items.Should().ContainSingle();
+        (await repo.ListPagedAsync(new PageRequest(9, 2), default)).Items.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GuidelineHistory_Query_FiltersAndOrdersNewestFirst()
     {
         var g = Builders.Guideline(campaign: "A", pillar: Pillar.IDEIAS);

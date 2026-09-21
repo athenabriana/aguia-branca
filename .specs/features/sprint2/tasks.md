@@ -345,7 +345,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
-### B11: Orientações estratégicas + histórico
+### B11: Orientações estratégicas + histórico  ✅ concluída
 
 **What**: CRUD de orientações (`LIDER`), leitura para todos, e **histórico imutável** com filtros.
 **Where**: `Application/Features/Guidelines/*`, `Api/Controllers/GuidelinesController.cs`, `Api/Contracts/*`, testes
@@ -354,13 +354,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-02.1–R2-02.6
 
 **Done when**:
-- [ ] `GET /guidelines` ordenado por `updatedAt` desc; `GET /guidelines/{id}`; `POST/PUT/DELETE` só LIDER (gestor/operador → 403)
-- [ ] Validação: título 3–120, descrição ≤ 2000, pilar válido, campanha ≤ 80
-- [ ] Criar/editar/excluir gravam `guidelineHistory` (`id`, `occurredAt`, `category`=pillar, `campaign`, `action`, snapshot, autor) **na mesma transação**
-- [ ] `GET /guidelines/history?guidelineId&category&campaign&from&to` paginado, mais recente primeiro; entradas de orientação já excluída permanecem
-- [ ] Excluir orientação com ideia vinculada → 204 e ideia continua acessível (`guidelineTitle=null`) — coberto no teste da B13
-- [ ] Gate: unit + integration (≥ 12 testes)
+- [x] `GET /guidelines` ordenado por `updatedAt` desc; `GET /guidelines/{id}`; `POST/PUT/DELETE` só LIDER (gestor/operador → 403)
+- [x] Validação: título 3–120, descrição ≤ 2000, pilar válido, campanha ≤ 80
+- [x] Criar/editar/excluir gravam `guidelineHistory` (`id`, `occurredAt`, `category`=pillar, `campaign`, `action`, snapshot, autor) **na mesma transação**
+- [x] `GET /guidelines/history?guidelineId&category&campaign&from&to` paginado, mais recente primeiro; entradas de orientação já excluída permanecem
+- [x] Excluir orientação com ideia vinculada → 204 e ideia continua acessível (`guidelineTitle=null`) — coberto no teste da B13
+- [x] Gate: unit + integration (≥ 12 testes)
 
+**Notas de execução**: `GET /guidelines` devolve o envelope paginado do contrato (`page`/`pageSize`, máx. 200); o app deve pedir `pageSize=200`. Criar/editar/excluir gravam orientação + histórico **na mesma transação** (`CREATED`/`UPDATED`/`DELETED`); o snapshot do `UPDATED` já é o texto editado e o `DELETED` guarda o último estado. Editar sem mudança real também registra entrada. Autor vem do token (o corpo não tem `authorId`/datas). Ids fora do formato ObjectId → 404 (rota `{id:objectid}`); `history?guidelineId=<inválido>` → lista vazia. Datas de filtro sem fuso (`2026-09-21`) são tratadas como UTC; `from > to` → 400. Achado: o BSON guarda milissegundos, então o `SystemClock` passou a **truncar para ms** — antes a resposta do `POST` trazia mais casas decimais do que a leitura seguinte. Testes de API criam as próprias orientações (campanhas únicas) sobre o banco semeado, sem depender de ordem. **30 unitários de handlers + 41 de API + 3 de infraestrutura** (paginação do repositório, relógio).
 **Tests**: unit + integration
 **Gate**: full
 

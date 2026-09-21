@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using AguiaBranca.Application.Common.Abstractions;
 using AguiaBranca.Application.Common.Abstractions.Repositories;
+using AguiaBranca.Application.Common.Paging;
 using AguiaBranca.Application.Common.Validation;
 using AguiaBranca.Domain.Entities;
 using AguiaBranca.Domain.Enums;
@@ -82,6 +83,45 @@ public sealed class InMemoryUsers : IUserRepository
         Task.FromResult<IReadOnlyList<AppUser>>(Items.Where(u => ids.Contains(u.Id)).ToList());
     public Task<IReadOnlyList<AppUser>> ListAsync(Role? role, CancellationToken ct) =>
         Task.FromResult<IReadOnlyList<AppUser>>(Items.Where(u => role is null || u.Role == role).ToList());
+}
+
+public sealed class InMemoryGuidelines : IGuidelineRepository
+{
+    public List<Guideline> Items { get; } = [];
+
+    public Task<Guideline?> GetByIdAsync(string id, CancellationToken ct) => Task.FromResult(Items.FirstOrDefault(g => g.Id == id));
+    public Task<bool> ExistsAsync(string id, CancellationToken ct) => Task.FromResult(Items.Any(g => g.Id == id));
+    public Task<IReadOnlyDictionary<string, string>> GetTitlesAsync(IEnumerable<string> ids, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<string, string>>(Items.Where(g => ids.Contains(g.Id)).ToDictionary(g => g.Id, g => g.Title));
+    public Task<IReadOnlyList<Guideline>> ListAsync(CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Guideline>>(Items.OrderByDescending(g => g.UpdatedAt).ToList());
+    public Task<PagedResult<Guideline>> ListPagedAsync(PageRequest page, CancellationToken ct) =>
+        Task.FromResult(new PagedResult<Guideline>(
+            Items.OrderByDescending(g => g.UpdatedAt).Skip(page.Skip).Take(page.PageSize).ToList(), page.Page, page.PageSize, Items.Count));
+    public Task AddAsync(Guideline guideline, CancellationToken ct) { Items.Add(guideline); return Task.CompletedTask; }
+    public void Remove(Guideline guideline) => Items.Remove(guideline);
+}
+
+public sealed class InMemoryGuidelineHistory : IGuidelineHistoryRepository
+{
+    public List<GuidelineHistoryEntry> Items { get; } = [];
+    public GuidelineHistoryQuery? LastQuery { get; private set; }
+    public PageRequest? LastPage { get; private set; }
+
+    public Task AddAsync(GuidelineHistoryEntry entry, CancellationToken ct) { Items.Add(entry); return Task.CompletedTask; }
+
+    public Task<PagedResult<GuidelineHistoryEntry>> QueryAsync(GuidelineHistoryQuery query, PageRequest page, CancellationToken ct)
+    {
+        LastQuery = query; LastPage = page;
+        var filtered = Items.AsEnumerable();
+        if (query.GuidelineId is { } g) filtered = filtered.Where(e => e.GuidelineId == g);
+        if (query.Category is { } c) filtered = filtered.Where(e => e.Category == c);
+        if (query.Campaign is { } camp) filtered = filtered.Where(e => e.Campaign == camp);
+        if (query.From is { } f) filtered = filtered.Where(e => e.OccurredAt >= f);
+        if (query.To is { } t) filtered = filtered.Where(e => e.OccurredAt <= t);
+        var list = filtered.OrderByDescending(e => e.OccurredAt).ToList();
+        return Task.FromResult(new PagedResult<GuidelineHistoryEntry>(list.Skip(page.Skip).Take(page.PageSize).ToList(), page.Page, page.PageSize, list.Count));
+    }
 }
 
 public sealed class FakeIdentityService : IIdentityService

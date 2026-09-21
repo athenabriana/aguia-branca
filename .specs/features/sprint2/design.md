@@ -240,7 +240,7 @@ Idempotência: `ApproveIdea` retorna `alreadyApproved=true` se a ideia já é `A
 
 Requests/Responses são `record`s em `Api/Contracts`; Application usa comandos/queries próprios; mapeamento explícito (sem AutoMapper). Campos controlados pelo servidor (`authorId`, `status`, `score`, `createdAt`, `version`) **não existem** nos requests (sem mass assignment).
 
-Paginação: `PageRequest(page=1, pageSize=50)` com limites 1–200; `PagedResponse<T>`. Contrato completo em `spec.md` → *Contrato de API*.
+Paginação: `PageRequest(page=1, pageSize=50)` com limites 1–200; `PagedResponse<T>`. Todas as listas (inclusive `GET /guidelines`) usam o envelope paginado. Contrato completo em `spec.md` → *Contrato de API*.
 
 Convenções HTTP: 200 consulta/atualização · 201 criação (`Location`) · 204 exclusão/logout · 400 validação · 401 · 403 · 404 · 409 · 422 · 429 · 5xx.
 
@@ -333,6 +333,10 @@ Multi-documento exige **replica set**. `docker-compose` sobe Mongo com `--replSe
 ### 8.4 Concorrência
 
 `Project.Version` (int) checada no `PUT` quando enviada (`409 CONCURRENCY_CONFLICT`). **`AppUser.Version`** protege gravações de "documento inteiro" do Identity (contador de falhas, hash) contra sobrescrever pontos/badges de outra transação: `ApplyPoints`/`AddBadges`/`MarkModified` incrementam a versão e a Infrastructure traduz `DbUpdateConcurrencyException` em `ConcurrencyConflictException`; o `IdentityService` relê o usuário e repete. Aprovação/conclusão protegidas por idempotência + índice único parcial. Pontos: transação com leitura-modificação-escrita do `AppUser`.
+
+### 8.4.1 Precisão de datas
+
+O BSON DateTime tem precisão de **milissegundo**. O `IClock` de produção (`SystemClock`) trunca para ms, de modo que o valor devolvido na resposta de uma criação é idêntico ao lido depois do banco. Datas de filtro recebidas sem fuso são interpretadas como UTC.
 
 ### 8.5 Seed e índices
 

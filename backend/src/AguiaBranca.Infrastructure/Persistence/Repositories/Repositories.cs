@@ -49,6 +49,14 @@ internal sealed class GuidelineRepository(AppDbContext db) : IGuidelineRepositor
     public async Task<IReadOnlyList<Guideline>> ListAsync(CancellationToken ct) =>
         await db.Guidelines.AsNoTracking().OrderByDescending(x => x.UpdatedAt).ToListAsync(ct);
 
+    public async Task<PagedResult<Guideline>> ListPagedAsync(PageRequest page, CancellationToken ct)
+    {
+        var total = await db.Guidelines.AsNoTracking().CountAsync(ct);
+        var items = await db.Guidelines.AsNoTracking()
+            .OrderByDescending(x => x.UpdatedAt).Skip(page.Skip).Take(page.PageSize).ToListAsync(ct);
+        return new PagedResult<Guideline>(items, page.Page, page.PageSize, total);
+    }
+
     public async Task AddAsync(Guideline guideline, CancellationToken ct) => await db.Guidelines.AddAsync(guideline, ct);
     public void Remove(Guideline guideline) => db.Guidelines.Remove(guideline);
 }

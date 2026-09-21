@@ -17,6 +17,9 @@ public sealed class SeededApiFixture : IAsyncLifetime
     private readonly Dictionary<Role, string> _tokens = [];
     private TestDatabase _db = null!;
 
+    /// <summary>Banco da API sob teste (para preparar/inspecionar dados diretamente).</summary>
+    public TestDatabase Db => _db;
+
     public ApiFactory Factory { get; private set; } = null!;
     public HttpClient Anonymous { get; private set; } = null!;
 
