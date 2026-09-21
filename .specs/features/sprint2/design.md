@@ -340,6 +340,10 @@ Multi-documento exige **replica set**. `docker-compose` sobe Mongo com `--replSe
 
 `Project.Version` (int) checada no `PUT` quando enviada (`409 CONCURRENCY_CONFLICT`). **`AppUser.Version`** protege gravações de "documento inteiro" do Identity (contador de falhas, hash) contra sobrescrever pontos/badges de outra transação: `ApplyPoints`/`AddBadges`/`MarkModified` incrementam a versão e a Infrastructure traduz `DbUpdateConcurrencyException` em `ConcurrencyConflictException`; o `IdentityService` relê o usuário e repete. Aprovação/conclusão protegidas por idempotência + índice único parcial. Pontos: transação com leitura-modificação-escrita do `AppUser`.
 
+**Contenção e retry (B16):** o `MongoUnitOfWork` repete a transação em `TransientTransactionError` até **8 vezes com jitter** (5–25 ms × tentativa). Com N escritores no mesmo documento um deles pode precisar de até N tentativas, porque cada tentativa reescreve e volta a competir — com 3 tentativas as conclusões simultâneas de projeto vazavam 500. Esgotado o orçamento, a falha é traduzida em `ConcurrencyConflictException` (**409 `CONCURRENCY_CONFLICT`**), nunca em erro interno. Operações que só *leem* após a primeira vitória (aprovar ideia) não competem de novo.
+
+**Projetos (B15):** `PUT` é substituição completa (campos obrigatórios evitam zerar valores por omissão); o diff sai de `Project.ApplyUpdate` e é tipado na API; `version` opcional ativa a checagem otimista (409 para as edições perdedoras, que não deixam histórico). O responsável é validado no servidor (existir e ser gestor/líder).
+
 ### 8.4.1 Precisão de datas
 
 O BSON DateTime tem precisão de **milissegundo**. O `IClock` de produção (`SystemClock`) trunca para ms, de modo que o valor devolvido na resposta de uma criação é idêntico ao lido depois do banco. Datas de filtro recebidas sem fuso são interpretadas como UTC.

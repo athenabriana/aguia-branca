@@ -157,6 +157,43 @@ public sealed class UnitOfWorkTests(MongoFixture fixture) : IAsyncLifetime
         (await CountAsync(Collections.Users), await CountAsync(Collections.Ideas)).Should().Be((0, 0));
     }
 
+    private static MongoException Transient()
+    {
+        var ex = new MongoException("WriteConflict simulado");
+        ex.AddErrorLabel("TransientTransactionError");
+        return ex;
+    }
+
+    [Fact]
+    public async Task TransientConflicts_AreRetried_ThenTheWorkSucceeds()
+    {
+        await using var ctx = _db.CreateContext();
+        var uow = _db.CreateUnitOfWork(ctx);
+        var attempts = 0;
+
+        var result = await uow.ExecuteInTransactionAsync(_ =>
+        {
+            if (++attempts < 4) throw Transient();
+            return Task.FromResult("ok");
+        }, default);
+
+        result.Should().Be("ok");
+        attempts.Should().Be(4);
+    }
+
+    [Fact]
+    public async Task WhenTheRetryBudgetIsExhausted_ContentionBecomesAConflict_NotAnInternalError()
+    {
+        await using var ctx = _db.CreateContext();
+        var uow = _db.CreateUnitOfWork(ctx);
+        var attempts = 0;
+
+        var act = () => uow.ExecuteInTransactionAsync<int>(_ => { attempts++; throw Transient(); }, default);
+
+        await act.Should().ThrowAsync<ConcurrencyConflictException>();
+        attempts.Should().Be(MongoUnitOfWork.MaxAttempts);
+    }
+
     [Fact]
     public void Translate_ReturnsNull_ForUnknownExceptions() =>
         MongoUnitOfWork.Translate(new InvalidOperationException("x")).Should().BeNull();

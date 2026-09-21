@@ -32,7 +32,8 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | Orientações estratégicas (CRUD do líder, leitura para todos) + **registro histórico** (id, data, categoria, campanha) | ✅ |
 | Ideias: cadastro, edição, exclusão, curadoria (ICE), rejeição e **aprovação → projeto rascunho** | ✅ |
 | Gamificação no servidor: pontos, badges, ranking mensal | ✅ |
-| Projetos · Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
+| Projetos: CRUD do gestor, histórico com diff e **conclusão → ideia implementada (+200 pontos)** | ✅ |
+| Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
 | Ferramenta de migração Firebase → MongoDB | ⏳ próximas fases |
 
 ### Endpoints disponíveis hoje
@@ -56,6 +57,12 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | `PUT` | `/api/v1/ideas/{id}/ice` | **GESTOR** | Salva o ICE (1–10); `SUBMETIDA` → `EM_ANALISE` |
 | `POST` | `/api/v1/ideas/{id}/reject` | **GESTOR** | Rejeita (comentário obrigatório) |
 | `POST` | `/api/v1/ideas/{id}/approve` | **GESTOR** | Aprova: cria o projeto rascunho, +50 ao autor. Idempotente; o autor não aprova a própria ideia |
+| `GET` | `/api/v1/projects` | GESTOR, LIDER | Lista paginada; filtros `stage`, `division`, `guidelineId` |
+| `GET` | `/api/v1/projects/{id}` | GESTOR, LIDER | Detalhe (com `netProfit` e `roiPercent`) |
+| `GET` | `/api/v1/projects/{id}/updates` | GESTOR, LIDER | Histórico (timeline) com o diff dos campos |
+| `POST` | `/api/v1/projects` | **GESTOR** | Cadastro direto de projeto |
+| `PUT` | `/api/v1/projects/{id}` | **GESTOR** | Substituição completa; grava histórico com diff. `stage=CONCLUIDO` conclui a ideia de origem (+200 ao autor, uma única vez). `version` opcional para concorrência |
+| `DELETE` | `/api/v1/projects/{id}` | **GESTOR** | Exclui o projeto e o histórico (a ideia de origem permanece) |
 | `GET` | `/api/v1/users` | GESTOR, LIDER | Usuários (`id`, `name`, `role`, `division`); filtro `role` |
 | `GET` | `/api/v1/users/ranking` | autenticado | Top do mês (operadores); `limit` 1–50 (padrão 5) |
 | `GET` | `/health/live` · `/health/ready` · `/health` | público | Saúde (processo · MongoDB · tudo) |

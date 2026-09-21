@@ -13,7 +13,11 @@ namespace AguiaBranca.Infrastructure.Persistence;
 /// </summary>
 internal sealed partial class MongoUnitOfWork(AppDbContext db, ILogger<MongoUnitOfWork> logger) : IUnitOfWork
 {
-    private const int MaxAttempts = 3;
+    /// <summary>
+    /// Tentativas sob conflito de escrita. Com N escritores concorrentes no mesmo documento, um pode precisar de até N
+    /// tentativas (cada tentativa reescreve e volta a competir), por isso o limite é folgado e há jitter.
+    /// </summary>
+    internal const int MaxAttempts = 8;
 
     public async Task<int> SaveChangesAsync(CancellationToken ct)
     {
@@ -50,9 +54,17 @@ internal sealed partial class MongoUnitOfWork(AppDbContext db, ILogger<MongoUnit
             }
             catch (Exception ex) when (IsTransient(ex) && attempt < MaxAttempts)
             {
-                logger.LogWarning(ex, "Erro transitório na transação (tentativa {Attempt}/{Max}); repetindo.", attempt, MaxAttempts);
+                logger.LogWarning("Conflito transitório na transação (tentativa {Attempt}/{Max}); repetindo.", attempt, MaxAttempts);
                 db.ChangeTracker.Clear(); // descarta o estado da tentativa que falhou; o trabalho será reexecutado
-                await Task.Delay(TimeSpan.FromMilliseconds(50 * attempt), ct);
+                // jitter: evita que os concorrentes repitam em lockstep e colidam de novo
+                await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(5, 25) * attempt), ct);
+            }
+            catch (Exception ex) when (IsTransient(ex))
+            {
+                // Orçamento esgotado: é contenção, não falha interna — vira conflito (409), nunca 500.
+                db.ChangeTracker.Clear();
+                logger.LogError(ex, "Transação abandonada após {Max} tentativas por conflito de escrita.", MaxAttempts);
+                throw new ConcurrencyConflictException(ex);
             }
             catch (Exception ex) when (Translate(ex) is { } translated)
             {

@@ -3,6 +3,7 @@ using AguiaBranca.Application.Common.Abstractions;
 using AguiaBranca.Application.Common.Validation;
 using AguiaBranca.Application.Features.Gamification;
 using AguiaBranca.Application.Features.Ideas;
+using AguiaBranca.Application.Features.Projects;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<IValidationService, ValidationService>();
         services.AddScoped<GamificationService>();
         services.AddScoped<IdeaResponseFactory>();
+        services.AddScoped<ProjectResponseFactory>();
+        services.AddScoped<ProjectCompletionAutomation>();
         return services;
     }
 

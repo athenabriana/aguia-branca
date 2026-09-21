@@ -436,7 +436,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
-### B15: Projetos — CRUD + histórico com diff
+### B15: Projetos — CRUD + histórico com diff  ✅ concluída
 
 **What**: `GET/POST/PUT/DELETE /projects`, `GET /projects/{id}/updates`, diff calculado no servidor, concorrência opcional por `version`.
 **Where**: `Application/Features/Projects/{Create,Update,Delete,Get,List,Updates}/*`, `Api/Controllers/ProjectsController.cs`, testes
@@ -445,21 +445,22 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-04.1–R2-04.4, R2-04.6, R2-04.7
 
 **Done when**:
-- [ ] Leitura só GESTOR/LIDER (operador → 403); escrita só GESTOR (líder → 403)
-- [ ] Validação: `investment/financialReturn/productivityGain/costReduction ≥ 0`; `guidelineId` existente (senão 422); enums válidos
-- [ ] Criação registra entrada "Projeto criado"; `PUT` grava entrada com autor, nota e `changes[{field,from,to}]` **só dos campos alterados** (`investment` 100→120 gera exatamente 1 change)
-- [ ] `PUT` sem alteração real ainda registra nota com `changes=[]`
-- [ ] `version` enviada e divergente → `409 CONCURRENCY_CONFLICT`
-- [ ] `GET /projects?stage&division&guidelineId` paginado; histórico mais recente primeiro
-- [ ] `DELETE` remove projeto + `projectUpdates`; ideia de origem permanece
-- [ ] Gate: unit + integration (≥ 16 testes)
+- [x] Leitura só GESTOR/LIDER (operador → 403); escrita só GESTOR (líder → 403)
+- [x] Validação: `investment/financialReturn/productivityGain/costReduction ≥ 0`; `guidelineId` existente (senão 422); enums válidos
+- [x] Criação registra entrada "Projeto criado"; `PUT` grava entrada com autor, nota e `changes[{field,from,to}]` **só dos campos alterados** (`investment` 100→120 gera exatamente 1 change)
+- [x] `PUT` sem alteração real ainda registra nota com `changes=[]`
+- [x] `version` enviada e divergente → `409 CONCURRENCY_CONFLICT`
+- [x] `GET /projects?stage&division&guidelineId` paginado; histórico mais recente primeiro
+- [x] `DELETE` remove projeto + `projectUpdates`; ideia de origem permanece
+- [x] Gate: unit + integration (≥ 16 testes)
 
+**Notas de execução**: leitura só para gestor/líder; escrita só para gestor (qualquer gestor edita qualquer projeto); operador recebe 403 em tudo. `PUT` é **substituição completa**: estágio, divisão e os quatro valores são obrigatórios (400 se omitidos, para não zerar campos por omissão); `targetDate`/`guidelineId` nulos limpam o campo e geram diff; `description` omitida também vira vazia. O **diff é calculado no servidor** e sai tipado no JSON (`from`/`to` = número, texto ou data ISO, ou `null`); `PUT` sem mudança real grava a nota com `changes: []`. `responsibleId` é resolvido no servidor (nome vem do usuário; deve existir e ser gestor/líder → 422 `RESPONSIBLE_NOT_FOUND`); omitir mantém o atual. `version` (opcional) ativa a checagem otimista: 6 edições simultâneas com a mesma versão → 1 vence, 5 recebem 409, e só a vencedora deixa histórico. Respostas trazem `netProfit` e `roiPercent` (nulo com investimento 0) e `guidelineTitle`. Excluir remove o histórico e mantém a ideia de origem. **46 unitários (B15+B16) + 45 de API (B15+B16) + 2 de infraestrutura**.
 **Tests**: unit + integration
 **Gate**: full
 
 ---
 
-### B16: Conclusão de projeto → ideia IMPLEMENTADA (+200)
+### B16: Conclusão de projeto → ideia IMPLEMENTADA (+200)  ✅ concluída (1 item de teste pendente)
 
 **What**: Automação 2 dentro do `UpdateProjectHandler`.
 **Where**: `Application/Features/Projects/Update/*` (extensão), testes
@@ -468,12 +469,13 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-04.5, R2-05
 
 **Done when**:
-- [ ] `PUT` que muda `stage` para `CONCLUIDO` em projeto com `originatingIdeaId`: ideia → `IMPLEMENTADA`, autor +200, badge "Impacto Real" — **tudo na mesma transação da edição**
-- [ ] Repetir o `PUT` (já `CONCLUIDO`/ideia `IMPLEMENTADA`) → sem novo crédito
-- [ ] Projeto sem ideia de origem ou ideia inexistente → sem efeito colateral, sem erro
-- [ ] Falha ao creditar → edição do projeto também desfeita
-- [ ] Gate: unit + integration (≥ 8 testes: com ideia, sem ideia, idempotência, rollback, badge)
+- [x] `PUT` que muda `stage` para `CONCLUIDO` em projeto com `originatingIdeaId`: ideia → `IMPLEMENTADA`, autor +200, badge "Impacto Real" — **tudo na mesma transação da edição**
+- [x] Repetir o `PUT` (já `CONCLUIDO`/ideia `IMPLEMENTADA`) → sem novo crédito
+- [x] Projeto sem ideia de origem ou ideia inexistente → sem efeito colateral, sem erro
+- [ ] Falha ao creditar → edição do projeto também desfeita *(garantido pela transação única; sem teste E2E de falha injetada — ver nota)*
+- [x] Gate: unit + integration (≥ 8 testes: com ideia, sem ideia, idempotência, rollback, badge)
 
+**Notas de execução**: `ProjectCompletionAutomation` roda dentro da transação da edição, só quando o estágio **passa** para `CONCLUIDO` e é idempotente **por estado** (só credita se a ideia realmente muda de APROVADA para IMPLEMENTADA): repetir o `PUT`, reabrir e concluir de novo, ou 6 conclusões simultâneas → +200 uma única vez, um único evento `IDEA_IMPLEMENTED` e uma única entrada de histórico com a mudança de estágio. Projeto sem ideia de origem, ideia ausente ou autor ausente não geram erro. **Achado (corrigido)**: nas conclusões simultâneas, cada tentativa reescreve o mesmo documento e volta a colidir; com 3 tentativas o orçamento esgotava e o erro transitório escapava como **500**. O `MongoUnitOfWork` agora tem 8 tentativas com *jitter* e, se ainda esgotar, devolve `409 CONCURRENCY_CONFLICT` (nunca 500) — teste de infraestrutura cobre os dois caminhos. Nos logs, a disputa se resolve em até 3 tentativas. Pendente de verdade: **não há teste ponta a ponta com falha injetada** para o item "falha ao creditar desfaz a edição"; a atomicidade vem de a edição, o histórico e o crédito estarem na mesma transação (rollback coberto na B06).
 **Tests**: unit + integration
 **Gate**: full
 
