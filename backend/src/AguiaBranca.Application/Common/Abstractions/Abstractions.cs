@@ -36,3 +36,9 @@ public interface IHandler<in TRequest, TResponse>
 {
     Task<Result<TResponse>> HandleAsync(TRequest request, CancellationToken ct);
 }
+
+/// <summary>Fuso usado para "mês corrente" (ranking, badges, relatórios). Vem de <c>Reports:TimeZone</c>.</summary>
+public interface ITimeZoneProvider
+{
+    TimeZoneInfo ReportTimeZone { get; }
+}

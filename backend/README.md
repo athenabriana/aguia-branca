@@ -30,7 +30,9 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | Autenticação: login, refresh de token rotativo, logout, `/me` (JWT, lockout, rate limit) | ✅ |
 | Autorização por perfil (`OPERADOR`, `GESTOR`, `LIDER`) + dados de demonstração (seed) | ✅ |
 | Orientações estratégicas (CRUD do líder, leitura para todos) + **registro histórico** (id, data, categoria, campanha) | ✅ |
-| Ideias · Projetos · Gamificação · Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
+| Ideias: cadastro, edição, exclusão, curadoria (ICE), rejeição e **aprovação → projeto rascunho** | ✅ |
+| Gamificação no servidor: pontos, badges, ranking mensal | ✅ |
+| Projetos · Relatórios/dashboard · **Insights de IA (Gemini)** | ⏳ próximas fases |
 | Ferramenta de migração Firebase → MongoDB | ⏳ próximas fases |
 
 ### Endpoints disponíveis hoje
@@ -47,6 +49,15 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | `PUT` | `/api/v1/guidelines/{id}` | **LIDER** | Edita |
 | `DELETE` | `/api/v1/guidelines/{id}` | **LIDER** | Exclui (o histórico é preservado) |
 | `GET` | `/api/v1/guidelines/history` | autenticado | Histórico com filtros `guidelineId`, `category`, `campaign`, `from`, `to` |
+| `GET` | `/api/v1/ideas` | autenticado | Lista paginada; `scope` = `mine` \| `curation` \| `all`, filtros `status`, `guidelineId`, `division`. Operador só vê as próprias |
+| `GET` | `/api/v1/ideas/{id}` | autenticado | Detalhe (com `guidelineTitle`, `ice` e `linkedProject`) |
+| `POST` | `/api/v1/ideas` | OPERADOR, GESTOR | Cadastra; credita +10 (+5 com orientação) |
+| `PUT` · `DELETE` | `/api/v1/ideas/{id}` | autor | Edita / exclui enquanto `SUBMETIDA` (exclusão estorna os pontos) |
+| `PUT` | `/api/v1/ideas/{id}/ice` | **GESTOR** | Salva o ICE (1–10); `SUBMETIDA` → `EM_ANALISE` |
+| `POST` | `/api/v1/ideas/{id}/reject` | **GESTOR** | Rejeita (comentário obrigatório) |
+| `POST` | `/api/v1/ideas/{id}/approve` | **GESTOR** | Aprova: cria o projeto rascunho, +50 ao autor. Idempotente; o autor não aprova a própria ideia |
+| `GET` | `/api/v1/users` | GESTOR, LIDER | Usuários (`id`, `name`, `role`, `division`); filtro `role` |
+| `GET` | `/api/v1/users/ranking` | autenticado | Top do mês (operadores); `limit` 1–50 (padrão 5) |
 | `GET` | `/health/live` · `/health/ready` · `/health` | público | Saúde (processo · MongoDB · tudo) |
 | `GET` | `/swagger` | público* | Documentação interativa (*só em Development ou com `Swagger__Enabled=true`) |
 

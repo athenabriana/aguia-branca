@@ -367,7 +367,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
-### B12: Gamificação — pontos, badges persistidas, ranking mensal
+### B12: Gamificação — pontos, badges persistidas, ranking mensal  ✅ concluída
 
 **What**: `PointsService` (razão + clamp), integração do `BadgeEvaluator` (B04), consulta de ranking mensal, `GET /users`, `GET /users/ranking`.
 **Where**: `Application/Features/Gamification/*`, `Application/Features/Users/*`, `Api/Controllers/UsersController.cs`, testes
@@ -376,19 +376,20 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-05.1–R2-05.5
 
 **Done when**:
-- [ ] `PointsService.AwardAsync` grava `pointEvents` com delta **efetivo** e atualiza `users.points` (≥ 0)
-- [ ] Após evento: `BadgeEvaluator` roda e novas badges são gravadas em `users.badges` sem duplicar
-- [ ] `GET /users/ranking?limit=5`: só `OPERADOR`, soma dos eventos do **mês corrente** em `America/Sao_Paulo`; desempate por pontos totais e nome; retorna `id,name,monthPoints`
-- [ ] Ranking ignora eventos de meses anteriores (teste com `IClock` fake cruzando virada de mês)
-- [ ] `GET /users?role=` permitido a GESTOR/LIDER; operador → 403
-- [ ] Gate: unit + integration (≥ 10 testes)
+- [x] `PointsService.AwardAsync` grava `pointEvents` com delta **efetivo** e atualiza `users.points` (≥ 0)
+- [x] Após evento: `BadgeEvaluator` roda e novas badges são gravadas em `users.badges` sem duplicar
+- [x] `GET /users/ranking?limit=5`: só `OPERADOR`, soma dos eventos do **mês corrente** em `America/Sao_Paulo`; desempate por pontos totais e nome; retorna `id,name,monthPoints`
+- [x] Ranking ignora eventos de meses anteriores (teste com `IClock` fake cruzando virada de mês)
+- [x] `GET /users?role=` permitido a GESTOR/LIDER; operador → 403
+- [x] Gate: unit + integration (≥ 10 testes)
 
+**Notas de execução**: `GamificationService` (Application) concentra `AwardAsync` (aplica o delta com clamp e grava o evento com o valor **efetivo**; delta efetivo 0 não gera evento) e `GrantEarnedBadgesAsync`, que **confirma as alterações pendentes antes de avaliar** (senão a ideia recém-criada/aprovada na mesma transação não seria vista) e devolve só as badges novas. Novo `ITimeZoneProvider` (fuso de `Reports:TimeZone`) usado pelo ranking e pelas badges. Ranking: janela [início do mês, início do próximo) **no fuso configurado**, só operadores, soma dos eventos do mês (negativo/zero fica de fora), desempate por pontos totais e nome, `limit` 1–50. `GET /users` devolve só `id, name, role, division` (sem e-mail). **20 unitários + 17 de API**.
 **Tests**: unit + integration
 **Gate**: full
 
 ---
 
-### B13: Ideias — CRUD, posse, vínculo e pontos
+### B13: Ideias — CRUD, posse, vínculo e pontos  ✅ concluída
 
 **What**: `POST/GET/PUT/DELETE /ideas`, listagem com `scope`, resposta com `guidelineTitle` e `linkedProject`, créditos e estornos de pontos.
 **Where**: `Application/Features/Ideas/{Create,Update,Delete,Get,List}/*`, `Api/Controllers/IdeasController.cs`, testes
@@ -397,20 +398,21 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-03.1–R2-03.5, R2-03.9, R2-03.10, R2-05
 
 **Done when**:
-- [ ] `POST /ideas`: servidor define `authorId/authorName/status`; corpo com `status`/`authorId` é ignorado; `guidelineId` inexistente → `422 GUIDELINE_NOT_FOUND`; retorna 201 + `pointsAwarded` (15 com orientação, 10 sem)
-- [ ] `GET /ideas?scope=mine|curation|all&status&guidelineId&division`: operador só `mine` (tentar `all` devolve apenas as próprias); detalhe de ideia alheia → 404 para operador
-- [ ] `scope=curation`: `SUBMETIDA`+`EM_ANALISE`, ICE score desc, sem ICE ao fim
-- [ ] `PUT/DELETE`: só o autor e só `SUBMETIDA` (senão `409 IDEA_NOT_EDITABLE`); `DELETE` estorna −10/−15 com clamp (evento efetivo)
-- [ ] Resposta inclui `linkedProject {id,stage,updatedAt}` e `guidelineTitle` (`null` se órfã)
-- [ ] Badges "Primeira Ideia"/"Inovador do Mês" concedidas na criação (5ª ideia no mês, 1× só)
-- [ ] Gate: unit + integration (≥ 16 testes)
+- [x] `POST /ideas`: servidor define `authorId/authorName/status`; corpo com `status`/`authorId` é ignorado; `guidelineId` inexistente → `422 GUIDELINE_NOT_FOUND`; retorna 201 + `pointsAwarded` (15 com orientação, 10 sem)
+- [x] `GET /ideas?scope=mine|curation|all&status&guidelineId&division`: operador só `mine` (tentar `all` devolve apenas as próprias); detalhe de ideia alheia → 404 para operador
+- [x] `scope=curation`: `SUBMETIDA`+`EM_ANALISE`, ICE score desc, sem ICE ao fim
+- [x] `PUT/DELETE`: só o autor e só `SUBMETIDA` (senão `409 IDEA_NOT_EDITABLE`); `DELETE` estorna −10/−15 com clamp (evento efetivo)
+- [x] Resposta inclui `linkedProject {id,stage,updatedAt}` e `guidelineTitle` (`null` se órfã)
+- [x] Badges "Primeira Ideia"/"Inovador do Mês" concedidas na criação (5ª ideia no mês, 1× só)
+- [x] Gate: unit + integration (≥ 16 testes)
 
+**Notas de execução**: regras de visibilidade centralizadas em `IdeaAccess`: operador só enxerga as próprias (alheia = 404, qualquer `scope`); gestor/líder enxergam todas; **editar/excluir** é do autor — quem não enxerga recebe 404 e quem enxerga mas não é o autor recebe 403. Padrão de escopo: `mine` para operador, `all` para gestor/líder. Escopo `curation` = SUBMETIDA + EM_ANALISE por ICE desc (sem ICE ao fim), combinável com `status`. `IdeaResponseFactory` monta `guidelineTitle` (nulo se órfã) e `linkedProject` em lote (sem N+1). `division` omitida assume a divisão do autor; `guidelineId` em branco = sem vínculo; `guidelineId` inexistente/inválido → 422. Criação credita +10/+15 e concede badges na mesma transação; exclusão estorna −10/−15 com clamp. **54 unitários + 38 de API**.
 **Tests**: unit + integration
 **Gate**: full
 
 ---
 
-### B14: Ideias — ICE, rejeição e aprovação (→ projeto rascunho)
+### B14: Ideias — ICE, rejeição e aprovação (→ projeto rascunho)  ✅ concluída
 
 **What**: `PUT /ideas/{id}/ice`, `POST /ideas/{id}/reject`, `POST /ideas/{id}/approve` com a automação 1.
 **Where**: `Application/Features/Ideas/{SaveIce,Reject,Approve}/*`, controller, testes
@@ -419,15 +421,16 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-03.6–R2-03.8, R2-03.11, R2-05
 
 **Done when**:
-- [ ] ICE: valores fora de 1–10 ou não inteiros → 400; `score` calculado no servidor; `SUBMETIDA` → `EM_ANALISE` automático; ICE em ideia `APROVADA/REJEITADA/IMPLEMENTADA` → `409 IDEA_INVALID_STATE`
-- [ ] `reject` sem `comment` → 400; com comentário → `REJEITADA` (+`reviewerId`, `reviewedAt`), **sem pontos**
-- [ ] `approve` em **uma transação**: ideia `APROVADA`; projeto `PLANEJAMENTO` (`title="PROJ: "+título`, herda `division/guidelineId`, `originatingIdeaId`, `creatorManagerId`, `priorityScore=ice.score`, `reporter*`=autor, `responsible*`=gestor); 1ª entrada de histórico "Criado automaticamente a partir da ideia: {título}"; +50 pts ao autor; badges avaliadas (ex.: Estrategista)
-- [ ] Autor tentando aprovar a própria ideia → `403 SELF_APPROVAL_FORBIDDEN`
-- [ ] **Idempotência:** aprovar 2× (inclusive em concorrência 2 requisições simultâneas) → 1 projeto, +50 uma vez, 2ª resposta `alreadyApproved=true` com o mesmo `projectId`
-- [ ] Falha no meio (simulada) → nada persiste (rollback)
-- [ ] Operador → 403 em ICE/approve/reject
-- [ ] Gate: unit + integration (≥ 16 testes)
+- [x] ICE: valores fora de 1–10 ou não inteiros → 400; `score` calculado no servidor; `SUBMETIDA` → `EM_ANALISE` automático; ICE em ideia `APROVADA/REJEITADA/IMPLEMENTADA` → `409 IDEA_INVALID_STATE`
+- [x] `reject` sem `comment` → 400; com comentário → `REJEITADA` (+`reviewerId`, `reviewedAt`), **sem pontos**
+- [x] `approve` em **uma transação**: ideia `APROVADA`; projeto `PLANEJAMENTO` (`title="PROJ: "+título`, herda `division/guidelineId`, `originatingIdeaId`, `creatorManagerId`, `priorityScore=ice.score`, `reporter*`=autor, `responsible*`=gestor); 1ª entrada de histórico "Criado automaticamente a partir da ideia: {título}"; +50 pts ao autor; badges avaliadas (ex.: Estrategista)
+- [x] Autor tentando aprovar a própria ideia → `403 SELF_APPROVAL_FORBIDDEN`
+- [x] **Idempotência:** aprovar 2× (inclusive em concorrência 2 requisições simultâneas) → 1 projeto, +50 uma vez, 2ª resposta `alreadyApproved=true` com o mesmo `projectId`
+- [x] Falha no meio (simulada) → nada persiste (rollback)
+- [x] Operador → 403 em ICE/approve/reject
+- [x] Gate: unit + integration (≥ 16 testes)
 
+**Notas de execução**: `ApproveIdeaHandler` faz tudo numa transação (ideia → APROVADA, projeto rascunho com a herança do spec, 1ª entrada do histórico, +50 ao autor, badges). **Idempotência sob concorrência verificada com Mongo real**: 8 aprovações simultâneas → 1 projeto, +50 uma vez, 1 histórico e exatamente 1 resposta `alreadyApproved=false`; nos logs, 7 das 8 tomaram o conflito de escrita do Mongo (`TransientTransactionError`), repetiram e viram a ideia já aprovada (estável em 12/12 execuções). Se a corrida terminar em chave duplicada (`ux_projects_originatingIdeaId`), o handler devolve `alreadyApproved=true` com o projeto vencedor. Para isso o `MongoUnitOfWork` agora **limpa o change tracker** ao traduzir uma exceção de escrita. ICE/aprovar/rejeitar: só gestor; autor não aprova a própria ideia (403 `SELF_APPROVAL_FORBIDDEN`, sem efeitos); ideia rejeitada/aprovada não aceita nova revisão (409). Aprovar sem ICE é permitido (`priorityScore` nulo). **36 unitários + 37 de API** (inclui a jornada completa criar → ICE → aprovar vista pelo autor).
 **Tests**: unit + integration
 **Gate**: full
 

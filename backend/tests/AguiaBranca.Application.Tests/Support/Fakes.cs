@@ -124,6 +124,77 @@ public sealed class InMemoryGuidelineHistory : IGuidelineHistoryRepository
     }
 }
 
+public sealed class FakeTimeZone(string id = "America/Sao_Paulo") : ITimeZoneProvider
+{
+    public TimeZoneInfo ReportTimeZone { get; } = TimeZoneInfo.FindSystemTimeZoneById(id);
+}
+
+public sealed class InMemoryPointEvents : IPointEventRepository
+{
+    public List<PointEvent> Items { get; } = [];
+    public Task AddAsync(PointEvent pointEvent, CancellationToken ct) { Items.Add(pointEvent); return Task.CompletedTask; }
+    public Task<IReadOnlyList<PointEvent>> ListBetweenAsync(DateTime fromInclusive, DateTime toExclusive, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<PointEvent>>(Items.Where(e => e.CreatedAt >= fromInclusive && e.CreatedAt < toExclusive).ToList());
+}
+
+public sealed class InMemoryIdeas : IIdeaRepository
+{
+    public List<Idea> Items { get; } = [];
+    public IdeaQuery? LastQuery { get; private set; }
+
+    public Task<Idea?> GetByIdAsync(string id, CancellationToken ct) => Task.FromResult(Items.FirstOrDefault(i => i.Id == id));
+    public Task AddAsync(Idea idea, CancellationToken ct) { Items.Add(idea); return Task.CompletedTask; }
+    public void Remove(Idea idea) => Items.Remove(idea);
+
+    public Task<PagedResult<Idea>> QueryAsync(IdeaQuery query, PageRequest page, CancellationToken ct)
+    {
+        LastQuery = query;
+        var q = Items.AsEnumerable();
+        if (query.AuthorId is { } a) q = q.Where(i => i.AuthorId == a);
+        if (query.Statuses is { Count: > 0 } st) q = q.Where(i => st.Contains(i.Status));
+        if (query.GuidelineId is { } g) q = q.Where(i => i.GuidelineId == g);
+        if (query.Division is { } d) q = q.Where(i => i.Division == d);
+        var list = (query.Sort == IdeaSort.ICE_SCORE_DESC
+            ? q.OrderByDescending(i => i.Ice?.Score ?? -1).ThenByDescending(i => i.CreatedAt)
+            : q.OrderByDescending(i => i.CreatedAt)).ToList();
+        return Task.FromResult(new PagedResult<Idea>(list.Skip(page.Skip).Take(page.PageSize).ToList(), page.Page, page.PageSize, list.Count));
+    }
+
+    public Task<IReadOnlyList<Idea>> ListByAuthorAsync(string authorId, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Idea>>(Items.Where(i => i.AuthorId == authorId).ToList());
+    public Task<IReadOnlyList<Idea>> ListAllAsync(Division? division, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Idea>>(Items.Where(i => division is null || i.Division == division).ToList());
+}
+
+public sealed class InMemoryProjects : IProjectRepository
+{
+    public List<Project> Items { get; } = [];
+
+    public Task<Project?> GetByIdAsync(string id, CancellationToken ct) => Task.FromResult(Items.FirstOrDefault(p => p.Id == id));
+    public Task<Project?> GetByOriginatingIdeaIdAsync(string ideaId, CancellationToken ct) =>
+        Task.FromResult(Items.FirstOrDefault(p => p.OriginatingIdeaId == ideaId));
+    public Task<IReadOnlyList<Project>> GetByOriginatingIdeaIdsAsync(IEnumerable<string> ideaIds, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Project>>(Items.Where(p => p.OriginatingIdeaId != null && ideaIds.Contains(p.OriginatingIdeaId)).ToList());
+    public Task AddAsync(Project project, CancellationToken ct) { Items.Add(project); return Task.CompletedTask; }
+    public void Remove(Project project) => Items.Remove(project);
+    public Task<PagedResult<Project>> QueryAsync(ProjectQuery query, PageRequest page, CancellationToken ct) =>
+        Task.FromResult(new PagedResult<Project>(Items.OrderByDescending(p => p.UpdatedAt).Skip(page.Skip).Take(page.PageSize).ToList(), page.Page, page.PageSize, Items.Count));
+    public Task<IReadOnlyList<Project>> ListAllAsync(Division? division, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyList<Project>>(Items.Where(p => division is null || p.Division == division).ToList());
+}
+
+public sealed class InMemoryProjectUpdates : IProjectUpdateRepository
+{
+    public List<ProjectUpdate> Items { get; } = [];
+    public Task AddAsync(ProjectUpdate update, CancellationToken ct) { Items.Add(update); return Task.CompletedTask; }
+    public Task<PagedResult<ProjectUpdate>> ListByProjectAsync(string projectId, PageRequest page, CancellationToken ct)
+    {
+        var list = Items.Where(u => u.ProjectId == projectId).OrderByDescending(u => u.CreatedAt).ToList();
+        return Task.FromResult(new PagedResult<ProjectUpdate>(list.Skip(page.Skip).Take(page.PageSize).ToList(), page.Page, page.PageSize, list.Count));
+    }
+    public Task RemoveByProjectAsync(string projectId, CancellationToken ct) { Items.RemoveAll(u => u.ProjectId == projectId); return Task.CompletedTask; }
+}
+
 public sealed class FakeIdentityService : IIdentityService
 {
     public CredentialCheckResult Result { get; set; } = CredentialCheckResult.Invalid();

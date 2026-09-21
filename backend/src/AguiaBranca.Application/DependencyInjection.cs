@@ -1,6 +1,8 @@
 using System.Reflection;
 using AguiaBranca.Application.Common.Abstractions;
 using AguiaBranca.Application.Common.Validation;
+using AguiaBranca.Application.Features.Gamification;
+using AguiaBranca.Application.Features.Ideas;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +16,8 @@ public static class DependencyInjection
         services.AddHandlersFrom(assembly);
         services.AddValidatorsFromAssembly(assembly, ServiceLifetime.Singleton, includeInternalTypes: true);
         services.AddScoped<IValidationService, ValidationService>();
+        services.AddScoped<GamificationService>();
+        services.AddScoped<IdeaResponseFactory>();
         return services;
     }
 

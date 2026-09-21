@@ -23,6 +23,7 @@ internal sealed partial class MongoUnitOfWork(AppDbContext db, ILogger<MongoUnit
         }
         catch (Exception ex) when (Translate(ex) is { } translated)
         {
+            db.ChangeTracker.Clear(); // a escrita falhou: o estado rastreado não é mais confiável
             throw translated;
         }
     }
@@ -55,6 +56,9 @@ internal sealed partial class MongoUnitOfWork(AppDbContext db, ILogger<MongoUnit
             }
             catch (Exception ex) when (Translate(ex) is { } translated)
             {
+                // Rollback já feito pelo dispose da transação; descarta as entidades rastreadas da tentativa que falhou
+                // para o chamador poder reler o banco (ex.: aprovação concorrente perdeu a corrida).
+                db.ChangeTracker.Clear();
                 throw translated;
             }
         }

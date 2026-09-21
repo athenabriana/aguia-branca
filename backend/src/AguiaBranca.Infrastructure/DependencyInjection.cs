@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddAguiaBrancaOptions(configuration);
 
         services.AddSingleton<IClock, SystemClock>();
+        services.AddSingleton<ITimeZoneProvider, ReportTimeZoneProvider>();
 
         // Conexão é preguiçosa: o driver só conecta no primeiro uso.
         services.AddSingleton<IMongoClient>(sp =>

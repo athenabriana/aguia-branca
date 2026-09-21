@@ -232,6 +232,12 @@ Idempotência: `ApproveIdea` retorna `alreadyApproved=true` se a ideia já é `A
 * `BadgeEvaluator.Evaluate(user, ideas)` — porte 1:1 do `BadgeEvaluator.kt` (mesmos casos de teste). Chamado ao final de cada caso de uso que muda ideias do autor; grava só badges novas.
 * Ranking: agregação dos `pointEvents` do mês (fuso `America/Sao_Paulo`) por usuário `OPERADOR`, top N. Volume baixo → agregação em memória sobre a consulta filtrada (o provider EF Mongo não suporta todos os `GroupBy`; ver §9.4).
 
+**Implementação (B12):** `GamificationService.AwardAsync` aplica o delta ao `AppUser` (clamp em 0) e grava o `PointEvent` com o valor **efetivo**; `GrantEarnedBadgesAsync` faz `SaveChanges` (dentro da transação corrente) antes de reler as ideias do autor e avaliar, para enxergar o estado recém-alterado. O ranking usa `ITimeZoneProvider` para a janela do mês; quem soma ≤ 0 no mês não aparece.
+
+**Visibilidade de ideias (B13):** `IdeaAccess` — operador só enxerga as próprias (404 para as alheias); gestor e líder enxergam todas; editar/excluir só o autor (404 se não enxerga, 403 se enxerga). `IdeaResponseFactory` resolve `guidelineTitle` e `linkedProject` em lote.
+
+**Aprovação concorrente (B14):** a idempotência não depende de "checar antes": o conflito de escrita do Mongo (transação repetida pelo `MongoUnitOfWork`) e o índice único parcial de `originatingIdeaId` decidem a corrida; quem perde relê e responde `alreadyApproved=true`. O `MongoUnitOfWork` limpa o change tracker ao traduzir uma falha de escrita para o handler poder reler com segurança.
+
 ### 5.6 Relatórios
 
 `ReportCalculator` é **função pura** (`ideas, projects, guidelines, filters, now → ReportSummary`), porte do `DashboardComputer.kt`, com os mesmos vetores de teste (golden). Carrega dados via repositórios filtrando por divisão no banco e por período em memória (volume de demo pequeno). Endpoints por estratégia/projeto reutilizam o calculador restrito ao subconjunto.
