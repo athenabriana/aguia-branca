@@ -1,0 +1,15 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+TestResults/
+coverage/
+publish/
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+secrets.json
+*.pfx

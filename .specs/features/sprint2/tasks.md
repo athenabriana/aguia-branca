@@ -112,7 +112,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ## Task Breakdown — Backend
 
-### B01: Scaffold da solution .NET 8
+### B01: Scaffold da solution .NET 8  ✅ concluída
 
 **What**: Criar `backend/AguiaBranca.sln` com 4 projetos de `src/` e 4 de `tests/`, referências conforme design §3, Central Package Management, `.editorconfig`, `global.json`, `.gitignore`.
 **Where**: `backend/AguiaBranca.sln`, `backend/src/AguiaBranca.{Api,Application,Domain,Infrastructure}`, `backend/tests/AguiaBranca.*.Tests`, `backend/Directory.Build.props`, `backend/Directory.Packages.props`, `backend/global.json`
@@ -121,19 +121,20 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.1, R2-10.9
 
 **Done when**:
-- [ ] `net8.0`, `Nullable=enable`, `ImplicitUsings`, `TreatWarningsAsErrors=true` em `Directory.Build.props`
-- [ ] Referências: Api→Application+Infrastructure; Infrastructure→Application+Domain; Application→Domain; Domain→∅ (verificado por teste de arquitetura simples que falha se Domain referenciar Application/Infra)
-- [ ] Versões estáveis mais recentes compatíveis com .NET 8 fixadas em `Directory.Packages.props` (JwtBearer, FluentValidation, Serilog.AspNetCore, Swashbuckle, MongoDB.EntityFrameworkCore, Microsoft.Extensions.Http.Resilience, xUnit, NSubstitute, AwesomeAssertions, Testcontainers.MongoDb, coverlet)
-- [ ] `global.json` fixa SDK `8.0.x` (`rollForward: latestFeature`)
-- [ ] `.gitignore` cobre `bin/ obj/ .env *.user secrets`
-- [ ] Gate: `dotnet build backend/AguiaBranca.sln -warnaserror` sem erro
+- [x] `net8.0`, `Nullable=enable`, `ImplicitUsings`, `TreatWarningsAsErrors=true` em `Directory.Build.props`
+- [x] Referências: Api→Application+Infrastructure; Infrastructure→Application+Domain; Application→Domain; Domain→∅ (verificado por teste de arquitetura simples que falha se Domain referenciar Application/Infra)
+- [x] Versões estáveis mais recentes compatíveis com .NET 8 fixadas em `Directory.Packages.props` (JwtBearer, FluentValidation, Serilog.AspNetCore, Swashbuckle, MongoDB.EntityFrameworkCore, Microsoft.Extensions.Http.Resilience, xUnit, NSubstitute, AwesomeAssertions, Testcontainers.MongoDb, coverlet)
+- [x] `global.json` fixa SDK `8.0.x` (`rollForward: latestFeature`)
+- [x] `.gitignore` cobre `bin/ obj/ .env *.user secrets`
+- [x] Gate: `dotnet build backend/AguiaBranca.sln -warnaserror` sem erro
 
-**Tests**: unit (teste de arquitetura de referências)
+**Notas de execução**: SDK 8.0.425 selecionado pelo `global.json`. `dotnet new` falha no sandbox (sem escrita em `~/.templateengine`) → `.sln` criado à mão + `dotnet sln add`. NuGet exige `NUGET_HTTP_CACHE_PATH` gravável (sandbox). Versões: EF Core/JwtBearer/Identity 8.0.31, `MongoDB.EntityFrameworkCore` 8.4.4, `MongoDB.Driver` 3.11.2, Resilience 8.10.0, FluentValidation 12.1.1, xUnit 2.9.3 (runner 2.8.2), Testcontainers.MongoDb 4.15.0. `NU1900–NU1904` (auditoria) não quebram o build.
+**Tests**: unit (teste de arquitetura de referências — 4 testes)
 **Gate**: quick
 
 ---
 
-### B02: Docker Compose (Mongo replica set) + configuração tipada
+### B02: Docker Compose (Mongo replica set) + configuração tipada  ✅ concluída
 
 **What**: `docker-compose.yml` com Mongo 7 em replica set de 1 nó (init automático) e serviço da API; `appsettings` conforme design §13; Options com `ValidateOnStart()`.
 **Where**: `backend/docker-compose.yml`, `backend/.env.example`, `backend/src/AguiaBranca.Api/appsettings*.json`, `Infrastructure/Configuration/*Options.cs`
@@ -142,18 +143,19 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.6, R2-10.8
 
 **Done when**:
-- [ ] `docker compose up mongo` sobe Mongo com `rs.status().ok == 1` (healthcheck)
-- [ ] `JwtOptions`, `MongoOptions`, `GeminiOptions`, `SeedOptions`, `CorsOptions` validados no startup (chave JWT < 32 bytes ou ausente → app **falha ao subir** com mensagem clara)
-- [ ] `.env.example` documenta `Jwt__Key`, `ConnectionStrings__Mongo`, `Gemini__ApiKey`, `Seed__Enabled` sem valores reais; `.env` ignorado no git
-- [ ] `appsettings*.json` sem segredos
-- [ ] Gate: `docker compose config` válido + teste unit dos validadores de options
+- [x] `docker compose up mongo` sobe Mongo com `rs.status().ok == 1` (healthcheck)
+- [x] `JwtOptions`, `MongoOptions`, `GeminiOptions`, `SeedOptions`, `CorsOptions` validados no startup (chave JWT < 32 bytes ou ausente → app **falha ao subir** com mensagem clara)
+- [x] `.env.example` documenta `Jwt__Key`, `ConnectionStrings__Mongo`, `Gemini__ApiKey`, `Seed__Enabled` sem valores reais; `.env` ignorado no git
+- [x] `appsettings*.json` sem segredos
+- [x] Gate: `docker compose config` válido + teste unit dos validadores de options
 
-**Tests**: unit (Options validators)
+**Notas de execução**: `Dockerfile` e `.dockerignore` já criados aqui (antecipando parte da B24) e o serviço `api` fica no profile `api` (`docker compose --profile api up`). `${JWT_KEY:-}` com default vazio para não exigir a chave só para subir o Mongo (a API falha no startup com mensagem clara). Replica set anuncia `localhost:27017` → strings de conexão usam `directConnection=true`. Verificado: `rs.status()` = PRIMARY. Testes: 14 (validators) + 4 (startup do host).
+**Tests**: unit (Options validators + falha de startup)
 **Gate**: unit
 
 ---
 
-### B03: SPIKE — EF Core MongoDB provider (go/no-go)
+### B03: SPIKE — EF Core MongoDB provider (go/no-go)  ✅ concluída — **GO**
 
 **What**: Prova de conceito descartável que valida os riscos do design §8: (a) CRUD de uma entidade com `ObjectId`→`string` e documento embutido, (b) **transação multi-documento** com commit e rollback, (c) **concurrency token**/`Version`, (d) consulta com filtro + ordenação + paginação, (e) **stores Identity customizados** (`UserManager.CreateAsync` + `CheckPasswordAsync`), (f) criação de índice único/parcial/TTL com o driver. Registrar resultado em ADR.
 **Where**: `backend/spikes/EfMongoSpike/` (não entra na solution final), decisão em `design.md` §19 (ADR-002/003 atualizados)
@@ -162,12 +164,22 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: DS-10 (mitiga risco de R2-09, R2-01, R2-03.8)
 
 **Done when**:
-- [ ] Cada item (a)–(f) tem resultado ✅/❌ documentado
-- [ ] **Go**: todos ✅ → segue ADR-002/003 como escritos
-- [ ] **Fallback**: se (b), (c) ou (e) ❌ → decisão registrada de usar `MongoDB.Driver` direto **dentro dos repositórios/stores** (interfaces de Application inalteradas) e ADR atualizado
+- [x] Cada item (a)–(f) tem resultado ✅/❌ documentado
+- [x] **Go**: todos ✅ → segue ADR-002/003 como escritos
+- [x] **Fallback**: se (b), (c) ou (e) ❌ → decisão registrada de usar `MongoDB.Driver` direto **dentro dos repositórios/stores** (interfaces de Application inalteradas) e ADR atualizado
 - [ ] Pasta `spikes/` removida ou marcada como exemplo antes do empacotamento (D04)
 
-**Tests**: none (spike; resultados via execução manual + Testcontainers)
+**Resultado (14/15 ✅)** — detalhes no design §8.2 e em `backend/spikes/README.md`:
+- ✅ CRUD com `_id` ObjectId nativo (inclusive **sem atributos do driver**, via `HasConversion`), enum como string, `Ice` e lista embutidos
+- ✅ Transação multi-doc: commit, rollback explícito, rollback por exceção; `SaveChanges` com várias entidades é atômico
+- ✅ Concurrency token (`Version`) → `DbUpdateConcurrencyException`
+- ✅ `Where/OrderBy/Skip/Take/Count/StartsWith`; `Select` simples
+- ✅ Identity: `UserManager` + store customizado (hash, senha fraca, e-mail único, find, lockout)
+- ✅ Índices único / parcial / TTL via driver
+- ✅ camelCase: `SetElementName` (propriedades) + `OwnsOne/OwnsMany(...).HasElementName` (embutidos)
+- ❌ `GroupBy` no servidor (esperado) → agregar em memória
+- ⚠️ Duplicate key sai como `MongoBulkWriteException(DuplicateKey)`, não `DbUpdateException` → traduzir no repositório/UoW
+**Tests**: none (spike; execução: `dotnet run --project backend/spikes/EfMongoSpike` com o Mongo do compose no ar)
 **Gate**: — (decisão registrada)
 
 ---
@@ -226,9 +238,9 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-09.1, R2-09.7, R2-10.1
 
 **Done when**:
-- [ ] Coleções e campos conforme spec (camelCase, `Ice`/`changes` embutidos, `legacyId` opcional)
+- [ ] Coleções e campos conforme spec: camelCase por convenção no `OnModelCreating` (`SetElementName` + `HasElementName` nos embutidos), `_id`/referências como `ObjectId` nativo via `HasConversion` (sem atributos no Domain), enums como string, `Ice`/`changes` embutidos, `legacyId` opcional (achados do B03)
 - [ ] `IndexInitializer` cria **todos** os índices do spec (únicos, parcial `projects.originatingIdeaId`, TTL `refreshTokens` e `aiInsights`); reexecutar não falha
-- [ ] `MongoUnitOfWork.ExecuteInTransactionAsync`: commit ok; exceção → rollback total; retry em `TransientTransactionError`
+- [ ] `MongoUnitOfWork.ExecuteInTransactionAsync`: commit ok; exceção → rollback total; retry em `TransientTransactionError`; `MongoBulkWriteException` com `DuplicateKey` traduzida em erro de conflito (não vaza exceção do driver)
 - [ ] Startup verifica replica set e loga erro claro se ausente
 - [ ] Testes de integração (Testcontainers rs): CRUD por repositório, rollback atômico (2 escritas, 2ª falha → nenhuma persiste), índice único parcial rejeita 2º projeto com mesmo `originatingIdeaId`
 - [ ] Gate: `dotnet test --filter "Category=Integration"` (≥ 8 testes)
@@ -262,7 +274,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ### B08: Identity — stores Mongo customizados
 
-**What**: `MongoUserStore` (password, email, lockout, security stamp, role) e `MongoRoleStore` mínimo; registro do Identity (`AddIdentityCore<AppUser>`), política de senha e lockout.
+**What**: `MongoUserStore` (password, email, lockout, security stamp; a base já existe no spike `backend/spikes/EfMongoSpike/IdentityStore.cs`), sem role store; registro do Identity (`AddIdentityCore<AppUser>`), política de senha e lockout.
 **Where**: `Infrastructure/Identity/*`, `Infrastructure.Tests/Identity/*`
 **Depends on**: B06 (reaproveita resultado do spike B03-e)
 **Reuses**: design §7.1, ADR-003
@@ -272,7 +284,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 - [ ] `UserManager.CreateAsync(user, password)` grava `passwordHash` (PBKDF2), nunca a senha
 - [ ] `CheckPasswordAsync` ok/erro; 5 falhas → `IsLockedOut` por 15 min
 - [ ] Senha < 8 caracteres rejeitada
-- [ ] Role única (`OPERADOR|GESTOR|LIDER`) persistida em `users.role`
+- [ ] Role única (`OPERADOR|GESTOR|LIDER`) persistida em `users.role` — **sem** `IRoleStore`/`IUserRoleStore` (decisão do B03; o perfil é campo do usuário)
 - [ ] Testes de integração dos stores (≥ 6 testes)
 - [ ] Gate: `dotnet test --filter "Category=Integration"`
 

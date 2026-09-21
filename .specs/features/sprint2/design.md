@@ -239,9 +239,9 @@ Convenções HTTP: 200 consulta/atualização · 201 criação (`Location`) · 2
 
 ### 7.1 ASP.NET Identity com MongoDB
 
-O provider EF Core MongoDB **não** suporta `IdentityDbContext` diretamente (sem `Select` projection e outras operações LINQ que o Identity usa). Decisão (ADR-003): usar `UserManager<AppUser>` + `SignInManager`/`PasswordHasher` do Identity com **stores customizados** (`MongoUserStore` implementando `IUserPasswordStore`, `IUserEmailStore`, `IUserLockoutStore`, `IUserRoleStore`, `IUserSecurityStampStore`; `MongoRoleStore` mínimo) sobre o mesmo `AppDbContext`. `AppUser` (Domain) é a própria entidade de usuário — mapeada para o Identity por um adaptador fino na Infrastructure para o Domain não depender do Identity.
+O provider EF Core MongoDB **não** suporta `IdentityDbContext` diretamente (sem `Select` projection e outras operações LINQ que o Identity usa). Decisão (ADR-003, **validada no spike B03**): usar `UserManager<AppUser>` + `PasswordHasher` do Identity (`AddIdentityCore`) com **store customizado** `MongoUserStore` (`IUserPasswordStore`, `IUserEmailStore`, `IUserLockoutStore`, `IUserSecurityStampStore`) sobre o mesmo `AppDbContext`. **Não há `IRoleStore`/`IUserRoleStore`**: o perfil é um campo único `role` do usuário (o app tem exatamente 3 perfis fixos), lido direto para as claims. `AppUser` (Domain) é a própria entidade de usuário — mapeada para o Identity por um adaptador fino na Infrastructure para o Domain não depender do Identity.
 
-Fallback (se a B03 reprovar): stores sobre `MongoDB.Driver` direto, mantendo as mesmas interfaces.
+Fallback (não necessário — B03 aprovou): stores sobre `MongoDB.Driver` direto, mantendo as mesmas interfaces.
 
 ### 7.2 JWT
 
@@ -295,18 +295,29 @@ Client ─ Authorization: Bearer <jwt> ─► JwtBearer ─► Policy ─► Con
 
 ### 8.2 Limitações do provider e como o design as absorve
 
-Confirmado na documentação do provider ([limitações](https://www.mongodb.com/docs/entity-framework/current/limitations/)): sem migrations, sem foreign keys, `Select` projection limitado, subconjunto de LINQ. Consequências:
+Validado na **B03** (spike `backend/spikes/EfMongoSpike`, MongoDB 7 em replica set, `MongoDB.EntityFrameworkCore` 8.4.4) e na [documentação de limitações](https://www.mongodb.com/docs/entity-framework/current/limitations/):
 
-| Limitação | Decisão |
-|---|---|
-| Sem migrations | Coleções criadas sob demanda; **`IndexInitializer`** (startup) cria índices/TTL/únicos com o driver oficial. Versão de schema documentada no README |
-| Sem FKs | Integridade referencial nos handlers (ex.: validar `guidelineId`); órfãos são **aceitos por regra** (R2-02.6) |
-| Sem `Select`/`GroupBy` completos | Repositórios materializam entidades (documentos pequenos) e projetam em memória; agregados (ranking, relatórios) calculados em memória sobre consultas já filtradas por índice |
-| Operadores atômicos (`$inc`) | Pontos via transação + `Version`/concurrency token; se o provider não suportar o token, usar `IMongoCollection` direto **dentro do repositório** (a interface do Application não muda) |
+| Ponto | Resultado no spike | Decisão |
+|---|---|---|
+| CRUD com `_id` string ↔ `ObjectId` nativo, enum, documentos embutidos (`OwnsOne`/`OwnsMany`) | ✅ | Sem atributos do driver no Domain: `Property(x => x.Id).HasConversion(v => ObjectId.Parse(v), v => v.ToString()).HasElementName("_id")` no `IEntityTypeConfiguration` (idem para referências como `GuidelineId`, `string?` ↔ `ObjectId?`; filtros por id/ref/null funcionam); enums com `.HasConversion<string>()` |
+| Transação multi-documento (commit, rollback explícito, rollback por exceção/dispose, 2 coleções) | ✅ | `MongoUnitOfWork` usa `Database.BeginTransactionAsync` |
+| `SaveChanges` com várias entidades é atômico? | ✅ (violação de índice único → 0 docs persistidos) | Mesmo assim, regras multi-escrita usam transação explícita |
+| Concorrência otimista (`IsConcurrencyToken` em `Version`) | ✅ `DbUpdateConcurrencyException` | Usado em `Project.Version` (R2-04.6) |
+| Consulta: `Where` + `OrderByDescending` + `Skip/Take` + `CountAsync` + `StartsWith` | ✅ | Paginação no banco |
+| `Select` para tipo anônimo | ✅ (casos simples) | Usar com parcimônia; preferir materializar a entidade |
+| `GroupBy` no servidor | ❌ `InvalidOperationException` | **Agregar em memória** sobre consulta já filtrada (ranking, relatórios — ADR-006) |
+| Identity: `UserManager` + `MongoUserStore` (create, hash, senha fraca rejeitada, e-mail único, find case-insensitive, check, lockout persistido) | ✅ | ADR-003 confirmado |
+| Índices único / **único parcial** / TTL | ✅ via `MongoDB.Driver` (`IndexInitializer`); provider não gerencia índices | Índice parcial só aceita `$type`/`$exists`/comparações — **não** `$regex` |
+| **Violação de índice único** | vira `MongoBulkWriteException` (`ServerErrorCategory.DuplicateKey`), **não** `DbUpdateException` | Repositório/UoW traduz `DuplicateKey` → `Result` `Conflict` (ex.: reaprovar ideia, e-mail repetido) |
+| Nomes de campo | padrão é **PascalCase** | `OnModelCreating` aplica camelCase: `property.SetElementName(camel)` para propriedades e `OwnsOne(...).HasElementName("ice")` / `OwnsMany(...).HasElementName("changes")` para embutidos (`SetElementName` não existe em navegações) |
+| Sem migrations | — | `IndexInitializer` no startup (idempotente) |
+| Sem foreign keys | — | Integridade referencial nos handlers; órfãos aceitos por regra (R2-02.6) |
+
+Consequências para os repositórios: agregações em memória; tradução de `MongoBulkWriteException`; camelCase por convenção no `AppDbContext`; índices sempre pelo driver.
 
 ### 8.3 Transações
 
-Multi-documento exige **replica set**. `docker-compose` sobe Mongo com `--replSet rs0` + init automático; Atlas M0 também suporta. `MongoUnitOfWork.ExecuteInTransactionAsync` abre transação via `Database.BeginTransactionAsync`, executa `SaveChangesAsync` e faz commit/rollback; repete em `TransientTransactionError` (até 3×).
+Multi-documento exige **replica set**. `docker-compose` sobe Mongo com `--replSet rs0` + init automático; Atlas M0 também suporta. `MongoUnitOfWork.ExecuteInTransactionAsync` abre transação via `Database.BeginTransactionAsync`, executa o trabalho e faz commit; sem commit (exceção/dispose) a transação é revertida (validado no spike). Repete em `TransientTransactionError` (até 3×) e traduz `MongoBulkWriteException` com `DuplicateKey` em erro de conflito.
 
 ### 8.4 Concorrência
 
@@ -497,10 +508,10 @@ Firestore (service account) ─► Extract ─► Transform (IdMap, Timestamp→
 **Status:** Aceito. **Contexto:** organização clara por camadas é critério de avaliação; MediatR passou a ter licença comercial. **Decisão:** handlers por caso de uso, registrados por assembly scan. **Alternativas:** MediatR; serviços "gordos" por feature. **Consequências:** + zero dependência, fluxo explícito; − sem pipeline behaviors automáticos (validação chamada explicitamente/decorator).
 
 ### ADR-002 — EF Core MongoDB provider para persistência
-**Status:** Aceito (sujeito ao spike B03). **Contexto:** stack exige EF Core; banco é MongoDB. **Decisão:** `MongoDB.EntityFrameworkCore` para as coleções de domínio; índices via driver. **Alternativas:** driver MongoDB puro em todo o backend; Mongo + EF Core InMemory (descartado). **Consequências:** + atende à stack pedida, mapeamento tipado; − limitações do provider (§8.2) — isoladas atrás de repositórios; fallback para driver puro sem alterar Application.
+**Status:** Aceito e **validado no spike B03** (14/15 verificações; única exceção: `GroupBy` no servidor). **Contexto:** stack exige EF Core; banco é MongoDB. **Decisão:** `MongoDB.EntityFrameworkCore` para as coleções de domínio; índices via driver. **Alternativas:** driver MongoDB puro em todo o backend; Mongo + EF Core InMemory (descartado). **Consequências:** + atende à stack pedida, mapeamento tipado, transações e concorrência otimista funcionam; − limitações do provider (§8.2: sem `GroupBy` no servidor, sem migrations/FKs, duplicate key como `MongoBulkWriteException`, camelCase manual) — isoladas atrás de repositórios; fallback para driver puro segue possível sem alterar Application.
 
 ### ADR-003 — Identity com stores customizados
-**Status:** Aceito. **Contexto:** o provider EF Mongo não suporta `IdentityDbContext`. **Decisão:** `UserManager`/`PasswordHasher` do Identity + `MongoUserStore`/`MongoRoleStore`. **Alternativas:** pacote comunitário `AspNetCore.Identity.MongoDbCore` (dependência de terceiros, dois caminhos de acesso a dados); hash de senha manual (perde lockout/políticas). **Consequências:** + segurança padrão e um único caminho de dados; − ~1 task de implementação e testes dos stores.
+**Status:** Aceito e **validado no spike B03** (create/hash/política de senha/e-mail único/find/lockout). **Contexto:** o provider EF Mongo não suporta `IdentityDbContext`. **Decisão:** `UserManager`/`PasswordHasher` do Identity + `MongoUserStore`/`MongoRoleStore`. **Alternativas:** pacote comunitário `AspNetCore.Identity.MongoDbCore` (dependência de terceiros, dois caminhos de acesso a dados); hash de senha manual (perde lockout/políticas). **Consequências:** + segurança padrão e um único caminho de dados; − 1 task de implementação e testes do store (B08). Sem role store: o perfil é o campo `role` do usuário.
 
 ### ADR-004 — Refresh token rotativo com hash
 **Status:** Aceito. **Decisão:** access 30 min + refresh 7 dias, rotação e detecção de reuso. **Alternativa:** access longo sem refresh (mais simples, pior segurança). **Consequência:** app precisa de `Authenticator`; task de refresh é *cortável* sem quebrar o resto (aumenta o access token temporariamente).
@@ -530,7 +541,7 @@ Firestore (service account) ─► Extract ─► Transform (IdMap, Timestamp→
 | **DS-7** | API versioning | Prefixo `/api/v1` | **Decidido** |
 | **DS-8** | Observabilidade | Serilog + health checks | **Decidido** |
 | **DS-9** | Rate limiting | ASP.NET Core Rate Limiting | **Decidido** |
-| **DS-10** | EF Core Mongo viabilidade (transações, concurrency token, Identity stores) | Viável | **Pendente — spike B03** |
+| **DS-10** | EF Core Mongo viabilidade (transações, concurrency token, Identity stores) | Viável | **Decidido — GO (spike B03)** |
 | **DS-11** | Hospedagem/URL do backend para o APK | Free host + Atlas M0 | **Pendente** (OP-5) |
 | **DS-12** | Modelo Gemini | Configurável | **Pendente** (OP-6) |
 
@@ -538,7 +549,7 @@ Firestore (service account) ─► Extract ─► Transform (IdMap, Timestamp→
 
 | Risco | Prob. | Impacto | Mitigação |
 |---|---|---|---|
-| Provider EF Core Mongo não cobre transações/concorrência/Identity como esperado | Média | Alto | Spike B03 antes de codar features; repositórios isolam o acesso → fallback driver puro |
+| Provider EF Core Mongo não cobre transações/concorrência/Identity como esperado | ~~Média~~ Baixa (mitigado) | Alto | Spike B03 **aprovou** transações, concorrência e Identity; limitações restantes documentadas em §8.2 |
 | Transações exigem replica set (falha em Mongo standalone) | Média | Alto | compose com `rs0`; Atlas M0; check de startup com mensagem clara |
 | Cota/instabilidade do Gemini free tier durante a demo | Média | Médio | Cache 6 h, rate limit, modelo configurável, erro amigável; **pré-gerar** insights antes da apresentação |
 | Nome/disponibilidade do modelo Gemini muda | Média | Médio | `Gemini:Model` configurável; validar na B19 |
