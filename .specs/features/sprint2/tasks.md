@@ -184,7 +184,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
-### B04: Domain — entidades, VOs, enums, regras
+### B04: Domain — entidades, VOs, enums, regras  ✅ concluída
 
 **What**: Entidades e regras puras do design §4 com testes.
 **Where**: `Domain/Entities/*`, `Domain/ValueObjects/{Ice,FieldChange}.cs`, `Domain/Enums/*`, `Domain/Rules/PointsRules.cs`, `Domain/Exceptions/*`; `Domain.Tests/*`
@@ -193,22 +193,23 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-03.5–R2-03.11, R2-04.1, R2-04.4, R2-05.1–R2-05.2
 
 **Done when**:
-- [ ] Enums: `Role`, `Division`, `IdeaStatus`, `ProjectStage`, `Pillar`, `Period`, `PointReason`, `GuidelineAction`
-- [ ] `Ice`: valida 1–10; `Score = I×C×F`
-- [ ] `Idea`: `EditContent` só em `SUBMETIDA` (senão `DomainException IDEA_NOT_EDITABLE`); `SaveIce` (SUBMETIDA/EM_ANALISE → EM_ANALISE); `Approve(reviewerId)` bloqueia autor; `Reject` exige comentário; `MarkImplemented` idempotente; normaliza categoria (trim + 1ª maiúscula, 2–40)
-- [ ] `AppUser.ApplyPoints(delta)` devolve delta efetivo com clamp em 0; `AddBadges` sem duplicar
-- [ ] `Project.ApplyUpdate(...)` devolve diff (`field/from/to`) só dos campos alterados, incrementa `Version`, sinaliza transição para `CONCLUIDO`; `IsOverdue(now)`
-- [ ] `RefreshToken` (`Rotate/Revoke/IsActive`), `PointEvent`, `GuidelineHistoryEntry`, `ProjectUpdate` imutáveis
-- [ ] `BadgeEvaluator` (5 badges, retorna só novas) portado com os **mesmos casos** do `BadgeEvaluatorTest.kt`
-- [ ] Domain sem referência a ASP.NET/EF/Mongo
-- [ ] Gate: `dotnet test --filter "Category!=Integration"` (≥ 25 testes Domain)
+- [x] Enums: `Role`, `Division`, `IdeaStatus`, `ProjectStage`, `Pillar`, `Period`, `PointReason`, `GuidelineAction`
+- [x] `Ice`: valida 1–10; `Score = I×C×F`
+- [x] `Idea`: `EditContent` só em `SUBMETIDA` (senão `DomainException IDEA_NOT_EDITABLE`); `SaveIce` (SUBMETIDA/EM_ANALISE → EM_ANALISE); `Approve(reviewerId)` bloqueia autor; `Reject` exige comentário; `MarkImplemented` idempotente; normaliza categoria (trim + 1ª maiúscula, 2–40)
+- [x] `AppUser.ApplyPoints(delta)` devolve delta efetivo com clamp em 0; `AddBadges` sem duplicar
+- [x] `Project.ApplyUpdate(...)` devolve diff (`field/from/to`) só dos campos alterados, incrementa `Version`, sinaliza transição para `CONCLUIDO`; `IsOverdue(now)`
+- [x] `RefreshToken` (`Rotate/Revoke/IsActive`), `PointEvent`, `GuidelineHistoryEntry`, `ProjectUpdate` imutáveis
+- [x] `BadgeEvaluator` (5 badges, retorna só novas) portado com os **mesmos casos** do `BadgeEvaluatorTest.kt`
+- [x] Domain sem referência a ASP.NET/EF/Mongo
+- [x] Gate: `dotnet test --filter "Category!=Integration"` (≥ 25 testes Domain)
 
+**Notas de execução**: enums em `UPPER_SNAKE` (`EM_ANALISE`) — são exatamente os valores do Mongo/API/app, sem camada de tradução. Ids do Domain são strings no formato ObjectId geradas por `EntityId` (sem depender do driver). `AppUser` é também o usuário do Identity (campos de credencial com setter público; o resto é encapsulado). Valores monetários em `decimal`. `FieldChange` guarda `Kind` (TEXT/NUMBER/DATE) + valores canônicos em texto, para a API devolver JSON tipado sem `object` no banco. `BadgeEvaluator` recebe o fuso do "mês calendário" (padrão UTC; a Application passa `America/Sao_Paulo`). **109 testes** (meta ≥ 25), incluindo os 10 casos portados de `BadgeEvaluatorTest.kt` e os de `IceTest.kt`.
 **Tests**: unit
 **Gate**: unit
 
 ---
 
-### B05: Application — fundamentos (Result, abstrações, validação)
+### B05: Application — fundamentos (Result, abstrações, validação)  ✅ concluída
 
 **What**: `Result<T>`/`Error`/`ErrorType`, `ICurrentUser`, `IClock`, `IUnitOfWork`, interfaces de repositório, `PageRequest/PagedResponse`, infraestrutura de handlers e validação (FluentValidation), `DependencyInjection.AddApplication()`.
 **Where**: `Application/Common/*`, `Application/DependencyInjection.cs`, `Application.Tests/Common/*`
@@ -217,19 +218,20 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.1, R2-10.2, R2-10.3
 
 **Done when**:
-- [ ] `Result<T>` com fábricas `Ok/Fail(Error…)`; mapeamento `ErrorType → HTTP` disponível para a Api
-- [ ] `IHandler<TCommand,TResult>` + scan de assembly registra todos os handlers
-- [ ] Helper de validação: valida request com FluentValidation e devolve `Result` Validation com `errors[]` (field/code/message)
-- [ ] `PageRequest` limita `pageSize` a 1–200 (default 50)
-- [ ] Interfaces de repositório: Idea, Guideline, GuidelineHistory, Project, ProjectUpdate, PointEvent, User, RefreshToken, InsightCache
-- [ ] Gate: unit (≥ 6 testes: Result, paginação, pipeline de validação)
+- [x] `Result<T>` com fábricas `Ok/Fail(Error…)`; mapeamento `ErrorType → HTTP` disponível para a Api
+- [x] `IHandler<TCommand,TResult>` + scan de assembly registra todos os handlers
+- [x] Helper de validação: valida request com FluentValidation e devolve `Result` Validation com `errors[]` (field/code/message)
+- [x] `PageRequest` limita `pageSize` a 1–200 (default 50)
+- [x] Interfaces de repositório: Idea, Guideline, GuidelineHistory, Project, ProjectUpdate, PointEvent, User, RefreshToken, InsightCache
+- [x] Gate: unit (≥ 6 testes: Result, paginação, pipeline de validação)
 
+**Notas de execução**: além do previsto, foram criadas `DuplicateKeyException` e `ConcurrencyConflictException` (Application) — a Infrastructure traduz as exceções do driver/EF nelas — e `DomainErrorMapper` (`DomainException` → `Error`). `IUnitOfWork` expõe `SaveChangesAsync` e `ExecuteInTransactionAsync`. Handlers registrados como classe concreta **e** interface. **46 testes** (meta ≥ 6).
 **Tests**: unit
 **Gate**: unit
 
 ---
 
-### B06: Infrastructure — persistência Mongo (DbContext, repositórios, UoW, índices)
+### B06: Infrastructure — persistência Mongo (DbContext, repositórios, UoW, índices)  ✅ concluída
 
 **What**: `AppDbContext`, configurações de entidade, repositórios, `MongoUnitOfWork` com transação/retry e `IndexInitializer`.
 **Where**: `Infrastructure/Persistence/{AppDbContext,Configurations,Repositories,MongoUnitOfWork,Indexes}`, `Infrastructure/DependencyInjection.cs`, `Infrastructure.Tests/Persistence/*`
@@ -238,19 +240,20 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-09.1, R2-09.7, R2-10.1
 
 **Done when**:
-- [ ] Coleções e campos conforme spec: camelCase por convenção no `OnModelCreating` (`SetElementName` + `HasElementName` nos embutidos), `_id`/referências como `ObjectId` nativo via `HasConversion` (sem atributos no Domain), enums como string, `Ice`/`changes` embutidos, `legacyId` opcional (achados do B03)
-- [ ] `IndexInitializer` cria **todos** os índices do spec (únicos, parcial `projects.originatingIdeaId`, TTL `refreshTokens` e `aiInsights`); reexecutar não falha
-- [ ] `MongoUnitOfWork.ExecuteInTransactionAsync`: commit ok; exceção → rollback total; retry em `TransientTransactionError`; `MongoBulkWriteException` com `DuplicateKey` traduzida em erro de conflito (não vaza exceção do driver)
-- [ ] Startup verifica replica set e loga erro claro se ausente
-- [ ] Testes de integração (Testcontainers rs): CRUD por repositório, rollback atômico (2 escritas, 2ª falha → nenhuma persiste), índice único parcial rejeita 2º projeto com mesmo `originatingIdeaId`
-- [ ] Gate: `dotnet test --filter "Category=Integration"` (≥ 8 testes)
+- [x] Coleções e campos conforme spec: camelCase por convenção no `OnModelCreating` (`SetElementName` + `HasElementName` nos embutidos), `_id`/referências como `ObjectId` nativo via `HasConversion` (sem atributos no Domain), enums como string, `Ice`/`changes` embutidos, `legacyId` opcional (achados do B03)
+- [x] `IndexInitializer` cria **todos** os índices do spec (únicos, parcial `projects.originatingIdeaId`, TTL `refreshTokens` e `aiInsights`); reexecutar não falha
+- [x] `MongoUnitOfWork.ExecuteInTransactionAsync`: commit ok; exceção → rollback total; retry em `TransientTransactionError`; `MongoBulkWriteException` com `DuplicateKey` traduzida em erro de conflito (não vaza exceção do driver)
+- [x] Startup verifica replica set e loga erro claro se ausente
+- [x] Testes de integração (Testcontainers rs): CRUD por repositório, rollback atômico (2 escritas, 2ª falha → nenhuma persiste), índice único parcial rejeita 2º projeto com mesmo `originatingIdeaId`
+- [x] Gate: `dotnet test --filter "Category=Integration"` (≥ 8 testes)
 
+**Notas de execução**: `Decimal128` é o mapeamento padrão de `decimal` (confirmado nos testes). `MongoOptions` ganhou `RequireReplicaSet` (falha o startup sem replica set, com mensagem clara) e `InitializeOnStartup`. TTL de `refreshTokens` = 1 dia após `expiresAt` (mantém tokens rotacionados para detectar reuso). Filtros com ids fora do formato ObjectId retornam vazio/`null` sem consultar o banco. Testes usam Testcontainers (Mongo 7 em replica set) ou `AGUIA_TEST_MONGO` para o ciclo local rápido. **45 testes de integração** (meta ≥ 8) + 18 unitários de options.
 **Tests**: integration
 **Gate**: full
 
 ---
 
-### B07: Api base — pipeline, erros, logs, Swagger, health
+### B07: Api base — pipeline, erros, logs, Swagger, health  ✅ concluída
 
 **What**: `Program.cs` com composition root; `ExceptionHandlingMiddleware` (ProblemDetails + `traceId`); `CorrelationIdMiddleware`; Serilog; Swagger com Bearer; health checks; mapeamento `Result → IActionResult`.
 **Where**: `Api/Program.cs`, `Api/Middleware/*`, `Api/Extensions/*`, `Api.Tests/Infrastructure/*`
@@ -259,14 +262,15 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.2, R2-10.4, R2-10.5
 
 **Done when**:
-- [ ] `GET /health/live` = 200; `/health/ready` = 200 com Mongo, 503 sem Mongo; `/health` agrega
-- [ ] Exceção não tratada → `500` `application/problem+json` com `code=INTERNAL_ERROR` + `traceId`, **sem stack trace**
-- [ ] `X-Correlation-ID` presente na resposta e nos logs
-- [ ] `/swagger` exibe esquema Bearer (Development)
-- [ ] Logs estruturados com `CorrelationId`; nenhum log de `Authorization`
-- [ ] `WebApplicationFactory<Program>` funcional (base para testes seguintes)
-- [ ] Gate: unit + integration Api (≥ 5 testes: 500, 404 ProblemDetails, correlation id, health ok/fail)
+- [x] `GET /health/live` = 200; `/health/ready` = 200 com Mongo, 503 sem Mongo; `/health` agrega
+- [x] Exceção não tratada → `500` `application/problem+json` com `code=INTERNAL_ERROR` + `traceId`, **sem stack trace**
+- [x] `X-Correlation-ID` presente na resposta e nos logs
+- [x] `/swagger` exibe esquema Bearer (Development)
+- [x] Logs estruturados com `CorrelationId`; nenhum log de `Authorization`
+- [x] `WebApplicationFactory<Program>` funcional (base para testes seguintes)
+- [x] Gate: unit + integration Api (≥ 5 testes: 500, 404 ProblemDetails, correlation id, health ok/fail)
 
+**Notas de execução**: `AddApi` recebe `IHostEnvironment` (Swagger só em Development ou com `Swagger:Enabled`). `SuppressMapClientErrors=true` para 404/415 gerados pelo MVC também usarem o formato de erro da API. Serilog com `preserveStaticLogger: true` (hosts paralelos nos testes) e sinks extras do DI. Rota `{id:objectid}` (id inválido → 404, nunca 500). Health em JSON sem detalhes da exceção. Endpoints de teste (`TestProbeController`) só existem no projeto de testes. **58 testes de Api**; smoke com o processo real (`dotnet run`) validado: `/health/ready` 200, 404 `problem+json`, Swagger e índices no startup.
 **Tests**: integration
 **Gate**: full
 

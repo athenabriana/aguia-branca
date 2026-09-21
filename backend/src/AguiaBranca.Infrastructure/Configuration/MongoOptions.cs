@@ -10,6 +10,10 @@ public sealed class MongoOptions
     /// <summary>Vem de <c>ConnectionStrings:Mongo</c> (env <c>ConnectionStrings__Mongo</c>).</summary>
     public string ConnectionString { get; set; } = string.Empty;
     public string Database { get; set; } = "aguiabranca";
+    /// <summary>Exige replica set no startup (transações). Só desligue em ambientes descartáveis.</summary>
+    public bool RequireReplicaSet { get; set; } = true;
+    /// <summary>Verifica replica set e cria índices no startup. Testes que não usam banco desligam.</summary>
+    public bool InitializeOnStartup { get; set; } = true;
 }
 
 public sealed class MongoOptionsValidator : IValidateOptions<MongoOptions>

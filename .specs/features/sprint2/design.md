@@ -166,6 +166,15 @@ Regras de pontos (constantes de domínio): `IdeaCreated = 10`, `StrategicLinkBon
 
 `DomainException(code, message)` para violações de invariante; a camada Application converte em `Result` quando é fluxo esperado.
 
+**Convenções do Domain (B04):**
+
+* Enums em `UPPER_SNAKE` (`IdeaStatus.EM_ANALISE`): são exatamente os valores persistidos no Mongo e trafegados na API/app.
+* Ids são `string` no formato ObjectId (24 hex), gerados por `EntityId.New()` — o Domain não referencia o driver; a Infrastructure os grava como `ObjectId` nativo.
+* Dinheiro e percentuais em `decimal` (persistidos como `Decimal128`).
+* `FieldChange` = `{ field, kind (TEXT|NUMBER|DATE), from, to }` com valores canônicos em texto; a API converte para JSON tipado (número/texto/data) conforme `kind`.
+* `AppUser` é também o "usuário Identity": campos de credencial (hash, security stamp, lockout) com setter público, restante encapsulado; `ApplyPoints` devolve o delta **efetivo** após o clamp.
+* `BadgeEvaluator.Evaluate(user, ideas, timeZone)` — o "mês calendário" usa o fuso configurado (`Reports:TimeZone`).
+
 ## 5. Camada Application
 
 ### 5.1 Handlers por feature
@@ -382,6 +391,8 @@ Sanitização: remover quebras de linha/controle, truncar, escapar delimitadores
 | Inesperado | 500 | `INTERNAL_ERROR` (sem detalhes internos) |
 
 Toda resposta de erro inclui `traceId`.
+
+Formato (implementado na B07): `type` = `urn:aguiabranca:error:<code-em-kebab>`, `code` estável, `errors[] = {code, message, field?}` e `traceId` = valor de `X-Correlation-ID`. Respostas 4xx sem corpo geradas pelo MVC/middlewares (404, 405, 415, 401, 403) também passam por esse formato (`UseStatusCodePages` + `SuppressMapClientErrors`).
 
 ## 11. Observabilidade
 

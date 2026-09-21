@@ -20,6 +20,10 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
   </ItemGroup>
   <ItemGroup>
+    <!-- MongoDB real (Testcontainers) compartilhado com os testes de Infrastructure -->
+    <Compile Include="..\AguiaBranca.Infrastructure.Tests\Support\MongoFixture.cs" Link="Support\MongoFixture.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="AwesomeAssertions" />
   </ItemGroup>
