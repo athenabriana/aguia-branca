@@ -46,6 +46,8 @@ services:
       Gemini__ApiKey: ${GEMINI_API_KEY:-}
       Gemini__Model: ${GEMINI_MODEL:-}
       Seed__Enabled: ${SEED_ENABLED:-true}
+      # Swagger em /swagger (em Production fica desligado por padrão; ligado aqui para a demonstração local).
+      Swagger__Enabled: ${SWAGGER_ENABLED:-true}
     restart: unless-stopped
 
 volumes:
