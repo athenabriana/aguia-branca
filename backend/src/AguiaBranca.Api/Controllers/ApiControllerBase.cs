@@ -12,6 +12,8 @@ public abstract class ApiControllerBase : ControllerBase
     protected ObjectResult ProblemFrom(IReadOnlyList<Error> errors)
     {
         var problem = ApiProblems.FromErrors(HttpContext, errors);
+        if (errors.Select(e => e.RetryAfterSeconds).FirstOrDefault(r => r is not null) is { } retryAfter)
+            Response.Headers.RetryAfter = retryAfter.ToString();
         return new ObjectResult(problem) { StatusCode = problem.Status, ContentTypes = { ApiProblems.ContentType } };
     }
 

@@ -67,4 +67,26 @@ public class AppUserTests
 
         user.Badges.Should().BeEquivalentTo(["A", "B", "C"]);
     }
+
+    [Fact]
+    public void Version_StartsAt1_AndBumpsOnlyOnRealChanges()
+    {
+        var user = TestData.User();
+        user.Version.Should().Be(1);
+
+        user.ApplyPoints(10);           // mudou
+        user.Version.Should().Be(2);
+        user.ApplyPoints(-100);         // clamp: efetivo -10 → mudou
+        user.Version.Should().Be(3);
+        user.ApplyPoints(-5);           // já em 0 → sem efeito
+        user.Version.Should().Be(3);
+
+        user.AddBadges(["A"]);
+        user.Version.Should().Be(4);
+        user.AddBadges(["A"]);          // duplicada → sem efeito
+        user.Version.Should().Be(4);
+
+        user.MarkModified();
+        user.Version.Should().Be(5);
+    }
 }

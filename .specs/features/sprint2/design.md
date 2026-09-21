@@ -267,11 +267,11 @@ Claims: `sub` (userId) · `email` · `name` · `role` · `division` · `jti`. `J
 
 ### 7.3 Refresh token
 
-Valor aleatório de 256 bits (Base64Url), **só o SHA-256** vai ao banco. Cada `refresh` revoga o token usado e emite outro na mesma `familyId`. Se um token **já revogado/rotacionado** for reapresentado → revoga a família inteira (indício de roubo) → `401 TOKEN_INVALID`. TTL 7 dias (índice TTL em `expiresAt`). Logout revoga o token informado.
+Valor aleatório de 256 bits (Base64Url), **só o SHA-256** vai ao banco. (Implementado em `RefreshHandler`: a leitura/rotação ocorre **dentro** da transação — em retry o change tracker é limpo — e a revogação da família é confirmada mesmo quando a resposta é `401`.) Cada `refresh` revoga o token usado e emite outro na mesma `familyId`. Se um token **já revogado/rotacionado** for reapresentado → revoga a família inteira (indício de roubo) → `401 TOKEN_INVALID`. TTL 7 dias (índice TTL em `expiresAt`). Logout revoga o token informado.
 
 ### 7.4 Roles e policies
 
-Roles: `OPERADOR`, `GESTOR`, `LIDER` (sem `ADMIN`; o líder é o perfil mais alto e não herda permissões de gestor — a matriz do spec é explícita).
+Roles: `OPERADOR`, `GESTOR`, `LIDER` (sem `ADMIN`; o líder é o perfil mais alto e não herda permissões de gestor — a matriz do spec é explícita). O `role` vem do claim do JWT (`RoleClaimType="role"`, `MapInboundClaims=false`).
 
 | Policy | Regra |
 |---|---|
@@ -283,6 +283,8 @@ Roles: `OPERADOR`, `GESTOR`, `LIDER` (sem `ADMIN`; o líder é o perfil mais alt
 | `UsersRead` | `GESTOR` ou `LIDER` |
 
 Regras por *recurso* (dono da ideia, status editável, auto-aprovação) ficam no Application/Domain (retornam `Forbidden`/`Conflict`), não em policy. Fallback policy exige usuário autenticado (rotas públicas usam `[AllowAnonymous]` explícito).
+
+**Comportamento da fallback policy (B10):** ela também vale para URLs sem endpoint. Logo, **rota inexistente e Swagger desligado respondem `401` a anônimos** (e `404` a autenticados): quem não está autenticado não descobre quais rotas existem. Públicas explícitas: `/api/v1/auth/login`, `/api/v1/auth/refresh`, `/health/*` e `/`.
 
 ### 7.5 Fluxo de login
 
@@ -330,7 +332,7 @@ Multi-documento exige **replica set**. `docker-compose` sobe Mongo com `--replSe
 
 ### 8.4 Concorrência
 
-`Project.Version` (int) checada no `PUT` quando enviada (`409 CONCURRENCY_CONFLICT`). Aprovação/conclusão protegidas por idempotência + índice único parcial. Pontos: transação com leitura-modificação-escrita do `AppUser`.
+`Project.Version` (int) checada no `PUT` quando enviada (`409 CONCURRENCY_CONFLICT`). **`AppUser.Version`** protege gravações de "documento inteiro" do Identity (contador de falhas, hash) contra sobrescrever pontos/badges de outra transação: `ApplyPoints`/`AddBadges`/`MarkModified` incrementam a versão e a Infrastructure traduz `DbUpdateConcurrencyException` em `ConcurrencyConflictException`; o `IdentityService` relê o usuário e repete. Aprovação/conclusão protegidas por idempotência + índice único parcial. Pontos: transação com leitura-modificação-escrita do `AppUser`.
 
 ### 8.5 Seed e índices
 

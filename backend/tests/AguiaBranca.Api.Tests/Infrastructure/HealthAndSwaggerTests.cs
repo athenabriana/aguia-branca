@@ -102,7 +102,9 @@ public class SwaggerTests
         using var factory = new ApiFactory { Environment = "Production" };
         using var client = factory.CreateClient();
 
-        (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        // Sem o Swagger a URL não existe; a fallback policy responde 401 a anônimos (não revela nem a rota).
+        (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode.Should().BeOneOf(HttpStatusCode.Unauthorized, HttpStatusCode.NotFound);
+        (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode.Should().NotBe(HttpStatusCode.OK);
     }
 
     [Fact]
@@ -120,6 +122,6 @@ public class SwaggerTests
         using var factory = new ApiFactory { Environment = "Development" }.With("Swagger:Enabled", "false");
         using var client = factory.CreateClient();
 
-        (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+        (await client.GetAsync("/swagger/v1/swagger.json")).StatusCode.Should().NotBe(HttpStatusCode.OK);
     }
 }

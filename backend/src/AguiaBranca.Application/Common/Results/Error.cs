@@ -3,7 +3,7 @@ namespace AguiaBranca.Application.Common.Results;
 public enum ErrorType { Validation, Unauthorized, Forbidden, NotFound, Conflict, Unprocessable, TooManyRequests, External, Unexpected }
 
 /// <summary>Erro de negócio estruturado. <see cref="Code"/> é estável (contrato da API).</summary>
-public sealed record Error(string Code, string Message, ErrorType Type, string? Field = null)
+public sealed record Error(string Code, string Message, ErrorType Type, string? Field = null, int? RetryAfterSeconds = null)
 {
     public static Error Validation(string message, string? field = null, string code = "VALIDATION_ERROR") =>
         new(code, message, ErrorType.Validation, field);

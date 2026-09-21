@@ -9,7 +9,16 @@ public sealed class ErrorHandlingTests : IClassFixture<ApiFactory>
 {
     private readonly HttpClient _client;
 
-    public ErrorHandlingTests(ApiFactory factory) => _client = factory.CreateClient();
+    private readonly HttpClient _anonymous;
+
+    public ErrorHandlingTests(ApiFactory factory)
+    {
+        _client = factory.CreateClient();
+        // Autenticado: a fallback policy responde 401 a anônimos até para rotas inexistentes/métodos errados.
+        _client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", TestJwt.Forge("665f00000000000000000001"));
+        _anonymous = factory.CreateClient();
+    }
 
     private static async Task<JsonElement> Json(HttpResponseMessage response) =>
         JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
@@ -201,7 +210,7 @@ public sealed class ErrorHandlingTests : IClassFixture<ApiFactory>
     [Fact]
     public async Task CurrentUser_WhenAnonymous_IsNotAuthenticated()
     {
-        var (_, body) = await Get("/api/v1/testprobe/me");
+        var body = await Json(await _anonymous.GetAsync("/api/v1/testprobe/me"));
         body.GetProperty("isAuthenticated").GetBoolean().Should().BeFalse();
         body.GetProperty("id").GetString().Should().BeEmpty();
     }

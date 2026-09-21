@@ -28,7 +28,8 @@ builder.Host.UseSerilog(preserveStaticLogger: true, configureLogger: (context, s
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
-    .AddApi(builder.Configuration, builder.Environment);
+    .AddApi(builder.Configuration, builder.Environment)
+    .AddAguiaBrancaSecurity();
 
 var app = builder.Build();
 

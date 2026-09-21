@@ -32,6 +32,7 @@ public sealed class Result<T>
     public static Result<T> Fail(IEnumerable<Error> errors) => new(errors.ToArray());
 
     public static implicit operator Result<T>(Error error) => Fail(error);
+    public static implicit operator Result<T>(T value) => Ok(value);
 
     public Result<TOut> Map<TOut>(Func<T, TOut> map) =>
         IsSuccess ? Result<TOut>.Ok(map(_value!)) : Result<TOut>.Fail(Errors);

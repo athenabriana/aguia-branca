@@ -276,7 +276,7 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
-### B08: Identity — stores Mongo customizados
+### B08: Identity — stores Mongo customizados  ✅ concluída
 
 **What**: `MongoUserStore` (password, email, lockout, security stamp; a base já existe no spike `backend/spikes/EfMongoSpike/IdentityStore.cs`), sem role store; registro do Identity (`AddIdentityCore<AppUser>`), política de senha e lockout.
 **Where**: `Infrastructure/Identity/*`, `Infrastructure.Tests/Identity/*`
@@ -285,19 +285,20 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-01.5, R2-01.6
 
 **Done when**:
-- [ ] `UserManager.CreateAsync(user, password)` grava `passwordHash` (PBKDF2), nunca a senha
-- [ ] `CheckPasswordAsync` ok/erro; 5 falhas → `IsLockedOut` por 15 min
-- [ ] Senha < 8 caracteres rejeitada
-- [ ] Role única (`OPERADOR|GESTOR|LIDER`) persistida em `users.role` — **sem** `IRoleStore`/`IUserRoleStore` (decisão do B03; o perfil é campo do usuário)
-- [ ] Testes de integração dos stores (≥ 6 testes)
-- [ ] Gate: `dotnet test --filter "Category=Integration"`
+- [x] `UserManager.CreateAsync(user, password)` grava `passwordHash` (PBKDF2), nunca a senha
+- [x] `CheckPasswordAsync` ok/erro; 5 falhas → `IsLockedOut` por 15 min
+- [x] Senha < 8 caracteres rejeitada
+- [x] Role única (`OPERADOR|GESTOR|LIDER`) persistida em `users.role` — **sem** `IRoleStore`/`IUserRoleStore` (decisão do B03; o perfil é campo do usuário)
+- [x] Testes de integração dos stores (≥ 6 testes)
+- [x] Gate: `dotnet test --filter "Category=Integration"`
 
+**Notas de execução**: `AppUser` ganhou `Version` (token de concorrência otimista, com `MarkModified()`; `ApplyPoints`/`AddBadges` incrementam só em mudança real). Motivo: o `UserManager` grava o documento inteiro; sem isso, um contador de falhas de login com dado velho **sobrescreveria pontos** creditados por outra transação — coberto por teste (`StaleIdentityWrite_DoesNotOverwritePoints...`). `IdentityService` faz retry relendo o usuário e aplica um hash "isca" quando o e-mail não existe (custo de PBKDF2 igual → sem diferença de tempo). Achado: `ReloadAsync` do provider **não** desserializa `DateTimeOffset?` nulo → o retry destaca a entidade e consulta de novo. Sem `IRoleStore` (decisão do B03). **22 testes** (11 de Identity com Mongo real + 11 unitários de JWT/refresh token).
 **Tests**: integration
 **Gate**: full
 
 ---
 
-### B09: Auth — JWT, refresh rotativo e endpoints
+### B09: Auth — JWT, refresh rotativo e endpoints  ✅ concluída
 
 **What**: `JwtTokenService`, `RefreshTokenService` (hash SHA-256, família, rotação, reuso), handlers `Login/Refresh/Logout/Me`, `AuthController`, rate limit `/auth/*`.
 **Where**: `Infrastructure/Authentication/*`, `Application/Features/Auth/*`, `Api/Controllers/AuthController.cs`, testes correspondentes
@@ -306,22 +307,23 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-01.1–R2-01.4, R2-01.6, R2-01.7, R2-01.9
 
 **Done when**:
-- [ ] Login válido → 200 com `accessToken` (claims `sub,email,name,role,division,jti`, exp 30 min), `refreshToken`, `expiresIn=1800`, `user`
-- [ ] Usuário inexistente e senha errada → **mesma** resposta `401 INVALID_CREDENTIALS`
-- [ ] Bloqueio após 5 falhas → `429` + `Retry-After`
-- [ ] `refresh` rotaciona (antigo passa a inválido); reapresentar antigo → `401 TOKEN_INVALID` e **família revogada** (novo token também falha)
-- [ ] Refresh armazenado **somente como hash** (teste inspeciona o banco)
-- [ ] `logout` revoga; `me` retorna perfil com `points`/`badges`
-- [ ] JWT inválido/expirado → 401; resposta nunca contém `passwordHash`/`securityStamp`
-- [ ] Rate limit: 11ª chamada/min ao `/auth/login` do mesmo IP → 429
-- [ ] Gate: unit + integration (≥ 12 testes)
+- [x] Login válido → 200 com `accessToken` (claims `sub,email,name,role,division,jti`, exp 30 min), `refreshToken`, `expiresIn=1800`, `user`
+- [x] Usuário inexistente e senha errada → **mesma** resposta `401 INVALID_CREDENTIALS`
+- [x] Bloqueio após 5 falhas → `429` + `Retry-After`
+- [x] `refresh` rotaciona (antigo passa a inválido); reapresentar antigo → `401 TOKEN_INVALID` e **família revogada** (novo token também falha)
+- [x] Refresh armazenado **somente como hash** (teste inspeciona o banco)
+- [x] `logout` revoga; `me` retorna perfil com `points`/`badges`
+- [x] JWT inválido/expirado → 401; resposta nunca contém `passwordHash`/`securityStamp`
+- [x] Rate limit: 11ª chamada/min ao `/auth/login` do mesmo IP → 429
+- [x] Gate: unit + integration (≥ 12 testes)
 
+**Notas de execução**: o lockout responde **429 já na 5ª tentativa errada** (conta bloqueada nesse momento) e nas seguintes, com `Retry-After`. Refresh/logout executam o carregamento **dentro** da transação (releitura em retry) e a revogação da família é confirmada mesmo quando a resposta é 401. Rate limit `/auth/*` por IP com balde compartilhado entre login e refresh, configurável (`RateLimiting:*`); atrás de proxy será preciso `ForwardedHeaders` (B21/B24). JWT com `MapInboundClaims=false`, algoritmo restrito a HS256, skew 30 s; claims `sub,email,name,role,division,jti`. Política de rate limit `insights` (por usuário) já registrada para a B20. `Cache-Control: no-store` em `/auth/*` fica na B21. **19 testes unitários dos handlers + 35 de API** (login, lockout, refresh/rotação/reuso, logout, me, JWT inválido em 7 variações, rate limit).
 **Tests**: unit + integration
 **Gate**: full
 
 ---
 
-### B10: Autorização — policies, seed e harness de matriz
+### B10: Autorização — policies, seed e harness de matriz  ✅ concluída
 
 **What**: Policies (`GestorOnly`, `LiderOnly`, `CanCreateIdea`, `ProjectsRead`, `UsersRead`, fallback autenticado), `DatabaseSeeder`, e **harness** de teste que cria os 3 usuários e obtém tokens (base para a matriz da B22).
 **Where**: `Api/Extensions/AuthorizationExtensions.cs`, `Infrastructure/Seed/DatabaseSeeder.cs`, `Api.Tests/Support/{TestServerFixture,AuthHelper}.cs`
@@ -330,13 +332,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-01.5, R2-01.8
 
 **Done when**:
-- [ ] Seed idempotente cria 3 usuários demo + 4 orientações + 6 ideias (estados variados) + 3 projetos com histórico; rodar 2× não duplica
-- [ ] Seed só roda com `Seed:Enabled=true` (padrão em Development)
-- [ ] Endpoint sem `[AllowAnonymous]` e sem token → 401 (fallback policy)
-- [ ] Endpoint de teste por policy: token errado → 403; correto → 200
-- [ ] Harness expõe `ClientAs(Role)` para os testes seguintes
-- [ ] Gate: integration (≥ 6 testes)
+- [x] Seed idempotente cria 3 usuários demo + 4 orientações + 6 ideias (estados variados) + 3 projetos com histórico; rodar 2× não duplica
+- [x] Seed só roda com `Seed:Enabled=true` (padrão em Development)
+- [x] Endpoint sem `[AllowAnonymous]` e sem token → 401 (fallback policy)
+- [x] Endpoint de teste por policy: token errado → 403; correto → 200
+- [x] Harness expõe `ClientAs(Role)` para os testes seguintes
+- [x] Gate: integration (≥ 6 testes)
 
+**Notas de execução**: a *fallback policy* também cobre URLs sem endpoint: **rota inexistente (e Swagger desligado) responde 401 a anônimos** e 404 a autenticados — decisão intencional (anônimo não descobre quais rotas existem); `[AllowAnonymous]` explícito em login/refresh/health/raiz. Seed: os 3 usuários pedidos **+ 2 operadores extras** (Ana/PASSAGEIROS e Bruno/COMERCIO) para o ranking mensal ter mais de uma pessoa; 4 orientações (5 entradas de histórico: 4 criações + 1 edição), 6 ideias cobrindo todos os status, 3 projetos com histórico e diffs (1 concluído com ROI positivo, 1 em execução no prazo, 1 rascunho), razão de pontos coerente com `users.points` e badges pelo `BadgeEvaluator` (operador = 295 pts e 3 badges). Seed retomável (usuários e dados independentes) e com aviso em Production. Testes passam a compartilhar **um único MongoDB (Testcontainers) por processo**. **10 testes de seed + 40 da matriz** (6 policies × 4 identidades, formato de erro, endpoints públicos, perfis semeados).
 **Tests**: integration
 **Gate**: full
 

@@ -16,6 +16,7 @@ internal sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
         b.Property(x => x.Id).AsDocumentId();
         b.Property(x => x.Role).HasConversion<string>();
         b.Property(x => x.Division).HasConversion<string>();
+        b.Property(x => x.Version).IsConcurrencyToken();
     }
 }
 

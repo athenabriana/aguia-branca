@@ -26,6 +26,10 @@ public static class WebApplicationExtensions
         }
 
         app.UseRouting();
+        app.UseRateLimiter();          // depois do routing: usa os metadados do endpoint ([EnableRateLimiting])
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseMiddleware<RequestContextLoggingMiddleware>();
         return app;
     }
 
@@ -33,12 +37,12 @@ public static class WebApplicationExtensions
     {
         app.MapControllers();
 
-        app.MapGet("/", () => Results.Ok(new { name = "INOVAGAB — Águia Branca API", version = "v1" })).ExcludeFromDescription();
+        app.MapGet("/", () => Results.Ok(new { name = "INOVAGAB — Águia Branca API", version = "v1" })).ExcludeFromDescription().AllowAnonymous();
 
         // Liveness: só o processo. Readiness: dependências (Mongo). /health: tudo.
-        app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = WriteHealthAsync });
-        app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready"), ResponseWriter = WriteHealthAsync });
-        app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = WriteHealthAsync });
+        app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false, ResponseWriter = WriteHealthAsync }).AllowAnonymous();
+        app.MapHealthChecks("/health/ready", new HealthCheckOptions { Predicate = c => c.Tags.Contains("ready"), ResponseWriter = WriteHealthAsync }).AllowAnonymous();
+        app.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = WriteHealthAsync }).AllowAnonymous();
         return app;
     }
 

@@ -19,6 +19,12 @@ public sealed class AppUser
     public string? LegacyId { get; private set; }
     public DateTime CreatedAt { get; private set; }
 
+    /// <summary>
+    /// Token de concorrência otimista: incrementa a cada alteração persistida. Evita que uma escrita "de documento inteiro"
+    /// (ex.: contador de falhas de login pelo Identity) sobrescreva pontos/badges alterados por outra transação.
+    /// </summary>
+    public int Version { get; private set; }
+
     // --- credenciais (Identity) ---
     public string? UserName { get; set; }
     public string? NormalizedUserName { get; set; }
@@ -45,9 +51,13 @@ public sealed class AppUser
             Role = role,
             Division = division,
             LegacyId = legacyId,
-            CreatedAt = now
+            CreatedAt = now,
+            Version = 1
         };
     }
+
+    /// <summary>Marca o documento como alterado (bump de <see cref="Version"/>). Chamado pelo store do Identity a cada gravação.</summary>
+    public void MarkModified() => Version++;
 
     /// <summary>Aplica o delta com clamp em 0 (R-06.7) e devolve o delta <b>efetivo</b>.</summary>
     public int ApplyPoints(int delta)
@@ -55,6 +65,7 @@ public sealed class AppUser
         var next = Math.Max(0, Points + delta);
         var effective = next - Points;
         Points = next;
+        if (effective != 0) Version++;
         return effective;
     }
 
@@ -68,6 +79,7 @@ public sealed class AppUser
             Badges.Add(badge);
             added.Add(badge);
         }
+        if (added.Count > 0) Version++;
         return added;
     }
 }
