@@ -8,6 +8,8 @@
     <ProjectReference Include="..\..\src\AguiaBranca.Application\AguiaBranca.Application.csproj" />
     <ProjectReference Include="..\..\src\AguiaBranca.Domain\AguiaBranca.Domain.csproj" />
     <ProjectReference Include="..\..\src\AguiaBranca.Infrastructure\AguiaBranca.Infrastructure.csproj" />
+    <!-- Migrador: o teste de compatibilidade migra dados fictícios e usa a API real sobre eles -->
+    <ProjectReference Include="..\..\tools\AguiaBranca.FirestoreMigrator\AguiaBranca.FirestoreMigrator.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
@@ -22,6 +24,7 @@
   <ItemGroup>
     <!-- MongoDB real (Testcontainers) compartilhado com os testes de Infrastructure -->
     <Compile Include="..\AguiaBranca.Infrastructure.Tests\Support\MongoFixture.cs" Link="Support\MongoFixture.cs" />
+    <Compile Include="..\..\tools\AguiaBranca.FirestoreMigrator.Tests\Support.cs" Link="Support\MigratorSupport.cs" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

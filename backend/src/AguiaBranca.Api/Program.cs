@@ -25,6 +25,13 @@ builder.Host.UseSerilog(preserveStaticLogger: true, configureLogger: (context, s
     else logger.WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {CorrelationId} {Message:lj}{NewLine}{Exception}");
 });
 
+// Kestrel: mesmo teto de corpo do middleware (defesa em profundidade) e sem o header "Server: Kestrel".
+builder.WebHost.ConfigureKestrel(kestrel =>
+{
+    kestrel.AddServerHeader = false;
+    kestrel.Limits.MaxRequestBodySize = builder.Configuration.GetValue<long?>("Security:MaxRequestBodyBytes") ?? 1_048_576;
+});
+
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)

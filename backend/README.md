@@ -16,7 +16,9 @@ API REST da plataforma de inovação corporativa **INOVAGAB**: orientações est
 7. [Testes](#7-testes)
 8. [Arquitetura e estrutura de pastas](#8-arquitetura-e-estrutura-de-pastas)
 9. [Conectando o app Android](#9-conectando-o-app-android)
-10. [Solução de problemas](#10-solução-de-problemas)
+10. [Migração dos dados do Firebase](#10-migração-dos-dados-do-firebase)
+11. [Deploy de demonstração](#11-deploy-de-demonstração)
+12. [Solução de problemas](#12-solução-de-problemas)
 
 ---
 
@@ -35,7 +37,10 @@ Backend em construção (Sprint 2). O que já está pronto e funcionando:
 | Projetos: CRUD do gestor, histórico com diff e **conclusão → ideia implementada (+200 pontos)** | ✅ |
 | Relatórios/dashboard: funil, KPIs, sparkline, retorno por orientação e por projeto (portados do app, com testes de paridade) | ✅ |
 | **Insights de IA (Google Gemini)** sobre o dashboard, com cache, cota diária e resiliência | ✅ |
-| Ferramenta de migração Firebase → MongoDB | ⏳ próximas fases |
+| Endurecimento de segurança: CORS restrito, limite de payload, headers de segurança, HSTS, varredura de segredos | ✅ |
+| Matriz de autorização completa (todas as rotas × 4 identidades) e fluxo ponta a ponta com MongoDB real | ✅ |
+| Ferramenta de migração Firebase → MongoDB ([`tools/`](tools/README.md)) | ✅ (leitura do Firestore real ainda não validada — ver o README da ferramenta) |
+| Deploy de demonstração (API + MongoDB Atlas) | ⏳ depende de contas externas — passo a passo na [seção 11](#11-deploy-de-demonstração) |
 
 ### Endpoints disponíveis hoje
 
@@ -86,7 +91,7 @@ O contrato completo (todas as rotas planejadas, payloads e perfis) está no [`sp
 | **.NET SDK** | **8.0.x** | Compilar/rodar/testar (não é necessário se você só usar o Docker) | [dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0) ou `brew install --cask dotnet-sdk@8` | [dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0) ou `winget install Microsoft.DotNet.SDK.8` |
 | **Git** | qualquer | Clonar o repositório | Xcode CLT / `brew install git` | [git-scm.com](https://git-scm.com/download/win) ou `winget install Git.Git` |
 
-> O `global.json` fixa o SDK em **8.0.x**. Ter apenas o SDK 9 instalado **não** basta (veja a [solução de problemas](#10-solução-de-problemas)). SDKs de várias versões podem conviver na mesma máquina.
+> O `global.json` fixa o SDK em **8.0.x**. Ter apenas o SDK 9 instalado **não** basta (veja a [solução de problemas](#12-solução-de-problemas)). SDKs de várias versões podem conviver na mesma máquina.
 
 Conferindo a instalação:
 
@@ -216,7 +221,7 @@ Guarde o valor: ele será usado como `JWT_KEY` (opção A) ou `Jwt:Key` (opção
    dotnet watch --project src/AguiaBranca.Api
    ```
 
-> A primeira restauração de pacotes NuGet precisa de internet. Se algum passo reclamar de SDK, veja a [solução de problemas](#10-solução-de-problemas).
+> A primeira restauração de pacotes NuGet precisa de internet. Se algum passo reclamar de SDK, veja a [solução de problemas](#12-solução-de-problemas).
 
 ### 3.C MongoDB Atlas (sem Docker para o banco)
 
@@ -245,7 +250,10 @@ A configuração vem de `appsettings*.json`, *user secrets*, variáveis de ambie
 | `Seed:Enabled` | `Seed__Enabled` (`SEED_ENABLED`) | `true` em Development e no compose | Popula os dados de demonstração |
 | `Swagger:Enabled` | `Swagger__Enabled` (`SWAGGER_ENABLED`) | Development: ligado · Production: desligado | Expõe `/swagger` |
 | `RateLimiting:AuthPermitLimit` | `RateLimiting__AuthPermitLimit` | `10` | Requisições por minuto, por IP, em `/api/v1/auth/*` |
-| `Cors:Origins` | `Cors__Origins__0` … | vazio | Origens permitidas (o app nativo não usa CORS) |
+| `Cors:Origins` | `Cors__Origins__0` … | vazio | Origens de navegador permitidas (exatas, ex.: `https://painel.exemplo.com`; sem curinga, barra final ou caminho — inválidas derrubam o startup). O app nativo não usa CORS |
+| `Security:MaxRequestBodyBytes` | `Security__MaxRequestBodyBytes` | `1048576` (1 MB) | Corpo maior → `413 PAYLOAD_TOO_LARGE` |
+| `Security:ForwardedHeaders` | `Security__ForwardedHeaders` | `false` | **Ligue só atrás de proxy/balanceador confiável** que termina o HTTPS (Render, Azure, Nginx): passa a valer `X-Forwarded-For/Proto` (IP real no rate limit, HSTS). Sem proxy, deixe desligado — senão um cliente forja o IP |
+| `Security:HstsMaxAgeDays` | `Security__HstsMaxAgeDays` | `365` | HSTS (só fora de Development e só em requisições HTTPS) |
 | `Reports:TimeZone` | `Reports__TimeZone` | `America/Sao_Paulo` | Fuso do "mês corrente" (ranking, badges) |
 | `Gemini:ApiKey` | `Gemini__ApiKey` (`GEMINI_API_KEY` no `.env`) | vazio | Chave do [Google AI Studio](https://aistudio.google.com/). **Sem chave a API funciona normalmente** e `/reports/insights` responde `503 AI_UNAVAILABLE` |
 | `Gemini:Model` | `Gemini__Model` (`GEMINI_MODEL`) | vazio (**obrigatório com chave**) | Modelo do free tier da sua conta. Este projeto usa **`gemini-3.1-flash-lite`** (menor custo em tokens). Os nomes mudam com frequência: liste os disponíveis em [ai.google.dev/gemini-api/docs/models](https://ai.google.dev/gemini-api/docs/models) |
@@ -354,6 +362,9 @@ Todos os erros seguem `application/problem+json`, com um `code` estável e o `tr
 
 - **Mais de 10 chamadas por minuto** a `/api/v1/auth/*` pelo mesmo IP retornam `429` (`RATE_LIMITED`). Para testes intensivos, suba com `RateLimiting__AuthPermitLimit=1000`.
 - **Rotas inexistentes respondem `401` a quem não está autenticado** (e `404` a quem está) — de propósito: anônimos não descobrem quais rotas existem.
+- **Headers em toda resposta:** `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` e CSP restritiva (exceto no Swagger); `/auth/*` também `Cache-Control: no-store`. HSTS em produção sobre HTTPS. O header `Server` é removido.
+- **CORS:** só as origens de `Cors:Origins`; qualquer outra não recebe `Access-Control-Allow-Origin`. **Corpo > 1 MB** → `413`. **Ids inválidos** na rota → `404` (nunca `500`); erros nunca trazem stack trace.
+- **Segredos:** `backend/scripts/scan-secrets.sh` varre os arquivos versionados atrás de chaves (Google `AIza…`, PEM, connection strings com senha, `Jwt`/`Gemini` preenchidos) e confere que o `.env` está fora do Git. Rode antes de cada commit/PR.
 
 ---
 
@@ -391,7 +402,25 @@ Em vez de subir um contêiner novo a cada execução, aponte os testes para o Mo
 | `export AGUIA_TEST_MONGO="mongodb://localhost:27017/?directConnection=true"` | `$env:AGUIA_TEST_MONGO = "mongodb://localhost:27017/?directConnection=true"` |
 | `dotnet test` | `dotnet test` |
 
-O que a suíte cobre: regras de domínio (máquina de estados da ideia, pontos, badges, diff de projeto), casos de uso de autenticação, persistência e transações no Mongo real, matriz de autorização (401/403/2xx por perfil), rate limit, formato de erros, health checks, Swagger e seed.
+Cobertura de linhas (Domain e Application), com o *coverlet*:
+
+```bash
+dotnet test tests/AguiaBranca.Domain.Tests --collect:"XPlat Code Coverage"
+dotnet test tests/AguiaBranca.Application.Tests --collect:"XPlat Code Coverage"
+```
+
+Só com os testes unitários: **Domain ≈ 95 %** e **Application ≈ 95 %** (meta: ≥ 80 %). Os testes da migração ficam em `tools/` e entram no `dotnet test` da solução.
+
+### Smoke test de uma API em execução
+
+Com a API no ar (compose ou deploy), o script confere saúde, login demo, dashboard, 401/403 e headers (e, com `SMOKE_INSIGHTS=1`, também **uma** geração de IA — consome 1 da cota diária):
+
+```bash
+backend/scripts/smoke.sh                            # http://localhost:5080
+SMOKE_INSIGHTS=1 backend/scripts/smoke.sh https://minha-api.onrender.com
+```
+
+O que a suíte cobre: regras de domínio (máquina de estados da ideia, pontos, badges, diff de projeto, prazos), casos de uso de todas as funcionalidades, persistência e transações no Mongo real, **matriz de autorização de todas as rotas × 4 identidades** (um teste falha se surgir rota sem entrada), **fluxo ponta a ponta** (orientação → ideia → ICE → aprovação → projeto → conclusão → dashboard → ranking → histórico), concorrência (aprovações e conclusões simultâneas, teto de IA), dashboard com casos *golden* calculados à mão, cliente Gemini com respostas simuladas, hardening (CORS, 413, headers, HSTS), migração Firestore → Mongo, rate limit, formato de erros, health checks, Swagger e seed.
 
 ---
 
@@ -437,6 +466,10 @@ backend/
 │   ├── AguiaBranca.Application.Tests/
 │   ├── AguiaBranca.Infrastructure.Tests/   # integração com MongoDB real
 │   └── AguiaBranca.Api.Tests/              # autorização, fluxos, contratos HTTP
+├── tools/
+│   ├── AguiaBranca.FirestoreMigrator/         # migração Firestore → MongoDB (CLI) — ver tools/README.md
+│   └── AguiaBranca.FirestoreMigrator.Tests/
+├── scripts/                      # scan-secrets.sh (varredura de segredos) · smoke.sh (smoke de API em execução)
 └── spikes/                       # prova de conceito do provider EF Core MongoDB (descartável)
 ```
 
@@ -466,7 +499,42 @@ Descobrindo o IP da máquina e liberando a porta:
 
 ---
 
-## 10. Solução de problemas
+## 10. Migração dos dados do Firebase
+
+A migração do app da Sprint 1 (Firestore) para o MongoDB é feita pela ferramenta em [`tools/`](tools/README.md): `--dry-run`, execução
+idempotente, remapeamento de todas as referências, recálculo de badges, pontos como evento de abertura e **relatório de
+conciliação**. Leia o [README da ferramenta](tools/README.md) (inclui como obter a service account e as limitações — por exemplo,
+as senhas do Firebase **não migram**: todos recebem uma senha temporária).
+
+---
+
+## 11. Deploy de demonstração
+
+O APK precisa de uma URL **HTTPS** pública. Caminho sugerido (gratuito): **API no Render** (ou Azure/Railway) + **MongoDB Atlas M0**
+(o M0 já é replica set, então as transações funcionam). Não é possível fazê-lo por script: exige contas e chaves suas.
+
+1. **Atlas:** crie um cluster M0, um usuário de banco e libere o IP do host (ou `0.0.0.0/0` só para a demonstração). Copie a connection string `mongodb+srv://…`.
+2. **Host da API:** crie um *Web Service* a partir deste repositório usando o `backend/Dockerfile` (contexto `backend/`), porta `8080`, *health check* em `/health/ready`.
+3. **Variáveis de ambiente do serviço** (segredos só no painel do host, nunca no Git):
+
+| Variável | Valor |
+|---|---|
+| `ConnectionStrings__Mongo` | a connection string do Atlas |
+| `Jwt__Key` | chave nova (`openssl rand -base64 48`) |
+| `Security__ForwardedHeaders` | `true` (o host termina o HTTPS) |
+| `Seed__Enabled` | `true` para a demonstração (cria os usuários demo) |
+| `Swagger__Enabled` | `true` se quiser o Swagger na demonstração |
+| `Gemini__ApiKey` / `Gemini__Model` / `Gemini__DailyLimit` | chave do AI Studio, `gemini-3.1-flash-lite` e o teto da sua cota |
+| `Cors__Origins__0` | só se algum front web for consumir a API |
+
+4. **Smoke pós-deploy:** `SMOKE_INSIGHTS=1 backend/scripts/smoke.sh https://sua-api.exemplo.com`.
+5. Anote a URL aqui e no `mobile/` (build *release*, tarefa M11 do plano). Planos gratuitos "dormem": a primeira chamada pode levar ~1 min.
+
+> Sem deploy, o fallback é `docker compose up` numa máquina da mesma rede e apontar o app para o IP da LAN (ver seção 9).
+
+---
+
+## 12. Solução de problemas
 
 | Sintoma | Causa provável e solução |
 |---|---|

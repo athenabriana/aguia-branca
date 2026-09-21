@@ -129,4 +129,35 @@ public class OptionsValidatorTests
     [Fact]
     public void Reports_SaoPaulo_Succeeds() =>
         new ReportsOptionsValidator().Validate(null, new ReportsOptions()).Succeeded.Should().BeTrue();
+
+    [Theory]
+    [InlineData("https://painel.exemplo.com", true)]
+    [InlineData("http://localhost:3000", true)]
+    [InlineData("*", false)]
+    [InlineData("https://painel.exemplo.com/", false)]
+    [InlineData("https://painel.exemplo.com/app", false)]
+    [InlineData("painel.exemplo.com", false)]
+    [InlineData("ftp://painel.exemplo.com", false)]
+    public void Cors_Origins_MustBeExactOrigins(string origin, bool ok) =>
+        new CorsOptionsValidator().Validate(null, new CorsOptions { Origins = [origin] }).Succeeded.Should().Be(ok);
+
+    [Fact]
+    public void Cors_NoOrigins_IsValid() =>
+        new CorsOptionsValidator().Validate(null, new CorsOptions()).Succeeded.Should().BeTrue();
+
+    [Theory]
+    [InlineData(1023, false)]
+    [InlineData(1024, true)]
+    [InlineData(1_048_576, true)]
+    [InlineData(10_485_760, true)]
+    [InlineData(10_485_761, false)]
+    public void Security_MaxRequestBody_IsBounded(long bytes, bool ok) =>
+        new SecurityOptionsValidator().Validate(null, new SecurityOptions { MaxRequestBodyBytes = bytes }).Succeeded.Should().Be(ok);
+
+    [Theory]
+    [InlineData(0, false)]
+    [InlineData(365, true)]
+    [InlineData(731, false)]
+    public void Security_HstsMaxAge_IsBounded(int days, bool ok) =>
+        new SecurityOptionsValidator().Validate(null, new SecurityOptions { HstsMaxAgeDays = days }).Succeeded.Should().Be(ok);
 }

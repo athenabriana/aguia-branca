@@ -1,7 +1,9 @@
 using System.Text.Json;
 using AguiaBranca.Api.Http;
 using AguiaBranca.Api.Middleware;
+using AguiaBranca.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Serilog;
 
@@ -11,12 +13,17 @@ public static class WebApplicationExtensions
 {
     public static WebApplication UseAguiaBrancaPipeline(this WebApplication app)
     {
+        if (app.Services.GetRequiredService<IOptions<SecurityOptions>>().Value.ForwardedHeaders) app.UseForwardedHeaders();
+        if (!app.Environment.IsDevelopment()) app.UseHsts(); // só emite o header em requisições HTTPS (direto ou via X-Forwarded-Proto)
+
         app.UseMiddleware<CorrelationIdMiddleware>();
+        app.UseMiddleware<SecurityHeadersMiddleware>();
         app.UseSerilogRequestLogging(o => o.GetLevel = (ctx, _, ex) =>
             ex is not null || ctx.Response.StatusCode >= 500 ? Serilog.Events.LogEventLevel.Error
             : ctx.Request.Path.StartsWithSegments("/health") ? Serilog.Events.LogEventLevel.Verbose
             : Serilog.Events.LogEventLevel.Information);
         app.UseMiddleware<ExceptionHandlingMiddleware>();
+        app.UseMiddleware<RequestBodyLimitMiddleware>();
         app.UseStatusCodePages(ApiProblems.WriteStatusCodeAsync);
 
         if (ServiceCollectionExtensions.IsSwaggerEnabled(app.Configuration, app.Environment))
@@ -26,6 +33,7 @@ public static class WebApplicationExtensions
         }
 
         app.UseRouting();
+        app.UseCors(); // antes da autenticação: o preflight (OPTIONS) não carrega credenciais
         app.UseAuthentication();
         app.UseAuthorization();
         // Depois da autenticação: o limite dos insights é por usuário (claim "sub") e só conta requisições já autorizadas.

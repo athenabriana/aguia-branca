@@ -584,14 +584,15 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.6
 
 **Done when**:
-- [ ] CORS só para `Cors:Origins` configuradas; origem não listada sem `Access-Control-Allow-Origin`
-- [ ] Payload > limite (1 MB) → 413
-- [ ] Headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` em `/auth/*`; HSTS em Production
-- [ ] IDs de rota inválidos (não ObjectId) → 400/404, sem 500
-- [ ] Varredura: `git grep` de padrões de segredo (`Key=`, `ApiKey`, `mongodb+srv://`) não encontra valores reais; `.env` fora do git
-- [ ] Teste garante que nenhuma resposta de erro contém stack trace
-- [ ] Gate: integration (≥ 6 testes)
+- [x] CORS só para `Cors:Origins` configuradas; origem não listada sem `Access-Control-Allow-Origin`
+- [x] Payload > limite (1 MB) → 413
+- [x] Headers: `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` em `/auth/*`; HSTS em Production
+- [x] IDs de rota inválidos (não ObjectId) → 400/404, sem 500
+- [x] Varredura: `git grep` de padrões de segredo (`Key=`, `ApiKey`, `mongodb+srv://`) não encontra valores reais; `.env` fora do git
+- [x] Teste garante que nenhuma resposta de erro contém stack trace
+- [x] Gate: integration (32 testes de integração + 13 de validação de opções)
 
+**Notas de execução**: `SecurityHeadersMiddleware` (nosniff, no-referrer, X-Frame-Options, CSP restritiva fora do Swagger; `Cache-Control: no-store` + `Pragma` em `/auth/*`; aplicado também às respostas de erro), `RequestBodyLimitMiddleware` (`Security:MaxRequestBodyBytes`, padrão 1 MB → 413 `PAYLOAD_TOO_LARGE`; o Kestrel recebe o mesmo teto e o header `Server` é removido), CORS restrito a `Cors:Origins` (validadas no startup: sem curinga/barra/caminho; preflight coberto), HSTS fora de Development (só sai em HTTPS) e `Security:ForwardedHeaders` **opt-in** (`X-Forwarded-For/Proto`; ligar só atrás de proxy confiável, senão o IP do rate limit é forjável). O `TestServer` não aplica o limite do Kestrel — por isso o middleware (testado de verdade) e não só a configuração do servidor. `scripts/scan-secrets.sh` varre o Git (chaves `AIza`, PEM, connection strings com senha, `Jwt`/`Gemini` preenchidos, `.env` versionado/ignorado) e foi validado plantando um segredo. **Achados da varredura:** só falsos positivos esperados (chaves fictícias dos testes) e `mobile/app/google-services.json` — a chave Android do Firebase da Sprint 1, embutida no APK por design (restrita por pacote/SHA-1); registrada como **exceção explícita** no script (o arquivo permanece porque Analytics/Crashlytics continuam, R2-08.8). Testes provam por mutação: remover o header ou o limite derruba testes. Nenhuma resposta de erro (7 cenários) contém stack trace, nomes de tipo ou a mensagem interna da exceção; ids de rota inválidos → 404/405, nunca 5xx (8 rotas).
 **Tests**: integration
 **Gate**: full
 
@@ -606,11 +607,12 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-01.5, R2-10.7
 
 **Done when**:
-- [ ] Matriz cobre **todos** os endpoints do contrato: esperado 401 (anônimo), 403 (perfil sem permissão) e 2xx (perfil permitido); um teste falha se surgir endpoint sem entrada na matriz (reflexão nas rotas)
-- [ ] Fluxo: líder cria orientação → operador cria ideia vinculada (+15) → gestor salva ICE → gestor aprova (projeto criado, +50) → gestor edita projeto (diff) → conclui (ideia IMPLEMENTADA, +200, "Impacto Real") → líder lê `/reports/summary` com números esperados → ranking mensal → histórico da orientação
-- [ ] Cobertura reportada (coverlet): Domain + Application ≥ 80%
-- [ ] Gate: `dotnet test backend/AguiaBranca.sln` verde
+- [x] Matriz cobre **todos** os endpoints do contrato: esperado 401 (anônimo), 403 (perfil sem permissão) e 2xx (perfil permitido); um teste falha se surgir endpoint sem entrada na matriz (reflexão nas rotas)
+- [x] Fluxo: líder cria orientação → operador cria ideia vinculada (+15) → gestor salva ICE → gestor aprova (projeto criado, +50) → gestor edita projeto (diff) → conclui (ideia IMPLEMENTADA, +200, "Impacto Real") → líder lê `/reports/summary` com números esperados → ranking mensal → histórico da orientação
+- [x] Cobertura reportada (coverlet): Domain + Application ≥ 80%
+- [x] Gate: `dotnet test backend/AguiaBranca.sln` verde
 
+**Notas de execução**: `AuthorizationMatrixTests` = **31 endpoints × 4 identidades (124 casos) + 1 teste de reflexão** que compara as rotas reais dos controllers (via `IActionDescriptorCollectionProvider`) com a matriz — rota nova sem entrada, ou entrada obsoleta, quebra o teste (verificado plantando uma rota). Esperado: anônimo 401 (login/refresh públicos), perfil sem permissão 403, perfil permitido → resposta de negócio (200 nos GET sem id, 404 em id inexistente, 400/404/409/422 em escrita com corpo vazio — nunca 401/403/5xx); as escritas usam ids inexistentes e corpo vazio: **a matriz não altera dados**. Mutação: abrir `DELETE /projects/{id}` ao líder derrubou o teste. `FullFlowTests` percorre a jornada inteira com Mongo real e confere pontos (15 → 65 → 265), badges por etapa (**"Estrategista" só depois de a ideia vinculada ser aprovada** — regra do avaliador, que o teste inicialmente antecipou por engano), histórico com diff, dashboard por **variação** sobre o seed (funil +1 em cada estágio, investimento +100.000, retorno +300.000, lucro +200.000, ROI 200 %), relatório da orientação e do projeto, ranking mensal e histórico da orientação (`UPDATED`, `CREATED`). **Cobertura (coverlet, só testes unitários): Domain 94,6 % linhas / 83,2 % ramos; Application 94,9 % / 91,5 %** (≥ 80 %). Suíte inteira (solução, incluindo o migrador): **1.158 testes** verdes (Mongo local e Testcontainers).
 **Tests**: integration
 **Gate**: full
 
@@ -625,16 +627,17 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-09.1–R2-09.7
 
 **Done when**:
-- [ ] CLI: `--firestore-project`, `--credentials`, `--mongo`, `--database`, `--dry-run`
-- [ ] Ordem `users → guidelines(+history CREATED) → ideas → projects → projectUpdates → pointEvents(MIGRATION) → badges recalculadas`
-- [ ] `IdMap` legacyId→ObjectId persistido (`migration_idmap`); **todas** as referências remapeadas
-- [ ] Idempotente: 2ª execução não duplica (upsert por `legacyId`); `--dry-run` não escreve
-- [ ] `Timestamp`→UTC; enum inválido → item reportado, migração continua
-- [ ] Usuários recriados no Identity com senha temporária; e-mail preservado
-- [ ] **Relatório de conciliação** (JSON/console): contagens origem×destino por coleção, órfãos, inválidos
-- [ ] Testes com transformações puras (mapeamento, remap, enums, timestamps) e dataset fake em memória (≥ 8 testes); execução real validada contra o emulador do Firestore ou projeto de teste (evidência no README)
-- [ ] Gate: unit do migrator
+- [x] CLI: `--firestore-project`, `--credentials`, `--mongo`, `--database`, `--dry-run`
+- [x] Ordem `users → guidelines(+history CREATED) → ideas → projects → projectUpdates → pointEvents(MIGRATION) → badges recalculadas`
+- [x] `IdMap` legacyId→ObjectId persistido (`migration_idmap`); **todas** as referências remapeadas
+- [x] Idempotente: 2ª execução não duplica (upsert por `legacyId`); `--dry-run` não escreve
+- [x] `Timestamp`→UTC; enum inválido → item reportado, migração continua
+- [x] Usuários recriados no Identity com senha temporária; e-mail preservado
+- [x] **Relatório de conciliação** (JSON/console): contagens origem×destino por coleção, órfãos, inválidos
+- [x] Testes com transformações puras (mapeamento, remap, enums, timestamps) e dataset fake em memória (45 unitários; validação contra Firestore real/emulador **pendente**, ver notas)
+- [x] Gate: unit do migrator
 
+**Notas de execução**: CLI `aguiabranca-firestore-migrator` (`tools/AguiaBranca.FirestoreMigrator`): leitura isolada em `IFirestoreSource`, parsers puros, `MigrationRunner` e destino em `IMigrationSink` (Mongo). Escreve **documentos BSON no formato exato do servidor** (ids, `legacyId`, `Decimal128`, `ice`, `changes` tipadas) com upsert por `_id`; o mapa legado→ObjectId (`migration_idmap`) é salvo **antes** das gravações (uma queda no meio não gera duplicatas). Badges pelo `BadgeEvaluator` do domínio (ideias "de avaliação" em memória); pontos como evento `MIGRATION` datado na criação do usuário (não entra no ranking do mês). Casos tratados e reportados sem abortar: enum/número inválido, referência opcional órfã (→ `null`), obrigatória órfã (item descartado), e-mail já existente no destino (conflito, nunca sobrescreve), e-mail duplicado na origem, dois projetos para a mesma ideia (o índice único parcial faria a gravação falhar — o 2º perde o vínculo). Exit codes 0/2/1. **Prova de compatibilidade** (`Api.Tests/Migration`, 7 testes com Mongo real): migra o dataset e a **API de verdade** faz login com a senha temporária, lê tudo com referências remapeadas, calcula o dashboard, **aprova uma ideia migrada** (+50 sobre o saldo de abertura) e edita um projeto migrado (versão/histórico); 2ª execução não duplica. Mutações (dry-run escrevendo, delta errado, sem reuso do mapa) derrubaram testes. **Pendência honesta:** a leitura de um Firestore **real ou do emulador** não foi executada (o emulador exige instalar o Firebase CLI e não há service account de teste); só a conversão de tipos do SDK (Timestamp/mapas/listas) está testada offline. Antes da migração definitiva: `--dry-run` contra o projeto real. Limitações documentadas em `tools/README.md` (senhas não migram; a API ainda não tem troca de senha).
 **Tests**: unit
 **Gate**: unit
 
@@ -649,13 +652,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-10.8, R2-11.1 · **OP-5**
 
 **Done when**:
-- [ ] `docker compose up --build` sobe Mongo (rs0) + API; `GET /health/ready` = 200 e login demo funciona (seed)
-- [ ] README: pré-requisitos, `docker compose`, `dotnet run`, variáveis de ambiente, usuários demo, como gerar a chave Gemini (Google AI Studio), rodar testes, estrutura de camadas, migração, portas/URLs, troubleshooting (replica set, SDK 8)
-- [ ] Imagem roda como usuário não-root; sem segredos na imagem
+- [x] `docker compose up --build` sobe Mongo (rs0) + API; `GET /health/ready` = 200 e login demo funciona (seed)
+- [x] README: pré-requisitos, `docker compose`, `dotnet run`, variáveis de ambiente, usuários demo, como gerar a chave Gemini (Google AI Studio), rodar testes, estrutura de camadas, migração, portas/URLs, troubleshooting (replica set, SDK 8)
+- [x] Imagem roda como usuário não-root; sem segredos na imagem
 - [ ] **Deploy** (decisão OP-5): API em host gratuito (ex.: Render/Azure/Railway) + MongoDB Atlas M0; URL HTTPS anotada no README e usada em M11. Se inviável, registrar fallback `docker compose` + IP da LAN e ajustar M11
 - [ ] Smoke pós-deploy: login + `/reports/summary` (seed) em ambiente publicado
 - [ ] Gate: `docker compose up` + smoke script
 
+**Notas de execução (parcial — o deploy depende de você):** validado localmente `docker compose --profile api up --build`: Mongo (rs0) + API, `/health/ready` = 200, login demo, dashboard, 401/403 e headers, **insights com a chave real** (200; uma tentativa anterior estourou o timeout do provedor e a 2ª respondeu em 3,2 s — a latência do modelo é variável) via `scripts/smoke.sh`. Imagem roda como usuário `app` (não-root) e **nenhuma chave nas camadas da imagem** (a chave só existe como variável de ambiente em execução). README com pré-requisitos, compose, `dotnet run`, variáveis, usuários demo, chave do Gemini, testes/cobertura, estrutura, migração, portas, troubleshooting e a **seção 11 (deploy passo a passo)**. **Não feito:** o deploy em host gratuito + Atlas (OP-5) exige contas e segredos seus — publicar é uma ação externa; ficam prontos o guia, o `Security__ForwardedHeaders`, o smoke script e o fallback (compose + IP da LAN).
 **Tests**: none (smoke manual/script)
 **Gate**: full
 

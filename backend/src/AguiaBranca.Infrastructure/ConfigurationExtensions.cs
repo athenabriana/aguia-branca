@@ -18,6 +18,8 @@ public static class ConfigurationExtensions
         services.AddSingleton<IValidateOptions<GeminiOptions>, GeminiOptionsValidator>();
         services.AddSingleton<IValidateOptions<ReportsOptions>, ReportsOptionsValidator>();
         services.AddSingleton<IValidateOptions<RateLimitingOptions>, RateLimitingOptionsValidator>();
+        services.AddSingleton<IValidateOptions<SecurityOptions>, SecurityOptionsValidator>();
+        services.AddSingleton<IValidateOptions<CorsOptions>, CorsOptionsValidator>();
 
         services.AddOptions<JwtOptions>().Bind(configuration.GetSection(JwtOptions.Section)).ValidateOnStart();
         services.AddOptions<MongoOptions>()
@@ -28,7 +30,8 @@ public static class ConfigurationExtensions
         services.AddOptions<ReportsOptions>().Bind(configuration.GetSection(ReportsOptions.Section)).ValidateOnStart();
         services.AddOptions<RateLimitingOptions>().Bind(configuration.GetSection(RateLimitingOptions.Section)).ValidateOnStart();
         services.AddOptions<SeedOptions>().Bind(configuration.GetSection(SeedOptions.Section));
-        services.AddOptions<CorsOptions>().Bind(configuration.GetSection(CorsOptions.Section));
+        services.AddOptions<CorsOptions>().Bind(configuration.GetSection(CorsOptions.Section)).ValidateOnStart();
+        services.AddOptions<SecurityOptions>().Bind(configuration.GetSection(SecurityOptions.Section)).ValidateOnStart();
 
         return services;
     }

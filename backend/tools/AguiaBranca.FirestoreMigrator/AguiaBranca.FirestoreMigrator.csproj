@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>aguiabranca-firestore-migrator</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Domain: BadgeEvaluator e enums (mesmas regras do servidor); Infrastructure: índices e nomes de coleções. -->
+    <ProjectReference Include="..\..\src\AguiaBranca.Domain\AguiaBranca.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AguiaBranca.Infrastructure\AguiaBranca.Infrastructure.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="AguiaBranca.FirestoreMigrator.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Google.Cloud.Firestore" />
+    <PackageReference Include="MongoDB.Driver" />
+    <PackageReference Include="Microsoft.Extensions.Identity.Core" />
+  </ItemGroup>
+</Project>

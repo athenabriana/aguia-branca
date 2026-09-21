@@ -6,6 +6,9 @@ using AguiaBranca.Domain.Enums;
 using AguiaBranca.Infrastructure.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.HttpsPolicy;
+using AspCorsOptions = Microsoft.AspNetCore.Cors.Infrastructure.CorsOptions;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -49,6 +52,8 @@ public static class SecurityExtensions
             .AddPolicy(Policies.CanCreateIdea, p => p.RequireRole(nameof(Role.OPERADOR), nameof(Role.GESTOR)))
             .AddPolicy(Policies.ProjectsRead, p => p.RequireRole(nameof(Role.GESTOR), nameof(Role.LIDER)))
             .AddPolicy(Policies.UsersRead, p => p.RequireRole(nameof(Role.GESTOR), nameof(Role.LIDER)));
+
+        AddHardening(services);
 
         services.AddRateLimiter(limiter =>
         {
@@ -97,5 +102,36 @@ public static class SecurityExtensions
         });
 
         return services;
+    }
+
+    /// <summary>CORS restrito às origens configuradas, HSTS e (opcional) headers de proxy reverso.</summary>
+    private static void AddHardening(IServiceCollection services)
+    {
+        services.AddCors();
+        // Só as origens de <c>Cors:Origins</c>; sem nenhuma, nenhuma origem de navegador é liberada (o app nativo não usa CORS).
+        services.AddOptions<AspCorsOptions>().Configure<IOptions<Infrastructure.Configuration.CorsOptions>>((cors, mine) =>
+            cors.AddDefaultPolicy(policy =>
+            {
+                if (mine.Value.Origins.Length == 0) return;
+                policy.WithOrigins(mine.Value.Origins)
+                    .WithMethods("GET", "POST", "PUT", "DELETE")
+                    .WithHeaders("Authorization", "Content-Type", "X-Correlation-ID")
+                    .WithExposedHeaders("X-Correlation-ID", "Retry-After")
+                    .SetPreflightMaxAge(TimeSpan.FromHours(1));
+            }));
+
+        services.AddOptions<HstsOptions>().Configure<IOptions<SecurityOptions>>((hsts, security) =>
+        {
+            hsts.MaxAge = TimeSpan.FromDays(security.Value.HstsMaxAgeDays);
+            hsts.IncludeSubDomains = true;
+        });
+
+        services.Configure<ForwardedHeadersOptions>(o =>
+        {
+            o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            // O proxy do host (Render/Azure/Nginx) não tem IP fixo conhecido: a confiança é ligada por configuração.
+            o.KnownNetworks.Clear();
+            o.KnownProxies.Clear();
+        });
     }
 }
