@@ -41,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.aguiabranca.app.core.domain.badge.Badges
+import com.aguiabranca.app.core.domain.model.Badges
 import com.aguiabranca.app.core.domain.model.IdeaStatus
 import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.components.BadgeChip

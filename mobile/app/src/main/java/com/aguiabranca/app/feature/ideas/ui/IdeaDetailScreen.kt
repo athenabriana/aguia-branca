@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.aguiabranca.app.core.domain.model.IdeaStatus
+import com.aguiabranca.app.core.domain.model.ProjectStage
 import com.aguiabranca.app.core.domain.model.Role
 import com.aguiabranca.app.core.ui.components.GuidelineBadge
 import com.aguiabranca.app.core.ui.components.IceMatrix
@@ -57,6 +58,7 @@ fun IdeaDetailScreen(
     var showReject by remember { mutableStateOf(false) }
     var showDelete by remember { mutableStateOf(false) }
     var pendingIce by remember { mutableStateOf<Ice?>(null) }
+    val actionError by vm.actionError.collectAsState()
 
     Scaffold(
         topBar = {
@@ -74,7 +76,7 @@ fun IdeaDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (idea.guidelineId != null) {
-                        GuidelineBadge(title = s.data.guideline?.title)
+                        GuidelineBadge(title = idea.guidelineTitle) // nulo com guidelineId = "Orientação removida"
                     } else {
                         Text("Sem orientação vinculada", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     }
@@ -94,10 +96,13 @@ fun IdeaDetailScreen(
 
                     if (isAuthor) {
                         Spacer(Modifier.height(8.dp))
+                        val projectStage = idea.linkedProject?.stage
                         val current = when (idea.status) {
                             IdeaStatus.SUBMETIDA -> JourneyStage.SUBMETIDA
                             IdeaStatus.EM_ANALISE -> JourneyStage.EM_ANALISE
-                            IdeaStatus.APROVADA -> JourneyStage.APROVADA
+                            // "Em execução" vem do projeto vinculado (stage), sem acessar /projects.
+                            IdeaStatus.APROVADA ->
+                                if (projectStage == ProjectStage.EM_EXECUCAO) JourneyStage.EM_EXECUCAO else JourneyStage.APROVADA
                             IdeaStatus.IMPLEMENTADA -> JourneyStage.RESULTADO
                             IdeaStatus.REJEITADA -> null
                         }
@@ -107,7 +112,7 @@ fun IdeaDetailScreen(
                                 JourneyStage.SUBMETIDA to idea.createdAt,
                                 JourneyStage.EM_ANALISE to idea.reviewedAt,
                                 JourneyStage.APROVADA to idea.reviewedAt,
-                                JourneyStage.EM_EXECUCAO to null,
+                                JourneyStage.EM_EXECUCAO to idea.linkedProject?.takeIf { it.stage == ProjectStage.EM_EXECUCAO || it.stage == ProjectStage.CONCLUIDO }?.updatedAt,
                                 JourneyStage.RESULTADO to null
                             ),
                             status = idea.status,
@@ -120,6 +125,8 @@ fun IdeaDetailScreen(
                             }
                         }
                     }
+
+                    actionError?.let { Text(it, color = MaterialTheme.colorScheme.error, fontSize = 13.sp) }
 
                     if (canCurate) {
                         Spacer(Modifier.height(8.dp))

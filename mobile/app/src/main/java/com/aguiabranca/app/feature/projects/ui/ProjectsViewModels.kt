@@ -12,7 +12,8 @@ import com.aguiabranca.app.core.domain.model.Guideline
 import com.aguiabranca.app.core.domain.model.Project
 import com.aguiabranca.app.core.domain.model.ProjectStage
 import com.aguiabranca.app.core.domain.model.ProjectUpdate
-import com.aguiabranca.app.core.domain.usecase.CompleteProjectUseCase
+import com.aguiabranca.app.core.util.Analytics
+import com.aguiabranca.app.core.domain.error.toPtBr
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -40,8 +41,7 @@ data class ProjectDetailUi(
 
 @HiltViewModel
 class ProjectDetailViewModel @Inject constructor(
-    private val repo: ProjectsRepository,
-    private val guidelinesRepo: GuidelinesRepository
+    private val repo: ProjectsRepository
 ) : ViewModel() {
     private val idFlow = MutableStateFlow<String?>(null)
     fun setProjectId(id: String) { idFlow.value = id }
@@ -50,8 +50,7 @@ class ProjectDetailViewModel @Inject constructor(
         idFlow.collect { id ->
             if (id == null) emit(ProjectDetailUi())
             else combine(repo.observe(id), repo.observeUpdates(id)) { project, updates ->
-                val guidelineTitle = project?.guidelineId?.let { gid -> runCatching { guidelinesRepo.observe(gid).first()?.title }.getOrNull() }
-                ProjectDetailUi(project = project, updates = updates, guidelineTitle = guidelineTitle)
+                ProjectDetailUi(project = project, updates = updates, guidelineTitle = project?.guidelineTitle)
             }.collect { emit(it) }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ProjectDetailUi())
@@ -79,6 +78,8 @@ data class ProjectForm(
     val responsibleId: String? = null,
     val responsibleName: String? = null,
     val note: String = "",
+    /** Versão lida do servidor: o PUT a devolve para detectar edição concorrente (409). */
+    val version: Int? = null,
     val saving: Boolean = false,
     val error: String? = null
 )
@@ -89,7 +90,7 @@ class ProjectFormViewModel @Inject constructor(
     private val projectsRepo: ProjectsRepository,
     private val guidelinesRepo: GuidelinesRepository,
     private val usersRepo: com.aguiabranca.app.core.domain.UsersRepository,
-    private val completeUseCase: CompleteProjectUseCase
+    private val analytics: Analytics
 ) : ViewModel() {
     private val _form = MutableStateFlow(restore())
     val form: StateFlow<ProjectForm> = _form.asStateFlow()
@@ -106,6 +107,8 @@ class ProjectFormViewModel @Inject constructor(
     }
 
     private var editingId: String? = null
+    private var loadedStage: ProjectStage? = null
+    private var loadedOriginatingIdeaId: String? = null
 
     fun load(id: String?) {
         editingId = id
@@ -122,8 +125,11 @@ class ProjectFormViewModel @Inject constructor(
                 division = p.division,
                 guidelineId = p.guidelineId,
                 responsibleId = p.responsibleId,
-                responsibleName = p.responsibleName
+                responsibleName = p.responsibleName,
+                version = p.version
             )
+            loadedStage = p.stage
+            loadedOriginatingIdeaId = p.originatingIdeaId
             persist()
         }
     }
@@ -163,7 +169,8 @@ class ProjectFormViewModel @Inject constructor(
                 division = f.division,
                 guidelineId = f.guidelineId,
                 responsibleId = f.responsibleId,
-                responsibleName = f.responsibleName
+                responsibleName = f.responsibleName,
+                version = f.version
             )
             val id = editingId
             val result = if (id == null) projectsRepo.create(input, managerId, managerName)
@@ -175,10 +182,12 @@ class ProjectFormViewModel @Inject constructor(
                         is String -> r
                         else -> id ?: ""
                     }
-                    if (f.stage == ProjectStage.CONCLUIDO) completeUseCase(pid)
+                    // A conclusão (ideia IMPLEMENTADA, +200 pts, badge) é efeito do PUT no servidor; o app só registra a métrica.
+                    if (f.stage == ProjectStage.CONCLUIDO && loadedStage != ProjectStage.CONCLUIDO)
+                        analytics.logProjectCompleted(pid, hasOriginatingIdea = loadedOriginatingIdeaId != null)
                     onDone(pid)
                 }
-                is Outcome.Failure -> _form.value = _form.value.copy(error = result.error.toString())
+                is Outcome.Failure -> _form.value = _form.value.copy(error = result.error.toPtBr())
             }
         }
     }

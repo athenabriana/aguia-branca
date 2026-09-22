@@ -678,11 +678,12 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.7
 
 **Done when**:
-- [ ] Dependências adicionadas ao catálogo (versões estáveis compatíveis com Kotlin/AGP atuais do projeto)
-- [ ] `debug`: `API_BASE_URL = http://10.0.2.2:5080/api/v1/` (cleartext permitido **só** para 10.0.2.2/localhost); `release`: valor de `local.properties`/gradle property `api.baseUrl` (HTTPS), com falha clara se ausente
-- [ ] Permissão `INTERNET` no manifest; `usesCleartextTraffic` não habilitado globalmente
-- [ ] Gate: `./gradlew :app:compileDebugKotlin`
+- [x] Dependências adicionadas ao catálogo (versões estáveis compatíveis com Kotlin/AGP atuais do projeto)
+- [x] `debug`: `API_BASE_URL = http://10.0.2.2:5080/api/v1/` (cleartext permitido **só** para 10.0.2.2/localhost); `release`: valor de `local.properties`/gradle property `api.baseUrl` (HTTPS), com falha clara se ausente
+- [x] Permissão `INTERNET` no manifest; `usesCleartextTraffic` não habilitado globalmente
+- [x] Gate: `./gradlew :app:compileDebugKotlin`
 
+**Notas de execução**: Retrofit 2.11 + converter kotlinx-serialization + OkHttp 4.12 + DataStore 1.1.1 + MockWebServer no catálogo. `API_BASE_URL` por build type: debug `http://10.0.2.2:5080/api/v1/`; release exige `-Papi.baseUrl`/`api.baseUrl` (local.properties) **HTTPS**, senão o `assembleRelease` falha com mensagem clara (validado no grafo de tarefas). Cleartext só no `network_security_config` **de debug** (`src/debug/res/xml`, apenas `10.0.2.2`/`localhost`); a variante main não permite HTTP. **Achado de ambiente:** o Gradle 8.11 não roda em JDK 24 (`Type T not present` ao criar `testDebugUnitTest`); usei o JBR (JDK 21) do Android Studio via `JAVA_HOME` — documentado no README do mobile.
 **Tests**: none
 **Gate**: quick
 
@@ -697,14 +698,15 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.2–R2-08.4, R2-08.9
 
 **Done when**:
-- [ ] `TokenStore`: tokens cifrados (não ficam em texto puro nas prefs); `clear()` no logout
-- [ ] `AuthInterceptor` injeta `Bearer`; ausente token → não injeta (rotas de auth)
-- [ ] `TokenAuthenticator`: em `401` faz **um** refresh (mutex, sem laço), repete a requisição; falha de refresh → limpa sessão e sinaliza logout
-- [ ] `ProblemDetailsMapper`: `401→NotAuthenticated`, `403→PermissionDenied`, `404→NotFound`, `400/422→ValidationFailed`, `409→ConflictingState`, `429`→mensagem de limite, `IOException/timeout→NetworkUnavailable`; usa `errors[]`/`code` quando presentes
-- [ ] `pollingFlow(interval=15s)` emite imediatamente e a cada intervalo enquanto coletado; `RefreshBus.invalidate(key)` força refetch imediato
-- [ ] Testes MockWebServer: refresh transparente, refresh falho → logout, mapeamento de erros, polling/invalidação (≥ 10 testes)
-- [ ] Gate: `./gradlew :app:testDebugUnitTest`
+- [x] `TokenStore`: tokens cifrados (não ficam em texto puro nas prefs); `clear()` no logout
+- [x] `AuthInterceptor` injeta `Bearer`; ausente token → não injeta (rotas de auth)
+- [x] `TokenAuthenticator`: em `401` faz **um** refresh (mutex, sem laço), repete a requisição; falha de refresh → limpa sessão e sinaliza logout
+- [x] `ProblemDetailsMapper`: `401→NotAuthenticated`, `403→PermissionDenied`, `404→NotFound`, `400/422→ValidationFailed`, `409→ConflictingState`, `429`→mensagem de limite, `IOException/timeout→NetworkUnavailable`; usa `errors[]`/`code` quando presentes
+- [x] `pollingFlow(interval=15s)` emite imediatamente e a cada intervalo enquanto coletado; `RefreshBus.invalidate(key)` força refetch imediato
+- [x] Testes MockWebServer: refresh transparente, refresh falho → logout, mapeamento de erros, polling/invalidação (≥ 10 testes)
+- [x] Gate: `./gradlew :app:testDebugUnitTest`
 
+**Notas de execução**: `core/network/*` (Retrofit APIs, DTOs, `TokenStore` com AES-GCM no Keystore atrás de `TokenCipher`, `AuthInterceptor`, `TokenAuthenticator` [refresh único e serializado, sem laço, rede caída não derruba a sessão], `ProblemDetailsMapper` + `safeApiCall` [nunca engole cancelamento], `pollingFlow` + `RefreshBus`, `fetchAll` para paginação). Novos `DomainError.TooManyRequests` e `ServiceUnavailable`. **Bug real achado pelos testes:** `pollingFlow` descartava resultados legitimamente `null` (`mapNotNull`), então "registro inexistente" nunca chegava à tela — corrigido e coberto. 24 testes (MockWebServer/Turbine): Bearer só onde deve, 401→refresh→repetição, 4 chamadas simultâneas = 1 refresh, refresh recusado → logout, sem laço, tokens cifrados em repouso, mapeamento 401/403/404/400/422/409/429/502/503/IO, polling imediato/15 s/invalidação/falha. Mutação (remover a proteção de laço e o reaproveitamento do token novo) derrubou testes.
 **Tests**: unit (MockWebServer)
 **Gate**: full
 
@@ -719,13 +721,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.2, R2-01
 
 **Done when**:
-- [ ] Login chama `/auth/login`, guarda tokens, `currentUser` reflete `/auth/me`; `Success(role)` navega para a home do perfil (comportamento atual preservado)
-- [ ] Reabrir o app mantém a sessão (tokens persistidos → `/auth/me`); token inválido → Login
-- [ ] Logout chama `/auth/logout` (falha de rede não impede limpar sessão local) e volta ao Login
-- [ ] Erros: credencial inválida → mensagem específica; 429 → "muitas tentativas"; sem rede → `NetworkUnavailable`
-- [ ] Quick-login (líder/gestor/operador) funciona contra o backend
-- [ ] Gate: compila + testes de `SessionManager`/`LoginViewModel` com fake `AuthApi` (≥ 5 testes)
+- [x] Login chama `/auth/login`, guarda tokens, `currentUser` reflete `/auth/me`; `Success(role)` navega para a home do perfil (comportamento atual preservado)
+- [x] Reabrir o app mantém a sessão (tokens persistidos → `/auth/me`); token inválido → Login
+- [x] Logout chama `/auth/logout` (falha de rede não impede limpar sessão local) e volta ao Login
+- [x] Erros: credencial inválida → mensagem específica; 429 → "muitas tentativas"; sem rede → `NetworkUnavailable`
+- [x] Quick-login (líder/gestor/operador) funciona contra o backend
+- [x] Gate: compila + testes de `SessionManager`/`LoginViewModel` com fake `AuthApi` (≥ 5 testes)
 
+**Notas de execução**: `SessionManager` (login/`me`/logout/expiração), `restoring` mantém a splash até restaurar a sessão; falha de rede no logout não impede limpar o estado local; token inválido limpa e volta ao Login; sem rede no start preserva os tokens. `RemoteUsersRepository`. 16 testes (9 do `SessionManager`, 7 do `LoginViewModel`, com `FakeAuthApi`).
 **Tests**: unit
 **Gate**: full
 
@@ -740,12 +743,13 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.1, R2-02
 
 **Done when**:
-- [ ] `observeAll/observe` via polling+invalidate; `create/update/delete` via REST e invalidam a lista
-- [ ] Líder cria → item no topo imediatamente; editar reposiciona; excluir remove
-- [ ] Gestor/operador não veem ações de escrita (UI atual) e o servidor retorna 403 se forçado (erro tratado)
-- [ ] Campo `campaign` adicionado ao modelo/tela de admin (opcional)
-- [ ] Gate: compila + testes MockWebServer do repositório (≥ 4 testes)
+- [x] `observeAll/observe` via polling+invalidate; `create/update/delete` via REST e invalidam a lista
+- [x] Líder cria → item no topo imediatamente; editar reposiciona; excluir remove
+- [x] Gestor/operador não veem ações de escrita (UI atual) e o servidor retorna 403 se forçado (erro tratado)
+- [x] Campo `campaign` adicionado ao modelo/tela de admin (opcional)
+- [x] Gate: compila + testes MockWebServer do repositório (≥ 4 testes)
 
+**Notas de execução**: `RemoteGuidelinesRepository` (polling + invalidação após escrita; exclusão também invalida relatórios), campo **campanha** no formulário do líder; erros de formulário agora em pt-BR (`toPtBr`, antes `toString()`). Histórico de orientações: só API (sem tela, como previsto). 7 testes MockWebServer.
 **Tests**: unit (MockWebServer)
 **Gate**: full
 
@@ -760,13 +764,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.1, R2-08.5, R2-03
 
 **Done when**:
-- [ ] `observeByAuthor` → `scope=mine`; `observeForCuration` → `scope=curation`; `observeAll`/`observeByGuideline`/`observe(id)` mapeados
-- [ ] `createIdea` exibe os pontos vindos do servidor (`pointsAwarded`); sem crédito calculado no cliente
-- [ ] `ApproveIdeaUseCase` chama `POST /ideas/{id}/approve` e mantém `analytics.logIdeaApproved`; erro `SELF_APPROVAL_FORBIDDEN` → mensagem existente
-- [ ] Stepper "Em execução" usa `linkedProject.stage`; "Orientação removida" quando `guidelineTitle == null` e `guidelineId != null`
-- [ ] Nenhuma referência a `FirebaseFirestore` em ideias/usecases de ideias
-- [ ] Gate: compila + MockWebServer (create/approve/reject/ice, erros 403/409) (≥ 8 testes)
+- [x] `observeByAuthor` → `scope=mine`; `observeForCuration` → `scope=curation`; `observeAll`/`observeByGuideline`/`observe(id)` mapeados
+- [x] `createIdea` exibe os pontos vindos do servidor (`pointsAwarded`); sem crédito calculado no cliente
+- [x] `ApproveIdeaUseCase` chama `POST /ideas/{id}/approve` e mantém `analytics.logIdeaApproved`; erro `SELF_APPROVAL_FORBIDDEN` → mensagem existente
+- [x] Stepper "Em execução" usa `linkedProject.stage`; "Orientação removida" quando `guidelineTitle == null` e `guidelineId != null`
+- [x] Nenhuma referência a `FirebaseFirestore` em ideias/usecases de ideias
+- [x] Gate: compila + MockWebServer (create/approve/reject/ice, erros 403/409) (≥ 8 testes)
 
+**Notas de execução**: `RemoteIdeasRepository` (`scope=mine|curation|all` + `guidelineId`), pontos do **servidor** (`pointsAwarded`) no toast, `ApproveIdeaUseCase` via `POST /ideas/{id}/approve`, stepper "Em execução" pelo `linkedProject.stage`, badge da orientação pelo `guidelineTitle` ("Orientação removida" quando nulo com id), e o detalhe agora **mostra o erro da ação** (antes falhava em silêncio e fechava a tela). 10 testes MockWebServer (escopos, mapeamento, criação sem autor/status no corpo, ICE local + PUT, rejeitar, aprovar + analytics + invalidações, 403 auto-aprovação, 409/404).
 **Tests**: unit (MockWebServer)
 **Gate**: full
 
@@ -781,12 +786,13 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.1, R2-08.5, R2-04
 
 **Done when**:
-- [ ] `FieldChange.from/to` desserializado de JSON tipado (número/string/null) e exibido pelo `TimelineEntry` como antes
-- [ ] Editar projeto adiciona entrada no topo do histórico; `stage=CONCLUIDO` não dispara escrita extra no cliente (analytics `project_completed` mantido)
-- [ ] `version` enviada no `PUT`; `409 CONCURRENCY_CONFLICT` → mensagem "projeto alterado por outro gestor"
-- [ ] Operador não acessa; líder só lê (UI atual) e servidor confirma 403 em escrita
-- [ ] Gate: compila + MockWebServer (≥ 6 testes: list, create, update com diff, 409, 403)
+- [x] `FieldChange.from/to` desserializado de JSON tipado (número/string/null) e exibido pelo `TimelineEntry` como antes
+- [x] Editar projeto adiciona entrada no topo do histórico; `stage=CONCLUIDO` não dispara escrita extra no cliente (analytics `project_completed` mantido)
+- [x] `version` enviada no `PUT`; `409 CONCURRENCY_CONFLICT` → mensagem "projeto alterado por outro gestor"
+- [x] Operador não acessa; líder só lê (UI atual) e servidor confirma 403 em escrita
+- [x] Gate: compila + MockWebServer (≥ 6 testes: list, create, update com diff, 409, 403)
 
+**Notas de execução**: `RemoteProjectsRepository`; `CompleteProjectUseCase` removido (a conclusão é efeito do `PUT`; a métrica `project_completed` só dispara na transição para CONCLUIDO); `version` lida e devolvida no PUT (409 → "outro gestor"); diff tipado (número→Double, prazo ISO→millis) renderiza como antes na timeline. 7 testes MockWebServer.
 **Tests**: unit (MockWebServer)
 **Gate**: full
 
@@ -801,13 +807,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-06.7, R2-08.6
 
 **Done when**:
-- [ ] Filtros período/divisão enviados ao servidor; troca de filtro refaz a chamada
-- [ ] Funil, KPIs, sparkline (com `null`→"—"), impacto por orientação, lista por ROI renderizados a partir da resposta (UI/modo apresentação inalterados)
-- [ ] `roiPercent == null` mostra "—"
-- [ ] `DashboardComputer.kt` removido; nenhum cálculo de ROI/funil no cliente
-- [ ] Atualização automática ≤ 15 s e imediata após editar projeto (invalidate)
-- [ ] Gate: compila + testes do `DashboardViewModel` com repositório fake (≥ 3 testes) + MockWebServer do `RemoteReportsRepository` (≥ 3)
+- [x] Filtros período/divisão enviados ao servidor; troca de filtro refaz a chamada
+- [x] Funil, KPIs, sparkline (com `null`→"—"), impacto por orientação, lista por ROI renderizados a partir da resposta (UI/modo apresentação inalterados)
+- [x] `roiPercent == null` mostra "—"
+- [x] `DashboardComputer.kt` removido; nenhum cálculo de ROI/funil no cliente
+- [x] Atualização automática ≤ 15 s e imediata após editar projeto (invalidate)
+- [x] Gate: compila + testes do `DashboardViewModel` com repositório fake (≥ 3 testes) + MockWebServer do `RemoteReportsRepository` (≥ 3)
 
+**Notas de execução**: `ReportsRepository` + `RemoteReportsRepository`; tipos do dashboard movidos para `core/domain/model`; `DashboardComputer.kt` **removido** (nenhum cálculo de ROI/funil no app). `DashboardViewModel` refaz a chamada ao trocar filtro, mantém o último resumo em falha passageira e tem erro + "Tentar novamente"; KPIs novos (retorno total, projetos atrasados). Decisão: o drill-down segue usando `ideas/projects?guidelineId=` (entrega as listas que a tela precisa); o detalhe agregado `/reports/guidelines/{id}` não é consumido pelo app. 9 testes (5 ViewModel + 4 MockWebServer).
 **Tests**: unit
 **Gate**: full
 
@@ -822,10 +829,11 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-05.4, R2-05.5, R2-08.6
 
 **Done when**:
-- [ ] Ranking mostra `monthPoints` do mês corrente (não mais pontos totais)
-- [ ] Badges conquistadas (persistidas pelo servidor) aparecem coloridas no perfil; atualiza após aprovar/concluir
-- [ ] Gate: compila + MockWebServer (≥ 3 testes)
+- [x] Ranking mostra `monthPoints` do mês corrente (não mais pontos totais)
+- [x] Badges conquistadas (persistidas pelo servidor) aparecem coloridas no perfil; atualiza após aprovar/concluir
+- [x] Gate: compila + MockWebServer (≥ 3 testes)
 
+**Notas de execução**: ranking do mês via `/users/ranking` (agora **atualiza sozinho**: polling + invalidação; antes carregava uma vez), perfil via `/auth/me` (badges do servidor), responsáveis via `/users?role=`. 5 testes MockWebServer.
 **Tests**: unit
 **Gate**: full
 
@@ -840,13 +848,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-07.8
 
 **Done when**:
-- [ ] Botão "✨ Gerar insights" (só líder) → estado Loading (indicador) → Success
-- [ ] Sucesso: parágrafo de resumo + seções **Destaques / Riscos / Recomendações** (chips de prioridade ALTA/MÉDIA/BAIXA, referência à orientação quando houver), selo "Gerado por IA — valide antes de decidir", data/hora e indicação de cache
-- [ ] Erros `503 AI_UNAVAILABLE`/`502`/`429`: mensagem amigável + "Tentar novamente"; **nunca** mostra conteúdo falso
-- [ ] Botão "Atualizar" envia `refresh=true`
-- [ ] Respeita filtros do dashboard; funciona no modo apresentação (ocultável)
-- [ ] Gate: compila + testes do ViewModel de insights (loading/sucesso/erro/retry) (≥ 4 testes) + MockWebServer (≥ 2)
+- [x] Botão "✨ Gerar insights" (só líder) → estado Loading (indicador) → Success
+- [x] Sucesso: parágrafo de resumo + seções **Destaques / Riscos / Recomendações** (chips de prioridade ALTA/MÉDIA/BAIXA, referência à orientação quando houver), selo "Gerado por IA — valide antes de decidir", data/hora e indicação de cache
+- [x] Erros `503 AI_UNAVAILABLE`/`502`/`429`: mensagem amigável + "Tentar novamente"; **nunca** mostra conteúdo falso
+- [x] Botão "Atualizar" envia `refresh=true`
+- [x] Respeita filtros do dashboard; funciona no modo apresentação (ocultável)
+- [x] Gate: compila + testes do ViewModel de insights (loading/sucesso/erro/retry) (≥ 4 testes) + MockWebServer (≥ 2)
 
+**Notas de execução**: `InsightsViewModel` (Idle/Loading/Success/Error; um clique por vez; "Atualizar" = `refresh=true`; lembra os filtros de geração para avisar resultado de outro recorte) e `InsightsCard` (selo "Gerado por IA — valide antes de decidir", destaques/riscos/recomendações com chip de prioridade e nome da orientação, data e "em cache", ocultável; o resumo aparece no modo apresentação). Falhas 503/502/429 mostram só a mensagem amigável do servidor + "Tentar novamente". 8 testes (6 ViewModel + 2 MockWebServer).
 **Tests**: unit
 **Gate**: full
 
@@ -861,13 +870,14 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 **Requirement**: R2-08.8, R2-08.9
 
 **Done when**:
-- [ ] `git grep -nE "FirebaseFirestore|FirebaseAuth|com.google.firebase.(auth|firestore)"` em `mobile/app/src` → **0** ocorrências
-- [ ] `firebase-auth` e `firebase-firestore` removidos das dependências; `google-services`/Analytics/Crashlytics preservados
-- [ ] `MapperTest` migrado para DTOs de rede (round-trip por entidade, `null` de `targetDate/ice/guidelineId`)
-- [ ] `IceTest`, `BadgeEvaluatorTest` mantidos (o avaliador do app deixa de ser usado em produção → decidir: remover do app junto com o teste **ou** manter; registrar decisão)
-- [ ] `mobile/README.md` atualizado (stack, setup do backend, `api.baseUrl`, sem instruções de Firestore)
-- [ ] Gate: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest` verde
+- [x] `git grep -nE "FirebaseFirestore|FirebaseAuth|com.google.firebase.(auth|firestore)"` em `mobile/app/src` → **0** ocorrências
+- [x] `firebase-auth` e `firebase-firestore` removidos das dependências; `google-services`/Analytics/Crashlytics preservados
+- [x] `MapperTest` migrado para DTOs de rede (round-trip por entidade, `null` de `targetDate/ice/guidelineId`)
+- [x] `IceTest`, `BadgeEvaluatorTest` mantidos (o avaliador do app deixa de ser usado em produção → decidir: remover do app junto com o teste **ou** manter; registrar decisão)
+- [x] `mobile/README.md` atualizado (stack, setup do backend, `api.baseUrl`, sem instruções de Firestore)
+- [x] Gate: `./gradlew :app:compileDebugKotlin :app:testDebugUnitTest` verde
 
+**Notas de execução**: `git grep FirebaseFirestore|FirebaseAuth|com.google.firebase.(auth|firestore)` em `app/src` → **0**. Removidos `firebase-auth`, `firebase-firestore`, `coroutines-play-services`, `FirestoreHelpers`, DTOs/mappers Firestore, `firestore.rules`, `firebase.json`, índices; `FirebaseModule` só Analytics/Crashlytics (`google-services` preservado). **Decisão (BadgeEvaluator):** removido do app junto com o teste — o servidor é o único avaliador (o backend já o executa a cada evento de pontos) e uma cópia no app só poderia divergir; ficou um catálogo `Badges` **somente de nomes** para a tela de perfil. `IceTest` mantido (validação local do ICE). `MapperTest` substituído por `NetMappersTest` (round-trip por entidade, `null` de prazo/ICE/orientação/campanha, enums desconhecidos, datas ISO com fração). README do mobile reescrito. **101 testes** do app verdes (`./gradlew :app:compileDebugKotlin :app:testDebugUnitTest`).
 **Tests**: unit
 **Gate**: full
 

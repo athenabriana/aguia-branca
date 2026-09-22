@@ -65,6 +65,13 @@ fun GuidelinesAdminScreen(
                 label = { Text("Descrição") },
                 modifier = Modifier.fillMaxWidth().height(160.dp)
             )
+            OutlinedTextField(
+                value = form.campaign,
+                onValueChange = vm::onCampaign,
+                label = { Text("Campanha (opcional)") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
             ExposedDropdownMenuBox(expanded = pillarExpanded, onExpandedChange = { pillarExpanded = it }) {
                 OutlinedTextField(
                     value = pillarLabel(form.pillar),

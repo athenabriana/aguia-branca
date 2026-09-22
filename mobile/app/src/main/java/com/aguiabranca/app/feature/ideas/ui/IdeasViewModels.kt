@@ -102,7 +102,9 @@ class NewIdeaViewModel @Inject constructor(
             when (result) {
                 is Outcome.Success -> {
                     analytics.logIdeaCreated(hasGuideline = f.guidelineId != null)
-                    val toast = if (f.guidelineId != null) "+15 pts (10 base + 5 conexão estratégica)" else "+10 pts"
+                    // Pontos vindos do servidor (R2-08.5): o app não calcula crédito.
+                    val pts = result.value.pointsAwarded
+                    val toast = if (f.guidelineId != null) "+$pts pts (10 base + 5 conexão estratégica)" else "+$pts pts"
                     onSuccess(toast)
                 }
                 is Outcome.Failure -> _form.value = _form.value.copy(error = describeError(result.error))
@@ -151,7 +153,6 @@ class CurationViewModel @Inject constructor(
 
 data class IdeaDetailUi(
     val idea: Idea? = null,
-    val guideline: Guideline? = null,
     val saving: Boolean = false,
     val error: String? = null
 )
@@ -159,7 +160,6 @@ data class IdeaDetailUi(
 @HiltViewModel
 class IdeaDetailViewModel @Inject constructor(
     private val ideasRepo: IdeasRepository,
-    private val guidelinesRepo: GuidelinesRepository,
     private val approveUseCase: ApproveIdeaUseCase,
     private val rejectUseCase: RejectIdeaUseCase
 ) : ViewModel() {
@@ -173,39 +173,38 @@ class IdeaDetailViewModel @Inject constructor(
             if (id == null) emit(UiState.Idle) else {
                 ideasRepo.observe(id).collect { idea ->
                     if (idea == null) emit(UiState.Error(DomainError.NotFound("ideia", id)))
-                    else {
-                        val guideline = idea.guidelineId?.let { gid -> runCatching { guidelinesRepo.observe(gid).first() }.getOrNull() }
-                        emit(UiState.Success(IdeaDetailUi(idea = idea, guideline = guideline)))
-                    }
+                    else emit(UiState.Success(IdeaDetailUi(idea = idea)))
                 }
             }
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Idle)
 
+    /** Mensagem do servidor para a última ação que falhou (ex.: "Você não pode aprovar a própria ideia."). */
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError.asStateFlow()
+    fun clearActionError() { _actionError.value = null }
+
+    private fun <T> handle(outcome: Outcome<T>, onSuccess: (T) -> Unit) {
+        when (outcome) {
+            is Outcome.Success -> { _actionError.value = null; onSuccess(outcome.value) }
+            is Outcome.Failure -> _actionError.value = describeError(outcome.error)
+        }
+    }
+
     fun approveWithIce(id: String, ice: Ice, reviewerId: String, reviewerName: String, onDone: (projectId: String?) -> Unit) {
         viewModelScope.launch {
             val saved = ideasRepo.saveIce(id, ice, reviewerId)
-            if (saved is Outcome.Success) {
-                val r = approveUseCase(id, reviewerId, reviewerName)
-                onDone((r as? Outcome.Success)?.value)
-            } else {
-                onDone(null)
-            }
+            if (saved is Outcome.Failure) { handle(saved) {}; return@launch }
+            handle(approveUseCase(id, reviewerId, reviewerName)) { onDone(it) }
         }
     }
 
     fun reject(id: String, reviewerId: String, comment: String, onDone: () -> Unit) {
-        viewModelScope.launch {
-            rejectUseCase(id, reviewerId, comment)
-            onDone()
-        }
+        viewModelScope.launch { handle(rejectUseCase(id, reviewerId, comment)) { onDone() } }
     }
 
     fun delete(id: String, authorId: String, onDone: () -> Unit) {
-        viewModelScope.launch {
-            ideasRepo.deleteIdea(id, authorId)
-            onDone()
-        }
+        viewModelScope.launch { handle(ideasRepo.deleteIdea(id, authorId)) { onDone() } }
     }
 }
 
@@ -216,5 +215,7 @@ internal fun describeError(error: DomainError): String = when (error) {
     is DomainError.PermissionDenied -> error.message ?: "Permissão negada."
     is DomainError.ConflictingState -> error.message
     is DomainError.NotAuthenticated -> error.message ?: "Faça login."
+    is DomainError.TooManyRequests -> error.message ?: "Muitas tentativas. Aguarde e tente novamente."
+    is DomainError.ServiceUnavailable -> error.message ?: "Serviço indisponível."
     is DomainError.Unknown -> error.cause?.localizedMessage ?: "Erro."
 }

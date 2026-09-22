@@ -24,8 +24,10 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Mantém a splash até a sessão ser restaurada (/auth/me): evita piscar o Login para quem já está logado.
+        splash.setKeepOnScreenCondition { sessionManager.restoring.value }
         enableEdgeToEdge()
         setContent {
             val session by sessionManager.currentUser.collectAsState()

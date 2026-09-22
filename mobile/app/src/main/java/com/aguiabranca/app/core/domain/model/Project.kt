@@ -21,7 +21,10 @@ data class Project(
     val responsibleId: String? = null,
     val responsibleName: String? = null,
     val createdAt: Long = 0L,
-    val updatedAt: Long = 0L
+    val updatedAt: Long = 0L,
+    /** Versão do servidor (concorrência otimista no PUT). */
+    val version: Int = 1,
+    val guidelineTitle: String? = null
 )
 
 data class ProjectUpdate(

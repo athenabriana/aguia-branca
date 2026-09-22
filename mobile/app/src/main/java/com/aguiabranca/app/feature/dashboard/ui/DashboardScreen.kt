@@ -55,6 +55,7 @@ import com.aguiabranca.app.core.ui.components.StageBadge
 import com.aguiabranca.app.core.ui.components.formatCurrency
 import com.aguiabranca.app.core.ui.components.formatPercent
 import com.aguiabranca.app.core.ui.local.LocalSession
+import com.aguiabranca.app.core.domain.error.toPtBr
 import com.aguiabranca.app.core.ui.state.UiState
 import com.aguiabranca.app.core.ui.theme.SemanticDanger
 import com.aguiabranca.app.core.ui.theme.SemanticInfo
@@ -71,6 +72,7 @@ fun DashboardScreen(
     onTab: (NavTab) -> Unit,
     vm: DashboardViewModel = hiltViewModel(),
     rankingVm: com.aguiabranca.app.feature.profile.ui.UsersRankingViewModel = hiltViewModel(),
+    insightsVm: InsightsViewModel = hiltViewModel(),
     analytics: Analytics? = null
 ) {
     val session = LocalSession.current ?: return
@@ -78,9 +80,10 @@ fun DashboardScreen(
     val filters by vm.filters.collectAsState()
     val isPresenting by vm.presentation.collectAsState()
     val ranking by rankingVm.ranking.collectAsState()
+    val insights by insightsVm.ui.collectAsState()
 
     if (isPresenting) {
-        PresentationMode(state = state, onExit = { vm.togglePresentation() })
+        PresentationMode(state = state, insightsSummary = (insights.state as? UiState.Success)?.data?.summary, onExit = { vm.togglePresentation() })
         return
     }
 
@@ -111,9 +114,20 @@ fun DashboardScreen(
                 is UiState.Success -> DashboardBody(
                     s.data,
                     ranking = ranking,
+                    filters = filters,
+                    insights = insights,
+                    onGenerateInsights = { refresh -> insightsVm.generate(filters, refresh) },
                     onOpenGuideline = onOpenGuideline,
                     onOpenProject = onOpenProject
                 )
+                is UiState.Error -> Column(
+                    Modifier.fillMaxWidth().padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(s.error.toPtBr(), color = MaterialTheme.colorScheme.error)
+                    androidx.compose.material3.OutlinedButton(onClick = vm::retry) { Text("Tentar novamente") }
+                }
                 else -> Box(Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) { Text("Carregando…") }
             }
             Spacer(Modifier.height(24.dp))
@@ -165,8 +179,11 @@ private fun FiltersBar(
 
 @Composable
 private fun DashboardBody(
-    state: com.aguiabranca.app.feature.dashboard.DashboardState,
+    state: com.aguiabranca.app.core.domain.model.DashboardState,
     ranking: List<com.aguiabranca.app.core.domain.model.User>,
+    filters: com.aguiabranca.app.core.domain.model.DashboardFilters,
+    insights: InsightsUi,
+    onGenerateInsights: (refresh: Boolean) -> Unit,
     onOpenGuideline: (String) -> Unit,
     onOpenProject: (String) -> Unit
 ) {
@@ -202,6 +219,11 @@ private fun DashboardBody(
             KpiCard("Ganho produtividade méd.", formatPercent(state.avgProductivityGain), modifier = Modifier.weight(1f))
             KpiCard("Redução de custo", formatCurrency(state.totalCostReduction), modifier = Modifier.weight(1f))
         }
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            KpiCard("Retorno total", formatCurrency(state.totalReturn), modifier = Modifier.weight(1f))
+            KpiCard("Projetos atrasados", state.overdueProjects.toString(), modifier = Modifier.weight(1f))
+        }
 
         val hasRoiHistory = state.sparklineRoi.count { it != null } >= 2
         if (hasRoiHistory) {
@@ -214,6 +236,13 @@ private fun DashboardBody(
                 }
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+        InsightsCard(
+            ui = insights, filters = filters,
+            guidelineTitles = state.guidelineImpacts.associate { it.guidelineId to it.title },
+            onGenerate = onGenerateInsights
+        )
 
         Spacer(Modifier.height(16.dp))
         Text("Impacto por orientação", fontWeight = FontWeight.SemiBold)
@@ -256,7 +285,8 @@ private fun DashboardBody(
 
 @Composable
 private fun PresentationMode(
-    state: UiState<com.aguiabranca.app.feature.dashboard.DashboardState>,
+    state: UiState<com.aguiabranca.app.core.domain.model.DashboardState>,
+    insightsSummary: String?,
     onExit: () -> Unit
 ) {
     Surface(
@@ -291,6 +321,12 @@ private fun PresentationMode(
                     )
                 }
                 else -> Text("Carregando…", color = Color.White)
+            }
+            // Modo apresentação: se os insights já foram gerados, o resumo entra na tela (o card completo fica no dashboard).
+            insightsSummary?.let {
+                Spacer(Modifier.height(16.dp))
+                Text("✨ $it", color = Color.White, fontSize = 14.sp)
+                Text(AI_DISCLAIMER, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
             }
             Spacer(Modifier.height(24.dp))
             Text("Toque para sair", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)

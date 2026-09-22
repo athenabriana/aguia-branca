@@ -20,7 +20,9 @@ data class ProjectInput(
     val division: Division,
     val guidelineId: String?,
     val responsibleId: String? = null,
-    val responsibleName: String? = null
+    val responsibleName: String? = null,
+    /** Versão lida do projeto; enviada no PUT para o servidor detectar edição concorrente (409). */
+    val version: Int? = null
 )
 
 interface ProjectsRepository {

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.aguiabranca.app.core.domain.GuidelinesRepository
+import com.aguiabranca.app.core.domain.error.toPtBr
 import com.aguiabranca.app.core.domain.model.Guideline
 import com.aguiabranca.app.core.domain.model.Pillar
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -34,6 +35,7 @@ data class GuidelineEditForm(
     val title: String = "",
     val description: String = "",
     val pillar: Pillar = Pillar.DIRECIONAMENTO,
+    val campaign: String = "",
     val saving: Boolean = false,
     val error: String? = null
 )
@@ -48,7 +50,8 @@ class GuidelinesAdminViewModel @Inject constructor(
         GuidelineEditForm(
             title = savedStateHandle.get<String>(KEY_TITLE) ?: "",
             description = savedStateHandle.get<String>(KEY_DESC) ?: "",
-            pillar = savedStateHandle.get<String>(KEY_PILLAR)?.let { runCatching { Pillar.valueOf(it) }.getOrNull() } ?: Pillar.DIRECIONAMENTO
+            pillar = savedStateHandle.get<String>(KEY_PILLAR)?.let { runCatching { Pillar.valueOf(it) }.getOrNull() } ?: Pillar.DIRECIONAMENTO,
+            campaign = savedStateHandle.get<String>(KEY_CAMPAIGN) ?: ""
         )
     )
     val form: StateFlow<GuidelineEditForm> = _form.asStateFlow()
@@ -61,16 +64,18 @@ class GuidelinesAdminViewModel @Inject constructor(
         viewModelScope.launch {
             val g = repo.observe(id).first()
             if (g != null) {
-                _form.value = GuidelineEditForm(title = g.title, description = g.description, pillar = g.pillar)
+                _form.value = GuidelineEditForm(title = g.title, description = g.description, pillar = g.pillar, campaign = g.campaign.orEmpty())
                 savedStateHandle[KEY_TITLE] = g.title
                 savedStateHandle[KEY_DESC] = g.description
                 savedStateHandle[KEY_PILLAR] = g.pillar.name
+                savedStateHandle[KEY_CAMPAIGN] = g.campaign.orEmpty()
             }
         }
     }
 
     fun onTitle(v: String) { _form.value = _form.value.copy(title = v); savedStateHandle[KEY_TITLE] = v }
     fun onDescription(v: String) { _form.value = _form.value.copy(description = v); savedStateHandle[KEY_DESC] = v }
+    fun onCampaign(v: String) { _form.value = _form.value.copy(campaign = v); savedStateHandle[KEY_CAMPAIGN] = v }
     fun onPillar(p: Pillar) { _form.value = _form.value.copy(pillar = p); savedStateHandle[KEY_PILLAR] = p.name }
 
     fun save(authorId: String, authorName: String, onDone: () -> Unit) {
@@ -79,11 +84,11 @@ class GuidelinesAdminViewModel @Inject constructor(
         _form.value = f.copy(saving = true, error = null)
         viewModelScope.launch {
             val id = editingId
-            val outcome = if (id == null) repo.create(f.title, f.description, f.pillar, authorId, authorName)
-            else repo.update(id, f.title, f.description, f.pillar)
+            val outcome = if (id == null) repo.create(f.title, f.description, f.pillar, authorId, authorName, f.campaign.trim().ifEmpty { null })
+            else repo.update(id, f.title, f.description, f.pillar, f.campaign.trim().ifEmpty { null })
             _form.value = _form.value.copy(saving = false)
             if (outcome is com.aguiabranca.app.core.domain.error.Outcome.Failure) {
-                _form.value = _form.value.copy(error = outcome.error.toString())
+                _form.value = _form.value.copy(error = outcome.error.toPtBr())
             } else {
                 onDone()
             }
@@ -94,5 +99,6 @@ class GuidelinesAdminViewModel @Inject constructor(
         const val KEY_TITLE = "guideline.title"
         const val KEY_DESC = "guideline.description"
         const val KEY_PILLAR = "guideline.pillar"
+        const val KEY_CAMPAIGN = "guideline.campaign"
     }
 }

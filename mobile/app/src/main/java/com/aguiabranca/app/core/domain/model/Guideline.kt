@@ -8,5 +8,6 @@ data class Guideline(
     val authorId: String,
     val authorName: String,
     val createdAt: Long = 0L,
-    val updatedAt: Long = 0L
+    val updatedAt: Long = 0L,
+    val campaign: String? = null
 )

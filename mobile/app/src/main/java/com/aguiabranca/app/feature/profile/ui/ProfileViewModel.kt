@@ -16,7 +16,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import com.aguiabranca.app.core.network.RefreshBus
+import com.aguiabranca.app.core.network.RefreshKeys
+import com.aguiabranca.app.core.network.pollingFlow
 import javax.inject.Inject
 
 data class ProfileUi(
@@ -49,23 +53,19 @@ class ProfileViewModel @Inject constructor(
 
     fun logout(onDone: () -> Unit) {
         viewModelScope.launch {
-            runCatching { sessionManager.signOut() }
+            sessionManager.signOut()
             onDone()
         }
     }
 }
 
+/** Top do **mês corrente** (pontos do mês, calculados no servidor). Atualiza a cada 15 s e após criar ideias/concluir projetos. */
 @HiltViewModel
 class UsersRankingViewModel @Inject constructor(
-    private val usersRepo: UsersRepository
+    private val usersRepo: UsersRepository,
+    bus: RefreshBus
 ) : ViewModel() {
-    private val _ranking = MutableStateFlow<List<User>>(emptyList())
-    val ranking: StateFlow<List<User>> = _ranking.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            val r = usersRepo.topByPointsThisMonth(5)
-            _ranking.value = (r as? Outcome.Success)?.value.orEmpty()
-        }
-    }
+    val ranking: StateFlow<List<User>> = pollingFlow(bus, setOf(RefreshKeys.RANKING)) { usersRepo.topByPointsThisMonth(5) }
+        .map { (it as? Outcome.Success)?.value.orEmpty() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 }

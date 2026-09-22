@@ -16,6 +16,27 @@ val keystoreProperties = Properties().apply {
     if (f.exists()) load(f.inputStream())
 }
 
+val localProperties = Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) load(f.inputStream())
+}
+
+// URL da API por build type. debug: emulador -> máquina host (10.0.2.2:5080). release: HTTPS obrigatório, vindo de
+// `-Papi.baseUrl=...` ou de `api.baseUrl` no local.properties (nunca versionado).
+val releaseApiBaseUrl: String? =
+    ((project.findProperty("api.baseUrl") as String?) ?: localProperties.getProperty("api.baseUrl"))
+        ?.trim()?.takeIf { it.isNotEmpty() }
+        ?.let { if (it.endsWith("/")) it else "$it/" }
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any { it.project == project && it.name.contains("Release") && (it.name.startsWith("assemble") || it.name.startsWith("bundle") || it.name.startsWith("package")) }
+    if (buildsRelease) {
+        val url = releaseApiBaseUrl
+            ?: throw GradleException("API_BASE_URL do release ausente: informe -Papi.baseUrl=https://sua-api/api/v1/ ou api.baseUrl no mobile/local.properties.")
+        if (!url.startsWith("https://")) throw GradleException("api.baseUrl do release deve usar HTTPS (recebido: $url).")
+    }
+}
+
 android {
     namespace = "com.aguiabranca.app"
     compileSdk = 35
@@ -46,8 +67,11 @@ android {
         debug {
             isMinifyEnabled = false
             applicationIdSuffix = ".debug"
+            // Emulador Android: 10.0.2.2 é a máquina host (onde roda o backend em docker compose, porta 5080).
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:5080/api/v1/\"")
         }
         release {
+            buildConfigField("String", "API_BASE_URL", "\"${releaseApiBaseUrl ?: ""}\"")
             isMinifyEnabled = false
             isShrinkResources = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -104,7 +128,11 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.android)
-    implementation(libs.kotlinx.coroutines.play.services)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.kotlinx.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
@@ -112,8 +140,6 @@ dependencies {
 
     val firebaseBom = platform(libs.firebase.bom)
     implementation(firebaseBom)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.crashlytics)
 
@@ -121,4 +147,5 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.turbine)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
 }

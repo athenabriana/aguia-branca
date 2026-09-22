@@ -24,6 +24,9 @@ data class UpdateIdeaInput(
     val guidelineId: String?
 )
 
+/** Resultado do cadastro: os pontos vêm do servidor (o app não calcula crédito). */
+data class CreatedIdea(val id: String, val pointsAwarded: Int)
+
 interface IdeasRepository {
     fun observeAll(): Flow<List<Idea>>
     fun observeByAuthor(authorId: String): Flow<List<Idea>>
@@ -31,7 +34,7 @@ interface IdeasRepository {
     fun observeByGuideline(guidelineId: String): Flow<List<Idea>>
     fun observe(id: String): Flow<Idea?>
 
-    suspend fun createIdea(input: CreateIdeaInput): Outcome<String>
+    suspend fun createIdea(input: CreateIdeaInput): Outcome<CreatedIdea>
     suspend fun updateIdea(id: String, input: UpdateIdeaInput): Outcome<Unit>
     suspend fun deleteIdea(id: String, authorId: String): Outcome<Unit>
     suspend fun saveIce(id: String, ice: Ice, reviewerId: String): Outcome<Unit>
