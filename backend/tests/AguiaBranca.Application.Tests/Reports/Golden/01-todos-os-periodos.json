@@ -1,0 +1,57 @@
+{
+  "description": "Período ALL, todas as divisões. Cobre funil, KPIs, sparkline com nulos, orientações sem projeto, projeto cancelado/concluído/atrasado e prazo futuro. Valores calculados à mão a partir de DashboardComputer.kt.",
+  "nowUtc": "2026-09-21T15:00:00Z",
+  "filters": { "period": "ALL", "division": null },
+  "guidelines": [
+    { "key": "g1", "title": "Eficiência logística" },
+    { "key": "g2", "title": "Experiência do cliente" },
+    { "key": "g3", "title": "Acessibilidade digital" },
+    { "key": "g4", "title": "Sem nada" }
+  ],
+  "ideas": [
+    { "division": "LOGISTICA",    "guideline": "g1", "status": "IMPLEMENTADA", "createdAt": "2026-03-01T12:00:00Z" },
+    { "division": "LOGISTICA",    "guideline": "g1", "status": "APROVADA",     "createdAt": "2026-04-01T12:00:00Z" },
+    { "division": "COMERCIO",     "guideline": "g2", "status": "REJEITADA",    "createdAt": "2026-05-01T12:00:00Z" },
+    { "division": "PASSAGEIROS",  "guideline": "g2", "status": "EM_ANALISE",   "createdAt": "2026-06-01T12:00:00Z" },
+    { "division": "CORPORATIVO",  "guideline": "g3", "status": "SUBMETIDA",    "createdAt": "2026-07-01T12:00:00Z" },
+    { "division": "LOGISTICA",    "guideline": null, "status": "SUBMETIDA",    "createdAt": "2026-08-01T12:00:00Z" },
+    { "division": "COMERCIO",     "guideline": "g1", "status": "SUBMETIDA",    "createdAt": "2026-09-01T12:00:00Z" }
+  ],
+  "projects": [
+    { "title": "Roteirização IA",   "stage": "CONCLUIDO",   "division": "LOGISTICA",   "guideline": "g1", "investment": 100000, "financialReturn": 250000, "productivityGain": 20, "costReduction": 30000, "targetDate": "2026-06-30T00:00:00Z", "updatedAt": "2026-08-15T12:00:00Z" },
+    { "title": "App de bordo",      "stage": "EM_EXECUCAO", "division": "PASSAGEIROS", "guideline": "g2", "investment": 200000, "financialReturn": 50000,  "productivityGain": 10, "costReduction": 0,     "targetDate": "2026-09-20T00:00:00Z", "updatedAt": "2026-09-10T12:00:00Z" },
+    { "title": "Portal de vendas",  "stage": "EM_EXECUCAO", "division": "COMERCIO",    "guideline": "g2", "investment": 50000,  "financialReturn": 0,      "productivityGain": 0,  "costReduction": 5000,  "targetDate": "2026-10-01T00:00:00Z", "updatedAt": "2026-09-05T12:00:00Z" },
+    { "title": "Piloto sem custo",  "stage": "PLANEJAMENTO","division": "LOGISTICA",   "guideline": "g1", "investment": 0,      "financialReturn": 0,      "productivityGain": 0,  "costReduction": 0,     "targetDate": null,                   "updatedAt": "2026-07-20T12:00:00Z" },
+    { "title": "Projeto cancelado", "stage": "CANCELADO",   "division": "CORPORATIVO", "guideline": null, "investment": 30000,  "financialReturn": 0,      "productivityGain": 0,  "costReduction": 0,     "targetDate": "2026-05-01T00:00:00Z", "updatedAt": "2026-05-10T12:00:00Z" },
+    { "title": "Automação fiscal",  "stage": "CONCLUIDO",   "division": "CORPORATIVO", "guideline": "g1", "investment": 80000,  "financialReturn": 60000,  "productivityGain": 5,  "costReduction": 12000, "targetDate": "2026-08-31T00:00:00Z", "updatedAt": "2026-03-15T12:00:00Z" }
+  ],
+  "expected": {
+    "funnel": { "submitted": 7, "evaluated": 4, "approved": 2, "inExecution": 4, "roiPositive": 1 },
+    "kpis": {
+      "roiConsolidated": -21.74, "netProfit": -100000, "totalInvestment": 460000, "totalReturn": 360000,
+      "activeProjects": 2, "avgProductivityGain": 11.67, "totalCostReduction": 47000, "overdueProjects": 1
+    },
+    "sparkline": [
+      { "month": "2026-04", "roiPercent": null },
+      { "month": "2026-05", "roiPercent": -100 },
+      { "month": "2026-06", "roiPercent": null },
+      { "month": "2026-07", "roiPercent": null },
+      { "month": "2026-08", "roiPercent": 150 },
+      { "month": "2026-09", "roiPercent": -80 }
+    ],
+    "guidelineImpacts": [
+      { "title": "Eficiência logística",   "ideasCount": 3, "projectsCount": 3, "investment": 180000, "financialReturn": 310000, "netProfit": 130000,  "roiPercent": 72.22 },
+      { "title": "Experiência do cliente", "ideasCount": 2, "projectsCount": 2, "investment": 250000, "financialReturn": 50000,  "netProfit": -200000, "roiPercent": -80 },
+      { "title": "Acessibilidade digital", "ideasCount": 1, "projectsCount": 0, "investment": 0,      "financialReturn": 0,      "netProfit": 0,       "roiPercent": null },
+      { "title": "Sem nada",               "ideasCount": 0, "projectsCount": 0, "investment": 0,      "financialReturn": 0,      "netProfit": 0,       "roiPercent": null }
+    ],
+    "projects": [
+      { "title": "Roteirização IA",   "stage": "CONCLUIDO",    "roiPercent": 150,  "daysToDeadline": null, "overdue": false },
+      { "title": "Automação fiscal",  "stage": "CONCLUIDO",    "roiPercent": -25,  "daysToDeadline": null, "overdue": false },
+      { "title": "App de bordo",      "stage": "EM_EXECUCAO",  "roiPercent": -75,  "daysToDeadline": -1,   "overdue": true },
+      { "title": "Portal de vendas",  "stage": "EM_EXECUCAO",  "roiPercent": -100, "daysToDeadline": 10,   "overdue": false },
+      { "title": "Projeto cancelado", "stage": "CANCELADO",    "roiPercent": -100, "daysToDeadline": null, "overdue": false },
+      { "title": "Piloto sem custo",  "stage": "PLANEJAMENTO", "roiPercent": null, "daysToDeadline": null, "overdue": false }
+    ]
+  }
+}

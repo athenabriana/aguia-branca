@@ -1,0 +1,56 @@
+# MongoDB (replica set de 1 nó — necessário para transações) + API.
+#   docker compose up -d mongo            → só o banco (use com `dotnet run`)
+#   docker compose --profile api up --build  → banco + API em http://localhost:5080
+name: aguiabranca
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: aguiabranca-mongo
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # Inicializa o replica set na primeira execução e só fica "healthy" com PRIMARY eleito.
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - "try { rs.status().ok } catch (e) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}).ok }"
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  api:
+    profiles: ["api"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aguiabranca-api
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "5080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      # directConnection: o replica set anuncia "localhost:27017", então não usamos descoberta.
+      ConnectionStrings__Mongo: mongodb://mongo:27017/?directConnection=true
+      Jwt__Key: ${JWT_KEY:-}   # obrigatório (>= 32 bytes); vazio → a API recusa subir com mensagem clara
+      Gemini__ApiKey: ${GEMINI_API_KEY:-}
+      Gemini__Model: ${GEMINI_MODEL:-}
+      Gemini__DailyLimit: ${GEMINI_DAILY_LIMIT:-100}
+      Gemini__ThinkingLevel: ${GEMINI_THINKING_LEVEL:-}
+      Seed__Enabled: ${SEED_ENABLED:-true}
+      # Swagger em /swagger (em Production fica desligado por padrão; ligado aqui para a demonstração local).
+      Swagger__Enabled: ${SWAGGER_ENABLED:-true}
+    restart: unless-stopped
+
+volumes:
+  mongo-data:

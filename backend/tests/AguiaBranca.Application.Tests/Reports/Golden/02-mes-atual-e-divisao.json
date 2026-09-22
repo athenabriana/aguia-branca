@@ -1,0 +1,49 @@
+{
+  "description": "THIS_MONTH + divisão LOGISTICA. Bordas: início do mês local (2026-09-01T03:00Z) incluído, 1 s antes excluído, item no futuro excluído, outra divisão excluída. A sparkline respeita a divisão e ignora o período.",
+  "nowUtc": "2026-09-21T15:00:00Z",
+  "filters": { "period": "THIS_MONTH", "division": "LOGISTICA" },
+  "guidelines": [
+    { "key": "ga", "title": "Roteiros" },
+    { "key": "gb", "title": "Frota verde" }
+  ],
+  "ideas": [
+    { "division": "LOGISTICA", "guideline": "ga", "status": "APROVADA",     "createdAt": "2026-09-01T03:00:00Z" },
+    { "division": "LOGISTICA", "guideline": "ga", "status": "SUBMETIDA",    "createdAt": "2026-09-01T02:59:59Z" },
+    { "division": "LOGISTICA", "guideline": "gb", "status": "REJEITADA",    "createdAt": "2026-09-15T10:00:00Z" },
+    { "division": "COMERCIO",  "guideline": "ga", "status": "IMPLEMENTADA", "createdAt": "2026-09-10T10:00:00Z" },
+    { "division": "LOGISTICA", "guideline": null, "status": "EM_ANALISE",   "createdAt": "2026-09-20T09:00:00Z" },
+    { "division": "LOGISTICA", "guideline": "gb", "status": "SUBMETIDA",    "createdAt": "2026-09-25T00:00:00Z" }
+  ],
+  "projects": [
+    { "title": "Q1", "stage": "EM_EXECUCAO", "division": "LOGISTICA", "guideline": "ga", "investment": 40000,  "financialReturn": 10000, "productivityGain": 8,  "costReduction": 2000, "targetDate": "2026-09-21T00:00:00Z", "updatedAt": "2026-09-12T12:00:00Z" },
+    { "title": "Q2", "stage": "CONCLUIDO",   "division": "LOGISTICA", "guideline": "gb", "investment": 20000,  "financialReturn": 50000, "productivityGain": 12, "costReduction": 4000, "targetDate": "2026-09-05T00:00:00Z", "updatedAt": "2026-09-01T03:00:00Z" },
+    { "title": "Q3", "stage": "EM_EXECUCAO", "division": "LOGISTICA", "guideline": "ga", "investment": 10000,  "financialReturn": 0,     "productivityGain": 0,  "costReduction": 0,    "targetDate": "2026-09-01T00:00:00Z", "updatedAt": "2026-08-31T20:00:00Z" },
+    { "title": "Q4", "stage": "CONCLUIDO",   "division": "COMERCIO",  "guideline": "ga", "investment": 999999, "financialReturn": 0,     "productivityGain": 99, "costReduction": 99,   "targetDate": null,                   "updatedAt": "2026-09-10T12:00:00Z" },
+    { "title": "Q5", "stage": "PLANEJAMENTO","division": "LOGISTICA", "guideline": null, "investment": 0,      "financialReturn": 0,     "productivityGain": 0,  "costReduction": 0,    "targetDate": "2026-09-30T00:00:00Z", "updatedAt": "2026-09-18T12:00:00Z" },
+    { "title": "Q6", "stage": "EM_EXECUCAO", "division": "LOGISTICA", "guideline": "gb", "investment": 5000,   "financialReturn": 5000,  "productivityGain": 3,  "costReduction": 0,    "targetDate": "2026-09-10T00:00:00Z", "updatedAt": "2026-09-28T12:00:00Z" }
+  ],
+  "expected": {
+    "funnel": { "submitted": 3, "evaluated": 3, "approved": 1, "inExecution": 2, "roiPositive": 1 },
+    "kpis": {
+      "roiConsolidated": 0, "netProfit": 0, "totalInvestment": 60000, "totalReturn": 60000,
+      "activeProjects": 1, "avgProductivityGain": 10, "totalCostReduction": 6000, "overdueProjects": 0
+    },
+    "sparkline": [
+      { "month": "2026-04", "roiPercent": null },
+      { "month": "2026-05", "roiPercent": null },
+      { "month": "2026-06", "roiPercent": null },
+      { "month": "2026-07", "roiPercent": null },
+      { "month": "2026-08", "roiPercent": -100 },
+      { "month": "2026-09", "roiPercent": 0 }
+    ],
+    "guidelineImpacts": [
+      { "title": "Frota verde", "ideasCount": 1, "projectsCount": 1, "investment": 20000, "financialReturn": 50000, "netProfit": 30000,  "roiPercent": 150 },
+      { "title": "Roteiros",    "ideasCount": 1, "projectsCount": 1, "investment": 40000, "financialReturn": 10000, "netProfit": -30000, "roiPercent": -75 }
+    ],
+    "projects": [
+      { "title": "Q2", "stage": "CONCLUIDO",    "roiPercent": 150,  "daysToDeadline": null, "overdue": false },
+      { "title": "Q1", "stage": "EM_EXECUCAO",  "roiPercent": -75,  "daysToDeadline": 0,    "overdue": false },
+      { "title": "Q5", "stage": "PLANEJAMENTO", "roiPercent": null, "daysToDeadline": 9,    "overdue": false }
+    ]
+  }
+}
