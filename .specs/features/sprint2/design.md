@@ -580,7 +580,7 @@ Firestore (service account) ─► Extract ─► Transform (IdMap, Timestamp→
 |---|---|---|---|
 | Provider EF Core Mongo não cobre transações/concorrência/Identity como esperado | ~~Média~~ Baixa (mitigado) | Alto | Spike B03 **aprovou** transações, concorrência e Identity; limitações restantes documentadas em §8.2 |
 | Transações exigem replica set (falha em Mongo standalone) | Média | Alto | compose com `rs0`; Atlas M0; check de startup com mensagem clara |
-| Cota/instabilidade do Gemini free tier durante a demo | Média | Médio | Cache 6 h, rate limit, modelo configurável, erro amigável; **pré-gerar** insights antes da apresentação |
+| Cota/instabilidade do Gemini free tier durante a demo | Média | Médio | Cache 6 h, rate limit, modelo configurável, erro amigável; **pré-gerar** insights antes da apresentação. Mitigação reforçada pela M09b (adicionada depois): a tela inicial da apresentação recupera o **último insight salvo no servidor** (`refresh=false`) sem gastar cota, então mesmo sem pré-gerar manualmente o líder vê algo pronto se já houver um cache válido |
 | Nome/disponibilidade do modelo Gemini muda | Média | Médio | `Gemini:Model` configurável; validar na B19 |
 | Segredos vazando (JWT key, Gemini key, connection string) | Média | Crítico | env/user-secrets, `.gitignore`, sem log, scan antes do zip |
 | Divergência de cálculo servidor × app antigo | Média | Alto | Golden tests com vetores do Kotlin; remover cálculo do app |

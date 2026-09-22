@@ -861,6 +861,32 @@ B24 + M11 → D01 (ENDPOINTS.md) → D02 (diagrama + IA) → D03 (apresentação
 
 ---
 
+### M09b: Insights em destaque no dashboard + apresentação em stories [ADICIONADO POSTERIORMENTE]
+
+> **Fora do levantamento inicial da sprint.** Pedido do usuário depois da M09 entregue (a funcionalidade de IA não tinha sido mapeada com esse nível de detalhe em R2-07/M09 originais): o card de insights vira o primeiro item do dashboard, e o modo apresentação ganha uma segunda forma de consumir a IA — visão em **stories** (Instagram-like). Não muda contrato nenhum do backend.
+
+**What**: (1) Reordena `DashboardBody` para o `InsightsCard` ser o primeiro item da tela. (2) Novo modo dentro da apresentação: tela inicial com botão de gerar/ver/regenerar insights e, com o resultado disponível, uma visão em stories (uma página por seção: resumo, destaques, riscos, cada recomendação) com barra de progresso segmentada, avanço automático por tempo, navegação manual (toque nas laterais) e pausa por toque-e-segurar.
+**Where**: `feature/dashboard/ui/DashboardScreen.kt` (reordenação do card; `PresentationMode`/`PresentationInsightsEntry` novos), `feature/dashboard/ui/InsightsStories.kt` (novo: `InsightsStoriesView` + páginas do reel)
+**Depends on**: M09
+**Reuses**: `InsightsViewModel`/`InsightsUi` (mesmo ViewModel, hoisted uma vez em `DashboardScreen` e compartilhado entre o card e a apresentação — sem chamada nova), `POST /reports/insights` **sem nenhuma alteração** (o "obter o último salvo" já existia: `refresh=false` retorna o cache do servidor se ainda válido)
+**Requirement**: R2-07.8, R2-07.10 (nova)
+
+**Done when**:
+- [x] `InsightsCard` é o primeiro item do `DashboardBody`, antes do funil
+- [x] Tela inicial da apresentação tem o botão "✨ Gerar insights com IA" (estado Idle); mesma máquina de estados Idle/Loading/Error/Success do card, mesma chamada
+- [x] Com um insight já disponível (gerado agora ou recuperado do cache do servidor), a tela inicial oferece "▶ Ver insights" (entra no reel sem nova chamada) e "Gerar novo" (`refresh=true`)
+- [x] Reel: 1 página de resumo + 1 de destaques (se houver) + 1 de riscos (se houver) + 1 por recomendação; barra de progresso segmentada (cheia/parcial/vazia); avança sozinho após alguns segundos por página; toque-e-segure pausa; toque na lateral esquerda/direita navega manualmente
+- [x] Passar da última página, ou voltar a partir da primeira, volta à tela inicial (não fecha a apresentação); ícone de recarregar dentro do reel gera de novo sem sair da apresentação; X sempre fecha a apresentação inteira
+- [x] Erros (503/502/429) aparecem na tela inicial, igual ao card — nunca dentro do reel com conteúdo inventado
+- [x] Validado manualmente num emulador contra o backend real: card no topo, geração vinda do cache (`fromCache=true`) entrando direto no reel, avanço automático, navegação manual para trás, fechar e reabrir mostrando "Último gerado em… · em cache"
+- [x] Gate: compila + suíte completa continua verde (mudança é só de composição; `InsightsViewModel`/rede não mudaram)
+
+**Notas de execução**: sem endpoint novo — a exigência de "obter o último insight salvo no banco, com opção de gerar um novo" já era atendida pelo cache do servidor (`Gemini:CacheHours`, R2-07.6); só expôs essa chamada (`refresh=false`) como primeira ação da tela inicial. `InsightsViewModel` é `hiltViewModel()` uma única vez em `DashboardScreen` e passado tanto para `DashboardBody` quanto para `PresentationMode`, então o que já foi gerado no card aparece pronto ao entrar na apresentação (e vice-versa). Sem testes automatizados novos (mudança de UI/composição, sem lógica nova em ViewModel/repositório/rede) — validação manual com capturas de tela.
+**Tests**: none (validação manual)
+**Gate**: quick
+
+---
+
 ### M10: Remoção do Firebase Auth/Firestore e limpeza
 
 **What**: Eliminar código e dependências do Firebase Auth/Firestore; manter Analytics/Crashlytics; atualizar testes e README.

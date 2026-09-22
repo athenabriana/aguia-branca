@@ -1,5 +1,6 @@
 package com.aguiabranca.app.feature.dashboard.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,23 +22,32 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -83,7 +94,13 @@ fun DashboardScreen(
     val insights by insightsVm.ui.collectAsState()
 
     if (isPresenting) {
-        PresentationMode(state = state, insightsSummary = (insights.state as? UiState.Success)?.data?.summary, onExit = { vm.togglePresentation() })
+        PresentationMode(
+            state = state,
+            insights = insights,
+            filters = filters,
+            onGenerateInsights = { refresh -> insightsVm.generate(filters, refresh) },
+            onExit = { vm.togglePresentation() }
+        )
         return
     }
 
@@ -188,6 +205,14 @@ private fun DashboardBody(
     onOpenProject: (String) -> Unit
 ) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+        // Insights da IA é o primeiro item da tela (destaque para a funcionalidade de IA).
+        InsightsCard(
+            ui = insights, filters = filters,
+            guidelineTitles = state.guidelineImpacts.associate { it.guidelineId to it.title },
+            onGenerate = onGenerateInsights
+        )
+
+        Spacer(Modifier.height(16.dp))
         Surface(shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text("Funil de inovação", fontWeight = FontWeight.SemiBold)
@@ -238,13 +263,6 @@ private fun DashboardBody(
         }
 
         Spacer(Modifier.height(16.dp))
-        InsightsCard(
-            ui = insights, filters = filters,
-            guidelineTitles = state.guidelineImpacts.associate { it.guidelineId to it.title },
-            onGenerate = onGenerateInsights
-        )
-
-        Spacer(Modifier.height(16.dp))
         Text("Impacto por orientação", fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(8.dp))
         state.guidelineImpacts.forEach { impact ->
@@ -283,18 +301,50 @@ private fun DashboardBody(
     }
 }
 
+/**
+ * Modo apresentação: começa na visão geral (KPIs + funil) com um botão para gerar insights de IA. Com os insights
+ * disponíveis (recém-gerados ou o último salvo no servidor), o líder pode entrar na visão em **stories** (ver
+ * [InsightsStoriesView]); terminar os stories (ou puxar para trás no primeiro) volta para esta tela inicial, de onde
+ * dá para gerar um novo. `refresh=false` já entrega o último salvo no banco (cache do servidor), sem custo de IA.
+ */
 @Composable
 private fun PresentationMode(
     state: UiState<com.aguiabranca.app.core.domain.model.DashboardState>,
-    insightsSummary: String?,
+    insights: InsightsUi,
+    filters: com.aguiabranca.app.core.domain.model.DashboardFilters,
+    onGenerateInsights: (refresh: Boolean) -> Unit,
     onExit: () -> Unit
 ) {
+    var storiesActive by rememberSaveable { mutableStateOf(false) }
+    var pendingAutoEnter by rememberSaveable { mutableStateOf(false) }
+
+    // Depois de disparar uma geração pela tela inicial, entra sozinho nos stories assim que ela terminar com sucesso.
+    LaunchedEffect(insights.state) {
+        if (pendingAutoEnter && insights.state is UiState.Success) {
+            storiesActive = true
+            pendingAutoEnter = false
+        }
+    }
+
+    val successInsights = insights.state as? UiState.Success
+    if (storiesActive && successInsights != null) {
+        val guidelineTitles = (state as? UiState.Success)?.data?.guidelineImpacts?.associate { it.guidelineId to it.title }.orEmpty()
+        InsightsStoriesView(
+            insights = successInsights.data,
+            guidelineTitles = guidelineTitles,
+            onRegenerate = { onGenerateInsights(true); pendingAutoEnter = true; storiesActive = false },
+            onFinished = { storiesActive = false },
+            onClose = onExit
+        )
+        return
+    }
+
     Surface(
         modifier = Modifier.fillMaxSize().clickable(onClick = onExit),
         color = MaterialTheme.colorScheme.primary
     ) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(24.dp),
+            modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -322,14 +372,71 @@ private fun PresentationMode(
                 }
                 else -> Text("Carregando…", color = Color.White)
             }
-            // Modo apresentação: se os insights já foram gerados, o resumo entra na tela (o card completo fica no dashboard).
-            insightsSummary?.let {
-                Spacer(Modifier.height(16.dp))
-                Text("✨ $it", color = Color.White, fontSize = 14.sp)
-                Text(AI_DISCLAIMER, color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp)
-            }
+
+            Spacer(Modifier.height(24.dp))
+            PresentationInsightsEntry(
+                ui = insights,
+                stale = insights.generatedFor != null && insights.generatedFor != filters,
+                onGenerate = { onGenerateInsights(false); pendingAutoEnter = true },
+                onRegenerate = { onGenerateInsights(true); pendingAutoEnter = true },
+                onViewSaved = { storiesActive = true }
+            )
+
             Spacer(Modifier.height(24.dp))
             Text("Toque para sair", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+        }
+    }
+}
+
+/** Bloco de IA da tela inicial da apresentação: gerar (usa o último salvo, se houver), ver os stories ou gerar de novo. */
+@Composable
+private fun PresentationInsightsEntry(
+    ui: InsightsUi,
+    stale: Boolean,
+    onGenerate: () -> Unit,
+    onRegenerate: () -> Unit,
+    onViewSaved: () -> Unit
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            modifier = Modifier
+                .background(Color.White.copy(alpha = 0.16f), shape = RoundedCornerShape(50))
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+        ) { Text(AI_DISCLAIMER, color = Color.White, fontSize = 11.sp) }
+
+        when (val s = ui.state) {
+            UiState.Idle -> Button(
+                onClick = onGenerate,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = MaterialTheme.colorScheme.primary)
+            ) { Text("✨ Gerar insights com IA") }
+
+            UiState.Loading -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = Color.White)
+                Text("Gerando insights…", color = Color.White, fontSize = 13.sp)
+            }
+
+            is UiState.Error -> {
+                Text(s.error.toPtBr(), color = Color.White, fontSize = 13.sp, textAlign = TextAlign.Center)
+                OutlinedButton(onClick = onGenerate, colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) { Text("Tentar novamente") }
+            }
+
+            is UiState.Success -> {
+                if (stale) Text("Os filtros mudaram desde a última geração.", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp)
+                Text(
+                    buildString {
+                        append("Último gerado em ").append(formatGeneratedAt(s.data.generatedAt))
+                        if (s.data.fromCache) append(" · em cache")
+                    },
+                    color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(
+                        onClick = onViewSaved,
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = MaterialTheme.colorScheme.primary)
+                    ) { Text("▶ Ver insights") }
+                    OutlinedButton(onClick = onRegenerate, colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)) { Text("Gerar novo") }
+                }
+            }
         }
     }
 }

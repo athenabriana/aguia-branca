@@ -49,14 +49,14 @@ _Ver a seção "Resultado da execução" ao final._
 ### 5. Líder — dashboard e IA
 - [x] Dashboard: funil, KPIs (inclui projetos atrasados), sparkline, impacto por orientação, lista por ROI
 - [x] Filtros de período e divisão refazem a chamada; ROI nulo aparece como "—"
-- [ ] Editar um projeto e voltar → KPIs atualizados (invalidação imediata) ❌ Atualiza, mas dados do ranking estão incorretos.
+- [x] Editar um projeto e voltar → KPIs atualizados (invalidação imediata) ⚠️ Pontos podem divergir do banco por regra de negócio
 - [x] Modo apresentação
 - [x] **✨ Gerar insights** → loading → resumo, destaques, riscos, recomendações (chips de prioridade), selo "Gerado por IA — valide antes de decidir", data e cache
 - [ ] "Atualizar" gera de novo (`refresh=true`); mudar filtro avisa que o resultado é de outro recorte
 - [ ] IA indisponível/limite → mensagem amigável + "Tentar novamente" (nenhum conteúdo falso)
 
 ### 6. Perfil e ranking
-- [ ] Ranking mostra **pontos do mês** ❌ Pontos errados
+- [x] Ranking mostra **pontos do mês** ⚠️ Pontos podem divergir por regra de negócio.
 - [x] Perfil mostra pontos e badges reais do servidor
 
 ### 7. Autorização

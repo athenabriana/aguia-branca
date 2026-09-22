@@ -216,6 +216,7 @@ Requisitos com IDs rastreáveis (`R2-XX`) e critérios de aceitação testáveis
 - R2-07.9 — **Prompt:** orientações vão como referência curta (`G1`…`G10`), nunca por id; a recomendação devolve `relatedGuidelineRef` que o servidor mapeia para o `relatedGuidelineId` real (referência inventada pelo modelo vira `null`). Com `guidelineId` no pedido, o resumo cobre só aquela orientação. Projetos enviados: os atrasados (até 4) + melhores/piores ROI até 10; orientações: as 10 com mais atividade (`orientacoesOmitidas`/`projetosOmitidos` informam o corte). O log registra só contagem de tokens, modelo, status e latência (nunca conteúdo nem chave; os headers do `HttpClient` são redigidos mesmo em `Trace`)
 - R2-07.7 — Chave `Gemini:ApiKey` só por variável de ambiente/secret; enviada em header `x-goog-api-key`; nunca logada
 - R2-07.8 — App: card "✨ Insights da IA" no dashboard (botão gerar, loading, seções Destaques/Riscos/Recomendações, erro com retry, selo de IA e data de geração); respeita os filtros ativos
+- R2-07.10 — **[Adicionado após a entrega da M09, a pedido do usuário — não fazia parte do levantamento inicial]** O card de insights é o **primeiro item** do dashboard. O modo apresentação ganha uma visão de **stories** (Instagram-like) para os insights: a tela inicial da apresentação tem o mesmo botão de gerar (mesma rota `POST /reports/insights`, sem alteração de contrato); com o resultado disponível — recém-gerado ou **o último salvo no servidor** (`refresh=false` já entrega o cache válido, sem custo de IA) —, o líder entra num reel com uma página por seção (resumo, destaques, riscos, cada recomendação), barra de progresso segmentada, avanço automático por tempo, navegação manual (toque nas laterais) e opção de gerar um novo sem sair da apresentação
 
 **Aceitação:**
 - Com chave válida, insights são retornados em ≤ 20 s e passam na validação de schema
@@ -223,6 +224,7 @@ Requisitos com IDs rastreáveis (`R2-XX`) e critérios de aceitação testáveis
 - Gemini indisponível/cota excedida → `503 AI_UNAVAILABLE` com mensagem amigável; app não quebra
 - Payload enviado ao Gemini (capturado em teste) não contém nome/e-mail/id de usuário
 - Operador/gestor → `403`
+- Reabrir a apresentação depois de já ter gerado um insight mostra "Ver insights"/"Gerar novo" com a data do último gerado, sem chamar o Gemini de novo
 
 ---
 
